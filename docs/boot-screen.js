@@ -88,7 +88,7 @@
 
         // Logo — soft, elegant reveal
         const logo = document.createElement('img');
-        logo.src = '/images/logo.gif';
+        logo.src = 'images/logo.gif';
         logo.style.cssText = `
             width: 92px; height: 92px; border-radius: 22px;
             display: block; object-fit: cover;
