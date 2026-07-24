@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aerodynamix</title>
+    <link rel="stylesheet" href="/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="auth-overlay.js" defer></script>
+    <script src="boot-screen.js"></script>
+    <link rel="preload" as="image" href="images/run-3.jpg">
+    <link rel="preload" as="image" href="images/drive-mad.jpg">
+    <link rel="preload" as="image" href="images/supersmashflash.jpg">
+    <link rel="preload" as="image" href="images/papaspizzeria.png">
+    <link rel="preload" as="image" href="images/retro-bowl.jpg">
+    <link rel="preload" as="image" href="images/mc.png">
+    <link rel="preload" as="image" href="images/slope.jpg">
+    <link rel="preload" as="image" href="images/pvz2.jpg">
+    <link rel="preload" as="image" href="images/papasfreezeria.png">
+    <link rel="preload" as="image" href="images/adventure-capitalist.png">
+    <link rel="preload" as="image" href="images/fridaynightfunkin.png">
+    <link rel="preload" as="image" href="images/run-2.png">
+    <link rel="preload" as="image" href="images/picoschool.png">
+    <link rel="preload" as="image" href="images/worldshardestgame.png">
+    <link rel="preload" as="image" href="images/sandboxels.png">
+</head>
+<body>
+    <nav>
+        <img src="/images/logo.gif" alt="logo" onclick="window.location='/'">
+        <h1><span class="logo-a" id="logo-a">A</span>ERODYNAMIX</h1>
+        <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:0.4vw;">
+            <a href="/" style="color:#000; text-decoration:none; padding:0.55vw 1.3vw; background-color:#fff; border-radius:0.5vw; font-weight:600; font-size:0.95vw; transition:all 0.3s ease;">Games</a>
+            <a href="/media-player.html" style="color:#fff; text-decoration:none; padding:0.55vw 1.3vw; border-radius:0.5vw; font-weight:600; font-size:0.95vw; transition:all 0.3s ease;">Media Player</a>
+        </div>
+        <a href="/colors.html" style="margin-right:1.5vw; color:#fff; text-decoration:none; padding:0.55vw 1.3vw; background-color:#2c7ffc; border-radius:0.5vw; font-weight:600; font-size:0.95vw; transition:all 0.3s ease;">Settings</a>
+    </nav>
+
+    <div class="featured">
+        <h1>Spotlight</h1>
+        <div class="games-row">
+          <a href="/game-frame.html?game=games/run-3/">
+            <img src="images/run-3.jpg">
+            <div class="play-button">
+                <i class="fa-solid fa-play"></i>
+            </div>
+          </a>
+          <a href="/game-frame.html?game=games/drive-mad/">
+            <img src="images/drive-mad.jpg">
+            <div class="play-button">
+                <i class="fa-solid fa-play"></i>
+            </div>
+          </a>
+          <a href="/game-frame.html?game=games/papaspizzeria/">
+            <img src="images/papaspizzeria.png">
+            <div class="play-button">
+                <i class="fa-solid fa-play"></i>
+            </div>
+          </a>
+          <a href="/game-frame.html?game=games/supersmashflash/">
+            <img src="images/supersmashflash.jpg">
+            <div class="play-button">
+                <i class="fa-solid fa-play"></i>
+            </div>
+          </a>
+        </div>
+    </div>
+
+    <div class="content">
+
+    <hr>
+
+    <div class="search">
+        <input type="text" placeholder="Search..." oninput="">
+        <button><i class="fas fa-search"></i></button>
+    </div>
+
+    <div id="games">
+        <p id="no-games-msg" style="display:none; color:#fff; font-size:1.2rem; text-align:center; width:100%; margin-top:2vw;">If there's no games then try refreshing the page</p>
+        <a href="/game-frame.html?game=games/run-3/"><img src="images/run-3.jpg" alt="run 3" loading="eager"></a>
+        <a href="/game-frame.html?game=games/drive-mad/"><img src="images/drive-mad.jpg" alt="drive mad" loading="eager"></a>
+        <a href="/game-frame.html?game=games/retro-bowl/"><img src="images/retro-bowl.jpg" alt="retrobowl" loading="eager"></a>
+        <a href="/game-frame.html?game=games/slope/"><img src="images/slope.jpg" alt="slope" loading="eager"></a>
+        <a href="/game-frame.html?game=games/minecraft/"><img src="images/mc.png" alt="minecraft" loading="eager"></a>
+        <a href="/game-frame.html?game=games/pvz2/"><img src="images/pvz2.jpg" alt="plants vs zombies 2" loading="eager"></a>
+        <a href="/game-frame.html?game=games/supersmashflash/"><img src="images/supersmashflash.jpg" alt="super smash flash" loading="eager"></a>
+        <a href="/game-frame.html?game=games/papaspizzeria/"><img src="images/papaspizzeria.png" alt="papa's pizzeria" loading="eager"></a>
+        <a href="/game-frame.html?game=games/papasfreezeria/"><img src="images/papasfreezeria.png" alt="papa's freezeria" loading="eager"></a>
+        <a href="/game-frame.html?game=games/adventure-capitalist/"><img src="images/adventure-capitalist.png" alt="adventure capitalist" loading="eager"></a>
+        <a href="/game-frame.html?game=games/fridaynightfunkin/"><img src="images/fridaynightfunkin.png" alt="friday night funkin'" loading="eager"></a>
+        <a href="/game-frame.html?game=games/run-2/"><img src="images/run-2.png" alt="run 2" loading="eager"></a>
+        <a href="/game-frame.html?game=games/picoschool/"><img src="images/picoschool.png" alt="pico's school" loading="eager"></a>
+        <a href="/game-frame.html?game=games/worldshardestgame/"><img src="images/worldshardestgame.png" alt="world's hardest game" loading="eager"></a>
+        <a href="/game-frame.html?game=games/sandboxels/"><img src="images/sandboxels.png" alt="sandboxels" loading="eager"></a>
+        <a href="/game-frame.html?game=attached_assets/Alien_Hominid_1784867581921.html"><img src="images/alien-hominid.png" alt="alien hominid" loading="eager"></a>
+        <a href="/game-frame.html?game=attached_assets/clsubwaysurferssanfrancisco_(1)_1784785408303.html"><img src="images/subway-surfers-sf.jpg" alt="subway surfers san francisco" loading="eager"></a>
+        <a href="/game-frame.html?game=attached_assets/Hobo_1_1784866297260.html"><img src="images/hobo-1.png" alt="hobo 1" loading="eager"></a>
+        <a href="/game-frame.html?game=attached_assets/Hobo_2_1784866273340.html"><img src="images/hobo-2.png" alt="hobo 2" loading="eager"></a>
+        <a href="/game-frame.html?game=attached_assets/Hobo_3_1784866253185.html"><img src="images/hobo-3.png" alt="hobo 3" loading="eager"></a>
+        <a href="/game-frame.html?game=attached_assets/Hobo_4_1784866216457.html"><img src="images/hobo-4.png" alt="hobo 4" loading="eager"></a>
+        <a href="/game-frame.html?game=attached_assets/Hobo_5_1784866218574.html"><img src="images/hobo-5.png" alt="hobo 5" loading="eager"></a>
+        <a href="/game-frame.html?game=attached_assets/Hobo_6_1784866220679.html"><img src="images/hobo-6.png" alt="hobo 6" loading="eager"></a>
+        <a href="/game-frame.html?game=attached_assets/Hobo_7_1784866222995.html"><img src="images/hobo-7.png" alt="hobo 7" loading="eager"></a>
+        <a href="/game-frame.html?game=attached_assets/Gladihoppers_1784866393639.html"><img src="images/gladihoppers.jpg" alt="gladihoppers" loading="eager"></a>
+        <a href="/game-frame.html?game=attached_assets/Fruit_Ninja_1784866426153.html"><img src="images/fruit-ninja.png" alt="fruit ninja" loading="eager"></a>
+        <a href="/game-frame.html?game=attached_assets/Binding_of_Issac__Wrath_of_the_Lamb_1784866537332.html"><img src="images/binding-of-isaac.png" alt="binding of isaac wrath of the lamb" loading="eager"></a>
+        <a href="/game-frame.html?game=attached_assets/Plants_vs._Zombies_GOTY_Edition_1784866649555.html"><img src="images/pvz-goty.jpg" alt="plants vs zombies goty edition" loading="eager"></a>
+    </div>
+    </div>
+    <div style="height: 120px;"></div>
+    <script src="music-player.js"></script>
+    <script src="script.js"></script>
+    <script src="bubble-overlay.js"></script>
+    <script src="snow-overlay.js"></script>
+</body>
+</html>

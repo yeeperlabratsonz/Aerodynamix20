@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game - Aerodynamix</title>
+    <script src="auth-overlay.js" defer></script>
+    <link rel="stylesheet" href="/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        html, body {
+            background-color: #000000;
+            color: #fff;
+            overflow-y: auto;
+            height: auto;
+        }
+
+        .game-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            height: 7vw;
+            padding: 0 1%;
+            backdrop-filter: blur(10px) saturate(200%) brightness(70%);
+        }
+
+        .game-header img {
+            height: 80%;
+            width: auto;
+            margin-right: 1%;
+            border-radius: 1vw;
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 5px 5px 10px rgba(53, 53, 53, 0.459);
+            background-color: #000000;
+            padding: 0.3vw;
+            box-sizing: border-box;
+        }
+
+        .game-header h1 {
+            font-size: 2vw;
+            font-weight: 800;
+            margin-right: 1%;
+            margin: 0;
+        }
+
+        .header-actions {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.5vw;
+        }
+        .back-button {
+            color: #fff;
+            text-decoration: none;
+            padding: 0.5vw 1vw;
+            background-color: #2c7ffc;
+            border-radius: 0.5vw;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            font-size: 1vw;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .back-button:hover {
+            background-color: #1e5bc4;
+            transform: scale(1.05);
+        }
+
+        .game-container {
+            margin-top: 7vw;
+            width: 100%;
+            height: calc(100vh - 7vw + 120px);
+            min-height: calc(100vh - 7vw + 120px);
+            border: 0.5vw solid #000;
+            box-sizing: border-box;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+            transition: height 0.3s ease, min-height 0.3s ease;
+        }
+        .game-container.footer-visible {
+            height: calc(100vh - 7vw - 72px + 120px);
+            min-height: calc(100vh - 7vw - 72px + 120px);
+        }
+
+        .game-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+
+        .game-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            display: none;
+            align-items: center;
+            gap: 20px;
+            padding: 12px 30px;
+            background: rgba(10,10,10,0.97);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid #222;
+            font-family: 'Montserrat', sans-serif;
+        }
+        .game-footer.visible { display: flex; }
+
+        .game-footer .gf-art {
+            width: 52px; height: 52px; border-radius: 6px;
+            object-fit: cover; flex-shrink: 0; background: #222;
+            opacity: 0.3; transition: opacity 0.3s;
+        }
+        .game-footer .gf-art.active { opacity: 1; }
+
+        .game-footer .gf-info {
+            flex-shrink: 0; width: 180px;
+            min-width: 0;
+        }
+        .game-footer .gf-info .gf-track {
+            font-size: 0.85rem; font-weight: 700;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            color: #fff;
+        }
+        .game-footer .gf-info .gf-album {
+            font-size: 0.72rem; color: #888;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        .game-footer .gf-controls {
+            display: flex; align-items: center; gap: 18px;
+            flex-shrink: 0;
+        }
+        .game-footer .gf-controls button {
+            background: none; border: none; color: #ccc;
+            cursor: pointer; font-size: 1.1rem; transition: color 0.2s;
+            padding: 4px;
+        }
+        .game-footer .gf-controls button:hover { color: #fff; }
+        .game-footer .gf-controls button.play-pause {
+            width: 38px; height: 38px; border-radius: 50%;
+            background: #fff; color: #000;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem;
+        }
+        .game-footer .gf-controls button.play-pause:hover { background: #ddd; }
+
+        .game-footer .gf-progress {
+            flex: 1; display: flex; flex-direction: column; gap: 4px;
+            min-width: 0;
+        }
+        .game-footer .gf-progress input {
+            -webkit-appearance: none; appearance: none;
+            width: 100%; height: 4px; background: #333; border-radius: 2px;
+            cursor: pointer; outline: none;
+        }
+        .game-footer .gf-progress input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 10px; height: 10px; background: #fff; border-radius: 50%;
+        }
+        .game-footer .gf-progress .gf-times {
+            display: flex; justify-content: space-between;
+            font-size: 0.65rem; color: #888;
+        }
+
+        .game-footer .gf-volume {
+            display: flex; align-items: center; gap: 8px;
+            flex-shrink: 0;
+        }
+        .game-footer .gf-volume i {
+            font-size: 0.75rem; color: #888;
+        }
+        .game-footer .gf-volume input {
+            -webkit-appearance: none; appearance: none;
+            width: 60px; height: 4px; background: #333; border-radius: 2px;
+            cursor: pointer;
+        }
+        .game-footer .gf-volume input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 10px; height: 10px; background: #fff; border-radius: 50%;
+        }
+        .game-footer .gf-game-volume {
+            display: flex; align-items: center; gap: 8px;
+            flex-shrink: 0;
+        }
+        .game-footer .gf-game-volume input {
+            -webkit-appearance: none; appearance: none;
+            width: 60px; height: 4px; background: #333; border-radius: 2px;
+            cursor: pointer;
+        }
+        .game-footer .gf-game-volume input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 10px; height: 10px; background: #fff; border-radius: 50%;
+        }
+
+        .game-footer .gf-extras {
+            display: flex; align-items: center; gap: 10px;
+            flex-shrink: 0;
+        }
+        .game-footer .gf-extras button {
+            background: none; border: none; color: #ccc;
+            cursor: pointer; font-size: 1rem; transition: color 0.2s;
+        }
+        .game-footer .gf-extras button:hover { color: #fff; }
+        .game-footer .gf-extras button.lyrics-btn {
+            font-size: 0.8rem; padding: 6px 10px;
+            border-radius: 6px; border: 1px solid #444;
+            background: transparent; color: #aaa;
+        }
+        .game-footer .gf-extras button.lyrics-btn:hover { color: #fff; border-color: #666; }
+        .game-footer .gf-extras button.fullscreen-btn {
+            font-size: 0.85rem; font-weight: 600;
+            padding: 6px 14px; border-radius: 6px;
+            border: 1px solid #444; background: transparent;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .game-footer .gf-extras button.fullscreen-btn:hover { color: #fff; border-color: #666; background: #222; }
+    </style>
+</head>
+<body>
+    <div class="game-header">
+        <img src="/images/logo.gif" alt="logo" onclick="goHome()">
+        <h1><span class="logo-a" id="logo-a">A</span>ERODYNAMIX</h1>
+        <div class="header-actions">
+            <button class="back-button" onclick="toggleFullscreen()" title="Fullscreen"><i class="fa-solid fa-expand" id="fs-icon-header"></i></button>
+            <button class="back-button" onclick="goHome()">← Back Home</button>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <iframe id="gameFrame"></iframe>
+    </div>
+
+    <div class="game-footer" id="game-footer">
+        <img class="gf-art" id="gf-art" src="/images/music/yeezus.jpg" alt="">
+        <div class="gf-info">
+            <div class="gf-track" id="gf-track">—</div>
+            <div class="gf-album" id="gf-album">—</div>
+        </div>
+        <div class="gf-controls">
+            <button id="gf-prev" onclick="AeroMusic.prevTrack()"><i class="fa-solid fa-backward-step"></i></button>
+            <button class="play-pause" id="gf-play" onclick="AeroMusic.togglePlayPause()"><i class="fa-solid fa-play"></i></button>
+            <button id="gf-next" onclick="AeroMusic.nextTrack()"><i class="fa-solid fa-forward-step"></i></button>
+        </div>
+        <div class="gf-progress">
+            <input type="range" id="gf-seek" min="0" max="100" step="0.1" value="0">
+            <div class="gf-times">
+                <span id="gf-current">0:00</span>
+                <span id="gf-total">0:00</span>
+            </div>
+        </div>
+        <div class="gf-volume">
+            <i class="fa-solid fa-volume-low"></i>
+            <input type="range" id="gf-music-vol" min="0" max="1" step="0.01" value="1">
+        </div>
+        <div class="gf-game-volume">
+            <i class="fa-solid fa-gamepad" style="font-size:0.75rem; color:#888;"></i>
+            <input type="range" id="gf-game-vol" min="0" max="1" step="0.01" value="1" title="Game volume">
+        </div>
+        <div class="gf-extras">
+            <button class="lyrics-btn" id="gf-lyrics" onclick="AeroMusic.toggleMiniLyrics()"><i class="fa-solid fa-microphone-lines"></i></button>
+            <button class="fullscreen-btn" id="gf-fullscreen" onclick="toggleFullscreen()"><i class="fa-solid fa-expand"></i> Fullscreen</button>
+        </div>
+    </div>
+
+    <script src="music-player.js"></script>
+    <script>
+        function goHome() {
+            window.location.href = '/';
+        }
+
+        // Get the game parameter from URL
+        const params = new URLSearchParams(window.location.search);
+        const gamePath = params.get('game');
+
+        if (gamePath) {
+            document.getElementById('gameFrame').src = gamePath;
+        } else {
+            goHome();
+        }
+
+        function toggleFullscreen() {
+            const container = document.querySelector('.game-container');
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else {
+                container.requestFullscreen();
+            }
+        }
+        document.addEventListener('fullscreenchange', () => {
+            const fsActive = !!document.fullscreenElement;
+            const footerIcon = document.getElementById('gf-fullscreen').querySelector('i');
+            const headerIcon = document.getElementById('fs-icon-header');
+            if (footerIcon) footerIcon.className = fsActive ? 'fa-solid fa-compress' : 'fa-solid fa-expand';
+            if (headerIcon) headerIcon.className = fsActive ? 'fa-solid fa-compress' : 'fa-solid fa-expand';
+            // Hide header/footer in fullscreen for maximum immersion
+            document.querySelector('.game-header').style.display = fsActive ? 'none' : 'flex';
+            const footer = document.getElementById('game-footer');
+            if (footer && !window.AeroMusic?.getState?.().playing) {
+                footer.style.display = fsActive ? 'none' : '';
+            }
+            // Adjust container margin when header hidden
+            const gameContainer = document.querySelector('.game-container');
+            gameContainer.style.marginTop = fsActive ? '0' : '7vw';
+            gameContainer.style.height = fsActive ? '100vh' : '';
+            gameContainer.style.minHeight = fsActive ? '100vh' : '';
+        });
+
+        // Sync footer with music player
+        function syncFooter() {
+            const footer = document.getElementById('game-footer');
+            const gameContainer = document.querySelector('.game-container');
+            if (!window.AeroMusic) return;
+            const st = AeroMusic.getState();
+            const hasMusic = st.src && st.src !== window.location.href && st.playing;
+            if (hasMusic) {
+                footer.classList.add('visible');
+                gameContainer.classList.add('footer-visible');
+                const art = document.getElementById('gf-art');
+                if (st.art) {
+                    art.src = st.art;
+                    art.classList.add('active');
+                } else {
+                    art.classList.remove('active');
+                }
+                document.getElementById('gf-track').textContent = st.title || '—';
+                document.getElementById('gf-album').textContent = st.album || '—';
+                const playIcon = document.getElementById('gf-play').querySelector('i');
+                playIcon.className = st.playing ? 'fa-solid fa-pause' : 'fa-solid fa-play';
+                document.getElementById('gf-music-vol').value = st.volume || 1;
+            } else {
+                footer.classList.remove('visible');
+                gameContainer.classList.remove('footer-visible');
+            }
+        }
+
+        // Music controls
+        const gfSeek = document.getElementById('gf-seek');
+        let gfSeeking = false;
+        gfSeek.addEventListener('mousedown', () => { gfSeeking = true; });
+        gfSeek.addEventListener('change', () => {
+            if (window.AeroMusic) AeroMusic.doSeek(gfSeek.value);
+            gfSeeking = false;
+        });
+        document.getElementById('gf-music-vol').addEventListener('input', function() {
+            if (window.AeroMusic) AeroMusic.setVolume(this.value);
+        });
+
+        // ─── Game Volume Controller ─────────────────────────────
+        let gameVolInjector = null;
+        function setGameVolume(level) {
+            const iframe = document.getElementById('gameFrame');
+            if (!iframe || !iframe.contentWindow) return;
+            const win = iframe.contentWindow;
+            try {
+                // 1. Patch Web Audio API — wrap all AudioContexts with a master gain
+                if (!win.__aeroAudioPatched) {
+                    win.__aeroAudioPatched = true;
+                    win.__aeroMasterGain = 1;
+                    const OrigCtx = win.AudioContext || win.webkitAudioContext;
+                    if (OrigCtx) {
+                        win.AudioContext = function(...args) {
+                            const ctx = new OrigCtx(...args);
+                            const gain = ctx.createGain();
+                            gain.gain.value = win.__aeroMasterGain;
+                            // Intercept destination connection
+                            const origConnect = ctx.destination.connect;
+                            const origDisconnect = ctx.destination.disconnect;
+                            // Redirect all destination audio through our gain node
+                            // We can't replace destination, but we can monkey-patch createBufferSource, oscillator, etc.
+                            const _connect = AudioNode.prototype.connect;
+                            AudioNode.prototype.connect = function(dest, out, inCh) {
+                                if (dest === ctx.destination) {
+                                    return _connect.call(this, gain, out, inCh);
+                                }
+                                return _connect.call(this, dest, out, inCh);
+                            };
+                            gain.connect(ctx.destination);
+                            ctx.__aeroGain = gain;
+                            return ctx;
+                        };
+                        win.AudioContext.prototype = OrigCtx.prototype;
+                        if (win.webkitAudioContext) win.webkitAudioContext = win.AudioContext;
+                    }
+                }
+                win.__aeroMasterGain = parseFloat(level);
+                // Update existing patched contexts
+                if (win.AudioContext) {
+                    // Walk all objects in window looking for AudioContexts with our gain
+                    // Simplest: iterate all globals
+                    Object.keys(win).forEach(k => {
+                        try {
+                            const v = win[k];
+                            if (v && v.__aeroGain) v.__aeroGain.gain.value = win.__aeroMasterGain;
+                        } catch(e){}
+                    });
+                }
+
+                // 2. HTML5 audio/video elements — catch existing + future
+                if (!win.__aeroMediaPatched) {
+                    win.__aeroMediaPatched = true;
+                    // Patch element creation so new audio/video get volume set
+                    const origCreate = win.document.createElement;
+                    win.document.createElement = function(tag) {
+                        const el = origCreate.call(win.document, tag);
+                        if (tag.toLowerCase() === 'audio' || tag.toLowerCase() === 'video') {
+                            el.volume = win.__aeroMasterGain !== undefined ? win.__aeroMasterGain : 1;
+                            // Also watch for volume changes by the game
+                            const origVol = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'volume');
+                            if (origVol && origVol.set) {
+                                Object.defineProperty(el, 'volume', {
+                                    get() { return origVol.get.call(this); },
+                                    set(v) {
+                                        // Store the game's intended volume, apply our multiplier
+                                        this.__aeroGameVol = v;
+                                        const applied = v * (win.__aeroMasterGain !== undefined ? win.__aeroMasterGain : 1);
+                                        origVol.set.call(this, applied);
+                                    },
+                                    configurable: true
+                                });
+                            }
+                        }
+                        return el;
+                    };
+                    // Patch existing elements
+                    const patchMedia = () => {
+                        win.document.querySelectorAll('audio, video').forEach(el => {
+                            if (!el.__aeroPatched) {
+                                el.__aeroPatched = true;
+                                el.volume = win.__aeroMasterGain !== undefined ? win.__aeroMasterGain : 1;
+                            }
+                        });
+                    };
+                    patchMedia();
+                    const mo = new win.MutationObserver(patchMedia);
+                    mo.observe(win.document, { childList: true, subtree: true });
+                }
+
+                // Re-apply to existing media elements when slider moves
+                win.document.querySelectorAll('audio, video').forEach(el => {
+                    const gameIntended = el.__aeroGameVol !== undefined ? el.__aeroGameVol : el.volume;
+                    el.__aeroGameVol = gameIntended;
+                    el.volume = gameIntended * win.__aeroMasterGain;
+                });
+
+            } catch (e) {
+                // cross-origin or other restriction
+            }
+        }
+
+        // Run injection once iframe loads, then on every slider move
+        document.getElementById('gameFrame').addEventListener('load', function() {
+            const sliderVal = document.getElementById('gf-game-vol').value;
+            setGameVolume(sliderVal);
+        });
+        document.getElementById('gf-game-vol').addEventListener('input', function() {
+            setGameVolume(this.value);
+        });
+
+        // Fullscreen icon swap
+        document.addEventListener('fullscreenchange', () => {
+            const icon = document.getElementById('gf-fullscreen').querySelector('i');
+            icon.className = document.fullscreenElement ? 'fa-solid fa-compress' : 'fa-solid fa-expand';
+        });
+
+        // Periodically sync footer
+        setInterval(() => {
+            if (window.AeroMusic) {
+                const st = AeroMusic.getState();
+                if (!gfSeeking) gfSeek.value = ((st.currentTime / (st.duration || 1)) * 100) || 0;
+                const fmt = (s) => {
+                    if (isNaN(s)) return '0:00';
+                    const m = Math.floor(s/60), sec = Math.floor(s%60).toString().padStart(2,'0');
+                    return `${m}:${sec}`;
+                };
+                document.getElementById('gf-current').textContent = fmt(st.currentTime);
+                document.getElementById('gf-total').textContent = fmt(st.duration || 0);
+                const playIcon = document.getElementById('gf-play').querySelector('i');
+                playIcon.className = st.playing ? 'fa-solid fa-pause' : 'fa-solid fa-play';
+                syncFooter();
+            }
+        }, 500);
+
+        // Initial sync
+        setTimeout(syncFooter, 100);
+
+        // Apply theme styling to header
+        function applyHeaderTheme(theme) {
+            const header = document.querySelector('.game-header');
+            const backButton = document.querySelector('.back-button');
+
+            if (theme === 'black') {
+                header.style.backgroundColor = 'transparent';
+                if (sessionStorage.getItem('authorized') === 'true') {
+                    document.body.style.backgroundColor = '#030509';
+                    document.body.style.backgroundImage = 'radial-gradient(ellipse at 50% 130%, rgba(44,127,252,0.32) 0%, rgba(44,127,252,0.08) 40%, transparent 65%), radial-gradient(ellipse at 20% 0%, rgba(44,127,252,0.10) 0%, transparent 35%)';
+                    document.body.style.backgroundSize = 'cover';
+                    document.body.style.backgroundAttachment = 'fixed';
+                    document.body.style.backgroundRepeat = 'no-repeat';
+                    backButton.style.background = 'linear-gradient(135deg, #2c7ffc 0%, #1a5fd0 100%)';
+                    backButton.style.boxShadow = '0 6px 20px rgba(44,127,252,0.3)';
+                    backButton.style.color = '#fff';
+                } else {
+                    document.body.style.backgroundImage = 'none';
+                    document.body.style.backgroundColor = '#1b1b1b';
+                    backButton.style.backgroundColor = '#2c7ffc';
+                    backButton.style.color = '#fff';
+                }
+            } else if (theme === 'frutiger-aero') {
+                header.style.backgroundColor = 'transparent';
+                backButton.style.background = 'linear-gradient(135deg, rgba(0,70,140,0.75) 0%, rgba(0,40,90,0.85) 100%)';
+                backButton.style.color = '#fff';
+                backButton.style.backdropFilter = 'blur(12px)';
+                backButton.style.boxShadow = '0 8px 24px rgba(0,40,90,0.3)';
+                document.body.style.backgroundColor = '#87CEEB';
+                document.body.style.backgroundImage = "url('/images/frutiger-aero-bg.jpg')";
+                document.body.style.backgroundSize = 'cover';
+                document.body.style.backgroundPosition = 'center';
+                document.body.style.backgroundAttachment = 'fixed';
+                document.body.style.color = '#002244';
+            } else if (theme === 'purple') {
+                header.style.backgroundColor = 'transparent';
+                backButton.style.background = 'linear-gradient(135deg, #9333ea 0%, #6b21a8 100%)';
+                backButton.style.color = '#fff';
+                backButton.style.boxShadow = '0 8px 28px rgba(147,51,234,0.4), 0 0 0 1px rgba(147,51,234,0.25)';
+                document.body.style.backgroundColor = '#180826';
+                document.body.style.backgroundImage = 'radial-gradient(ellipse at 50% 130%, rgba(160,80,255,0.42) 0%, rgba(140,50,255,0.12) 45%, transparent 65%), radial-gradient(ellipse at 80% 0%, rgba(200,100,255,0.18) 0%, transparent 35%)';
+                document.body.style.backgroundSize = 'cover';
+                document.body.style.backgroundAttachment = 'fixed';
+                document.body.style.backgroundRepeat = 'no-repeat';
+            } else if (theme === 'blue') {
+                header.style.backgroundColor = 'transparent';
+                backButton.style.background = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
+                backButton.style.color = '#fff';
+                backButton.style.boxShadow = '0 8px 28px rgba(59,130,246,0.4), 0 0 0 1px rgba(59,130,246,0.25)';
+                document.body.style.backgroundColor = '#040d24';
+                document.body.style.backgroundImage = 'radial-gradient(ellipse at 50% 130%, rgba(59,130,246,0.45) 0%, rgba(44,127,252,0.12) 45%, transparent 65%), radial-gradient(ellipse at 20% 0%, rgba(96,165,250,0.18) 0%, transparent 35%)';
+                document.body.style.backgroundSize = 'cover';
+                document.body.style.backgroundAttachment = 'fixed';
+                document.body.style.backgroundRepeat = 'no-repeat';
+            } else if (theme === 'christmas') {
+                header.style.backgroundColor = 'transparent';
+                backButton.style.background = 'linear-gradient(135deg, #b92e40 0%, #8a1c28 100%)';
+                backButton.style.color = '#fff';
+                backButton.style.boxShadow = '0 6px 20px rgba(185,46,64,0.3)';
+                document.body.style.backgroundColor = '#0a180d';
+                document.body.style.backgroundImage = 'radial-gradient(ellipse at 50% 120%, rgba(180,40,40,0.15) 0%, transparent 55%)';
+                document.body.style.backgroundSize = 'cover';
+                document.body.style.backgroundAttachment = 'fixed';
+                document.body.style.backgroundRepeat = 'no-repeat';
+                document.body.style.color = '#fcebd4';
+            }
+            // Santa hat on the A
+            const logoA = document.getElementById('logo-a');
+            if (logoA) logoA.classList.toggle('santa', theme === 'christmas');
+        }
+
+        var isTrial = sessionStorage.getItem('authorized') !== 'true';
+        var savedTheme = isTrial ? 'black' : (localStorage.getItem('aerodynamixTheme') || 'black');
+        applyHeaderTheme(savedTheme);
+    </script>
+    <div style="height: 120px;"></div>
+    <script src="script.js"></script>
+    <script src="bubble-overlay.js"></script>
+    <script src="snow-overlay.js"></script>
+</body>
+</html>

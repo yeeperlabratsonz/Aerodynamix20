@@ -1,0 +1,255 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap');
+
+body {
+    background-color: #000000;
+    font-family: 'Montserrat', sans-serif;
+}
+
+/* Lite Mode: disable heavy visual effects */
+body.lite-mode * {
+    animation: none !important;
+    transition: none !important;
+    backdrop-filter: none !important;
+}
+body.lite-mode nav {
+    backdrop-filter: none !important;
+}
+body.lite-mode #games img {
+    transform: none !important;
+    filter: none !important;
+}
+
+nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    backdrop-filter: blur(10px) saturate(200%) brightness(70%);
+    color: #fff;
+    display: flex;
+    height: 7vw;
+    width: 100%;
+    align-items: center;
+    justify-content: left;
+    padding: 0 1%;
+    z-index: 5;
+    margin: auto;
+}
+
+nav img {
+    height: 80%;
+    width: auto;
+    margin-right: 1%;
+    border-radius: 1vw;
+    cursor: pointer;
+    user-select: none;
+    box-shadow: 5px 5px 10px rgba(53, 53, 53, 0.459);
+}
+
+nav h1 {
+    font-size: 4vw;
+    font-weight: 800;
+    margin-right: 1%;
+}
+
+.logo-a {
+    position: relative;
+    display: inline-block;
+}
+
+.logo-a.santa::before {
+    content: '';
+    position: absolute;
+    top: -1.2em;
+    left: 50%;
+    width: 1.2em;
+    height: 1.5em;
+    transform: translateX(-50%) rotate(-8deg);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 100'%3E%3Cpolygon points='40,8 8,78 72,78' fill='%23c41e3a'/%3E%3Crect x='2' y='72' width='76' height='14' rx='7' fill='%23fff'/%3E%3Ccircle cx='40' cy='8' r='9' fill='%23fff'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.content {
+    flex-direction: column;
+    align-items: left;
+    padding: 7vw;
+    padding-top: 8vw;
+}
+
+.content hr {
+    border: 0;
+    height: 4px;
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgb(255, 255, 255), rgba(0, 0, 0, 0));
+    margin: 1vw 0;
+}
+
+.search {
+    display: flex;
+    user-select: none;
+    margin-top: 2.5vw;
+    margin-left: 1.2vw;
+}
+ 
+.search input {
+    background-color: #222222;
+    border: none;
+    border-radius: 1vw 0 0 1vw;
+    color: #fff;
+    font-size: 1.5vw;
+    font-weight: 600;
+    padding: 0.8vw 1.5vw;
+    font-family: 'Montserrat', sans-serif;
+    z-index: 1;
+    outline: none;
+}
+ 
+.search input::placeholder {
+    color: #fff;
+    font-weight: 600;
+    font-size: 1.5vw;
+}
+ 
+.search button {
+    background-color: #fff;
+    border: none;
+    border-radius: 0 1vw 1vw 0;
+    color:#222222;
+    font-size: 1.5vw;
+    font-weight: 600;
+    padding: 0.8vw 1vw;
+    cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    z-index: 1;
+    transition: .3s all ease;
+}
+ 
+#games {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: .6vw;
+    padding-bottom: 5vw;
+}
+
+#games.revealed {
+    animation: gamesReveal 0.01s forwards;
+}
+
+@keyframes gamesReveal {
+    from { opacity: 0.99; }
+    to { opacity: 1; }
+}
+ 
+#games img {    height: 15.6vw;
+    width: 15.6vw;
+    border-radius: 1vw;
+    margin: .5vw;
+    cursor: pointer;
+    user-select: none;
+    transition: transform .2s;
+}
+ 
+#games img:hover {
+    transform: scale(1.01);
+}
+
+.featured {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1vw;
+    margin: 1%;
+    margin-top: 6vw;
+}
+
+.featured h1 {
+    font-size: 2.8vw;
+    font-weight: 800;
+    margin: 0 0 1.2vw 0;
+    text-align: center;
+    color: #fff;
+    letter-spacing: 0.35em;
+    text-indent: 0.35em;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #2c7ffc 0%, #a855f7 50%, #ff6b6b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 20px rgba(44,127,252,0.4));
+}
+
+.featured .games-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 1vw;
+    width: 100%;
+}
+
+.featured img {
+    height: 16vw;
+    width: 16vw;
+    border-radius: 1.2vw;
+    cursor: pointer;
+    user-select: none;
+    transition: all .2s;
+}
+
+.featured img:hover {
+    transform: scale(1.05);
+    filter: brightness(50%);
+}
+
+.featured a {
+    display: inline-block;
+    position: relative;
+    color: #2c7ffc;
+    text-decoration: none;
+}
+
+.featured .play-button {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.featured a:hover .play-button {
+    opacity: 1;
+    pointer-events: none;
+}
+
+.featured .play-button i {
+    font-size: 4vw;
+    text-shadow: 0 0 60px #2c7ffc;
+}
+/* Black background for logo */
+nav img {
+    background-color: #000000;
+    padding: 0.3vw;
+    box-sizing: border-box;
+    border-radius: 1vw;
+}
+
+.rainbow-text {
+    background: linear-gradient(to right, #ef5350, #f48fb1, #7e57c2, #2196f3, #26c6da, #43a047, #eeff41, #f9a825, #ff5722);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: rainbow-animation 2s linear infinite;
+    font-weight: bold;
+    font-size: 1.2rem;
+    display: block;
+    margin-top: 15px;
+    text-shadow: none !important;
+}
+
+@keyframes rainbow-animation {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+}
