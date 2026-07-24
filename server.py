@@ -3,7 +3,7 @@ import socketserver
 import os
 
 PORT = 5000
-DIRECTORY = "Aerodynamix"
+DIRECTORY = "docs"
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):

@@ -17,7 +17,7 @@ Users without a key get a 5-minute free trial, after which they are locked out.
 ## Project structure
 
 ```
-Aerodynamix/
+docs/
   index.html          # Home / games listing
   apps.html           # Apps page
   music.html          # Music player page
