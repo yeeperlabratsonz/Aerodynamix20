@@ -172,13 +172,13 @@
             } else if (val === validKey || val.toLowerCase() === validKey.toLowerCase()) {
                 sessionStorage.setItem('authorized', 'true');
                 dismissOverlay();
+                window.dispatchEvent(new CustomEvent('aerodynamixAuthorized'));
+                var _tries = 0;
                 (function tryApply() {
                     if (typeof applyTheme === 'function') {
                         applyTheme('black');
-                        window.dispatchEvent(new CustomEvent('aerodynamixAuthorized'));
-                    } else { setTimeout(tryApply, 80); }
+                    } else if (++_tries < 50) { setTimeout(tryApply, 80); }
                 })();
-                if (window.AeroBootScreen && (window.location.pathname === '/' || window.location.pathname.endsWith('/') || window.location.pathname.endsWith('index.html'))) AeroBootScreen.show();
             } else if (val === trialKey) {
                 if (trialUsed()) {
                     error.innerText = 'Free Trial Cannot Be Used Again'; error.className = ''; error.style.display = 'block'; input.value = '';

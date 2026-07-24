@@ -7,15 +7,13 @@
     const BUBBLE_MAX_SIZE = 70;
     const FALL_SPEED_MIN = 2000; // ms
     const FALL_SPEED_MAX = 7000;
-    const GAME_PATH = '/game-frame.html';
-
     let bubbleContainer = null;
     let spawnTimer = null;
     let running = false;
     let bubbles = [];
 
     function isGamePage() {
-        return window.location.pathname === GAME_PATH;
+        return window.location.pathname.includes('game-frame');
     }
 
     function getTheme() {

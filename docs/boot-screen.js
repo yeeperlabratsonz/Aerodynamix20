@@ -206,4 +206,8 @@
         }
     };
 
+    window.addEventListener('aerodynamixAuthorized', function() {
+        window.AeroBootScreen.show();
+    });
+
 })();
