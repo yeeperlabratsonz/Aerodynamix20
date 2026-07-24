@@ -209,7 +209,7 @@
         if (theme !== 'frutiger-aero') return;
         const b = document.body;
         b.style.backgroundColor = '#87CEEB';
-        b.style.backgroundImage = "url('/images/frutiger-aero-bg.jpg')";
+        b.style.backgroundImage = "url('images/frutiger-aero-bg.jpg')";
         b.style.backgroundSize = 'cover';
         b.style.backgroundPosition = 'center';
         b.style.backgroundAttachment = 'fixed';

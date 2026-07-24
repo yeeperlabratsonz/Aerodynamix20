@@ -161,7 +161,7 @@
         bar.innerHTML = `
             <div class="mini-inner">
                 <div class="mini-left">
-                    <img id="mini-art" src="/images/music/yeezus.jpg" alt="" style="opacity:0.3">
+                    <img id="mini-art" src="images/music/yeezus.jpg" alt="" style="opacity:0.3">
                     <div class="mini-meta">
                         <div class="mini-track" id="mini-track">—</div>
                         <div class="mini-album" id="mini-album">—</div>

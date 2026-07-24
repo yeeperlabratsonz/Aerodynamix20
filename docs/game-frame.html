@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game - Aerodynamix</title>
     <script src="auth-overlay.js" defer></script>
-    <link rel="stylesheet" href="/main.css">
+    <link rel="stylesheet" href="main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         html, body {
@@ -226,7 +226,7 @@
 </head>
 <body>
     <div class="game-header">
-        <img src="/images/logo.gif" alt="logo" onclick="goHome()">
+        <img src="images/logo.gif" alt="logo" onclick="goHome()">
         <h1><span class="logo-a" id="logo-a">A</span>ERODYNAMIX</h1>
         <div class="header-actions">
             <button class="back-button" onclick="toggleFullscreen()" title="Fullscreen"><i class="fa-solid fa-expand" id="fs-icon-header"></i></button>
@@ -239,7 +239,7 @@
     </div>
 
     <div class="game-footer" id="game-footer">
-        <img class="gf-art" id="gf-art" src="/images/music/yeezus.jpg" alt="">
+        <img class="gf-art" id="gf-art" src="images/music/yeezus.jpg" alt="">
         <div class="gf-info">
             <div class="gf-track" id="gf-track">—</div>
             <div class="gf-album" id="gf-album">—</div>
@@ -273,7 +273,7 @@
     <script src="music-player.js"></script>
     <script>
         function goHome() {
-            window.location.href = '/';
+            window.location.href = 'index.html';
         }
 
         // Get the game parameter from URL
@@ -520,7 +520,7 @@
                 backButton.style.backdropFilter = 'blur(12px)';
                 backButton.style.boxShadow = '0 8px 24px rgba(0,40,90,0.3)';
                 document.body.style.backgroundColor = '#87CEEB';
-                document.body.style.backgroundImage = "url('/images/frutiger-aero-bg.jpg')";
+                document.body.style.backgroundImage = "url('images/frutiger-aero-bg.jpg')";
                 document.body.style.backgroundSize = 'cover';
                 document.body.style.backgroundPosition = 'center';
                 document.body.style.backgroundAttachment = 'fixed';

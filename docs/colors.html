@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Theme Settings - Aerodynamix</title>
     <script src="auth-overlay.js" defer></script>
-    <link rel="stylesheet" href="/main.css">
+    <link rel="stylesheet" href="main.css">
     <style>
         .settings-container {
             margin-top: 10vw;
@@ -52,7 +52,7 @@
         }
 
         .theme-button.frutiger-aero {
-            background: url('/images/frutiger-aero-btn-bg.png') center/cover no-repeat;
+            background: url('images/frutiger-aero-btn-bg.png') center/cover no-repeat;
             color: #fff;
             border-color: rgba(255,255,255,0.8);
             text-shadow: 0 2px 6px rgba(0,0,0,0.5), 0 0 10px rgba(0,0,0,0.3);
@@ -107,13 +107,13 @@
 </head>
 <body>
     <nav>
-        <img src="/images/logo.gif" alt="logo" onclick="window.location='/'">
+        <img src="images/logo.gif" alt="logo" onclick="window.location='index.html'">
         <h1><span class="logo-a" id="logo-a">A</span>ERODYNAMIX</h1>
         <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:0.4vw;">
-            <a href="/" style="color:#fff; text-decoration:none; padding:0.55vw 1.3vw; border-radius:0.5vw; font-weight:600; font-size:0.95vw; transition:all 0.3s ease;">Games</a>
-            <a href="/media-player.html" style="color:#fff; text-decoration:none; padding:0.55vw 1.3vw; border-radius:0.5vw; font-weight:600; font-size:0.95vw; transition:all 0.3s ease;">Media Player</a>
+            <a href="index.html" style="color:#fff; text-decoration:none; padding:0.55vw 1.3vw; border-radius:0.5vw; font-weight:600; font-size:0.95vw; transition:all 0.3s ease;">Games</a>
+            <a href="media-player.html" style="color:#fff; text-decoration:none; padding:0.55vw 1.3vw; border-radius:0.5vw; font-weight:600; font-size:0.95vw; transition:all 0.3s ease;">Media Player</a>
         </div>
-        <a href="/colors.html" style="margin-right:1.5vw; color:#fff; text-decoration:none; padding:0.55vw 1.3vw; background-color:#2c7ffc; border-radius:0.5vw; font-weight:600; font-size:0.95vw; transition:all 0.3s ease;">Settings</a>
+        <a href="colors.html" style="margin-right:1.5vw; color:#fff; text-decoration:none; padding:0.55vw 1.3vw; background-color:#2c7ffc; border-radius:0.5vw; font-weight:600; font-size:0.95vw; transition:all 0.3s ease;">Settings</a>
     </nav>
 
     <div id="trial-blur-overlay" style="display:none; position:fixed; top:7vw; left:0; width:100%; height:calc(100% - 7vw); backdrop-filter:blur(12px) saturate(120%); background:rgba(0,0,0,0.55); z-index:9998; align-items:center; justify-content:center;">
@@ -137,7 +137,7 @@
             <button id="lite-mode-btn" class="theme-button lite" onclick="toggleLiteMode()">Lite Mode</button>
             <p id="lite-status" style="text-align:center; font-size:0.9rem; color:#aaa; margin-top:0.5vw;">Disables animations, particle effects, and heavy visual effects</p>
             <button onclick="enableTabCloak()" class="back-button" style="background-color: #e74c3c; margin-top: 2vw;">Tab Cloak</button>
-            <a href="/" class="back-button">Back to Home</a>
+            <a href="index.html" class="back-button">Back to Home</a>
         </div>
     </div>
 
@@ -180,7 +180,7 @@
             const content = document.querySelector('.content');
             const searchInput = document.querySelector('.search input');
             const searchButton = document.querySelector('.search button');
-            const settingsButton = document.querySelector('nav a[href="/colors.html"]');
+            const settingsButton = document.querySelector('nav a[href="colors.html"]');
             const gameImgs = document.querySelectorAll('#games img');
             const h1Elements = document.querySelectorAll('h1');
 
@@ -243,7 +243,7 @@
                 h1Elements.forEach(h => h.style.color = '#fff');
             } else if (theme === 'frutiger-aero') {
                 body.style.backgroundColor = '#87CEEB';
-                body.style.backgroundImage = "url('/images/frutiger-aero-bg.jpg')";
+                body.style.backgroundImage = "url('images/frutiger-aero-bg.jpg')";
                 body.style.backgroundSize = 'cover';
                 body.style.backgroundPosition = 'center';
                 body.style.backgroundAttachment = 'fixed';

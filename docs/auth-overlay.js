@@ -120,7 +120,7 @@
         overlay.id = 'key-overlay';
         overlay.innerHTML = `
             <div class="key-card">
-                <img src="/images/logo.gif" alt="" class="key-logo">
+                <img src="images/logo.gif" alt="" class="key-logo">
                 <h1 class="key-title">AERODYNAMIX</h1>
                 <p class="key-sub">Enter your access key to continue</p>
                 <div class="key-input-wrap">
@@ -178,7 +178,7 @@
                         window.dispatchEvent(new CustomEvent('aerodynamixAuthorized'));
                     } else { setTimeout(tryApply, 80); }
                 })();
-                if (window.AeroBootScreen && window.location.pathname === '/') AeroBootScreen.show();
+                if (window.AeroBootScreen && (window.location.pathname === '/' || window.location.pathname.endsWith('/') || window.location.pathname.endsWith('index.html'))) AeroBootScreen.show();
             } else if (val === trialKey) {
                 if (trialUsed()) {
                     error.innerText = 'Free Trial Cannot Be Used Again'; error.className = ''; error.style.display = 'block'; input.value = '';
