@@ -1,0 +1,2 @@
+- [Attached assets serving path](attached-assets-serving.md) — uploaded files land in root `attached_assets`; the web server only serves `docs/`, so game files must be copied to `docs/attached_assets`.
+- [Server port reuse](server-port-reuse.md) — `server.py` needs `socketserver.TCPServer.allow_reuse_address = True` to avoid `Address already in use` on workflow restarts.
