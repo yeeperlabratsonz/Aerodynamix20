@@ -1,55 +1,67 @@
 import os
-import sqlite3
 import datetime
 import re
 import uuid
+import mimetypes
 from io import BytesIO
-from flask import Flask, request, jsonify, session, send_from_directory, abort, send_file
+from flask import Flask, request, jsonify, session, send_from_directory, abort, Response
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from sqlalchemy import create_engine, Column, String, Integer, DateTime, LargeBinary, Text, ForeignKey
+from sqlalchemy.orm import declarative_base, sessionmaker, scoped_session, relationship
 from bad_words import contains_bad_words
 
-PORT = 5000
-DATABASE = 'dynamix.db'
+PORT = int(os.environ.get('PORT', 5000))
+DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///dynamix.db')
+if DATABASE_URL.startswith('postgres://'):
+    DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+
 UPLOAD_FOLDER = 'docs/uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'}
 
 app = Flask(__name__, static_folder='docs', static_url_path='')
 app.secret_key = os.environ.get('SESSION_SECRET', 'dev-secret-key')
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5 MB max upload
+
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+Base = declarative_base()
+DBSession = scoped_session(sessionmaker(bind=engine))
+
+
+class User(Base):
+    __tablename__ = 'users'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String(20), unique=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    posts = relationship('Post', back_populates='user', cascade='all, delete-orphan')
+
+
+class Post(Base):
+    __tablename__ = 'posts'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    text = Column(Text, nullable=False)
+    image_filename = Column(String(255))
+    image_data = Column(LargeBinary)
+    image_mimetype = Column(String(50))
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    user = relationship('User', back_populates='posts')
+
+
+Base.metadata.create_all(engine)
+
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
-def get_db():
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-
-def init_db():
-    conn = get_db()
-    conn.executescript('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-        CREATE TABLE IF NOT EXISTS posts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            text TEXT NOT NULL,
-            image_path TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id)
-        );
-    ''')
-    conn.commit()
-    conn.close()
-
-
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+@app.teardown_appcontext
+def remove_session(exception=None):
+    DBSession.remove()
 
 
 @app.after_request
@@ -81,21 +93,22 @@ def register():
         return jsonify({'error': 'Username can only contain letters, numbers, and underscores'}), 400
 
     password_hash = generate_password_hash(password)
-    conn = get_db()
+    db = DBSession()
     try:
-        cur = conn.execute(
-            'INSERT INTO users (username, password_hash) VALUES (?, ?)',
-            (username, password_hash)
-        )
-        conn.commit()
-        user_id = cur.lastrowid
-        session['user_id'] = user_id
-        session['username'] = username
-        return jsonify({'success': True, 'user': {'id': user_id, 'username': username}})
-    except sqlite3.IntegrityError:
-        return jsonify({'error': 'Username already taken'}), 409
+        user = User(username=username, password_hash=password_hash)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        session['user_id'] = user.id
+        session['username'] = user.username
+        return jsonify({'success': True, 'user': {'id': user.id, 'username': user.username}})
+    except Exception as e:
+        db.rollback()
+        if 'unique' in str(e).lower() or 'duplicate' in str(e).lower():
+            return jsonify({'error': 'Username already taken'}), 409
+        return jsonify({'error': 'Could not create account'}), 500
     finally:
-        conn.close()
+        db.close()
 
 
 @app.route('/api/login', methods=['POST'])
@@ -104,17 +117,14 @@ def login():
     username = (data.get('username') or '').strip()
     password = (data.get('password') or '').strip()
 
-    conn = get_db()
-    user = conn.execute(
-        'SELECT id, username, password_hash FROM users WHERE username = ?',
-        (username,)
-    ).fetchone()
-    conn.close()
+    db = DBSession()
+    user = db.query(User).filter_by(username=username).first()
+    db.close()
 
-    if user and check_password_hash(user['password_hash'], password):
-        session['user_id'] = user['id']
-        session['username'] = user['username']
-        return jsonify({'success': True, 'user': {'id': user['id'], 'username': user['username']}})
+    if user and check_password_hash(user.password_hash, password):
+        session['user_id'] = user.id
+        session['username'] = user.username
+        return jsonify({'success': True, 'user': {'id': user.id, 'username': user.username}})
     return jsonify({'error': 'Invalid username or password'}), 401
 
 
@@ -133,25 +143,21 @@ def me():
 
 @app.route('/api/posts', methods=['GET'])
 def get_posts():
-    conn = get_db()
-    posts = conn.execute('''
-        SELECT posts.id, posts.text, posts.image_path, posts.created_at, users.username, users.id as user_id
-        FROM posts
-        JOIN users ON posts.user_id = users.id
-        ORDER BY posts.created_at DESC
-    ''').fetchall()
-    conn.close()
+    db = DBSession()
+    posts = db.query(Post, User).join(User, Post.user_id == User.id).order_by(Post.created_at.desc()).all()
+    db.close()
+
     return jsonify({
         'posts': [
             {
-                'id': row['id'],
-                'text': row['text'],
-                'image_url': f'/uploads/{os.path.basename(row["image_path"])}' if row['image_path'] else None,
-                'created_at': row['created_at'],
-                'username': row['username'],
-                'user_id': row['user_id']
+                'id': post.id,
+                'text': post.text,
+                'image_url': f'/uploads/{post.image_filename}' if post.image_filename else None,
+                'created_at': post.created_at.strftime('%Y-%m-%d %H:%M:%S') if post.created_at else None,
+                'username': user.username,
+                'user_id': user.id
             }
-            for row in posts
+            for post, user in posts
         ]
     })
 
@@ -169,27 +175,37 @@ def create_post():
     if contains_bad_words(text):
         return jsonify({'error': 'Your post contains words that are not allowed on Dynamix Connect.'}), 400
 
-    image_path = None
+    image_filename = None
+    image_data = None
+    image_mimetype = None
+
     if 'image' in request.files:
         file = request.files['image']
         if file and file.filename and allowed_file(file.filename):
             ext = secure_filename(file.filename).rsplit('.', 1)[1].lower()
             filename = f'{uuid.uuid4().hex}.{ext}'
-            safe_filename = secure_filename(filename)
-            file_path = os.path.join(UPLOAD_FOLDER, safe_filename)
-            file.save(file_path)
-            image_path = file_path
+            image_filename = secure_filename(filename)
+            image_data = file.read()
+            image_mimetype = mimetypes.guess_type(image_filename)[0] or 'application/octet-stream'
 
-    conn = get_db()
-    cur = conn.execute(
-        'INSERT INTO posts (user_id, text, image_path) VALUES (?, ?, ?)',
-        (session['user_id'], text, image_path)
-    )
-    conn.commit()
-    post_id = cur.lastrowid
-    conn.close()
-
-    return jsonify({'success': True, 'post_id': post_id})
+    db = DBSession()
+    try:
+        post = Post(
+            user_id=session['user_id'],
+            text=text,
+            image_filename=image_filename,
+            image_data=image_data,
+            image_mimetype=image_mimetype
+        )
+        db.add(post)
+        db.commit()
+        db.refresh(post)
+        return jsonify({'success': True, 'post_id': post.id})
+    except Exception as e:
+        db.rollback()
+        return jsonify({'error': 'Could not create post'}), 500
+    finally:
+        db.close()
 
 
 @app.route('/api/posts/<int:post_id>', methods=['DELETE'])
@@ -197,30 +213,34 @@ def delete_post(post_id):
     if 'user_id' not in session:
         return jsonify({'error': 'You must be logged in'}), 401
 
-    conn = get_db()
-    post = conn.execute('SELECT user_id, image_path FROM posts WHERE id = ?', (post_id,)).fetchone()
+    db = DBSession()
+    post = db.query(Post).filter_by(id=post_id).first()
     if not post:
-        conn.close()
+        db.close()
         return jsonify({'error': 'Post not found'}), 404
-    if post['user_id'] != session['user_id']:
-        conn.close()
+    if post.user_id != session['user_id']:
+        db.close()
         return jsonify({'error': 'You can only delete your own posts'}), 403
 
-    conn.execute('DELETE FROM posts WHERE id = ?', (post_id,))
-    conn.commit()
-    conn.close()
-
-    if post['image_path'] and os.path.exists(post['image_path']):
-        os.remove(post['image_path'])
+    db.delete(post)
+    db.commit()
+    db.close()
 
     return jsonify({'success': True})
 
 
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
-    return send_from_directory(UPLOAD_FOLDER, filename)
+    db = DBSession()
+    post = db.query(Post).filter_by(image_filename=filename).first()
+    db.close()
+    if post and post.image_data:
+        return Response(
+            post.image_data,
+            mimetype=post.image_mimetype or mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+        )
+    abort(404)
 
 
 if __name__ == '__main__':
-    init_db()
-    app.run(host='0.0.0.0', port=PORT, debug=True)
+    app.run(host='0.0.0.0', port=PORT, debug=False)

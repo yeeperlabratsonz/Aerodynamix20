@@ -1,0 +1,27 @@
+# Local dev files
+dynamix.db
+*.db
+docs/uploads/*
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg-info/
+.pytest_cache/
+
+# Replit
+.pythonlibs/
+.config/
+.cache/
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
