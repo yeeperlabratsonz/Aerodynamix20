@@ -95,8 +95,6 @@
             h1Elements.forEach(function (h) { h.style.color = '#fcebd4'; });
         }
 
-        var logoA = document.getElementById('logo-a');
-        if (logoA) logoA.classList.toggle('santa', theme === 'christmas');
     };
 
     function autoApply() {
