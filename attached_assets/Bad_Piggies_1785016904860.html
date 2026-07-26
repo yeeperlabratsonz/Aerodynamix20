@@ -29,6 +29,17 @@
 			width: 100vw;
 			height: 100vh;
 		}
+
+		/* Hide the custom splash image/text injected by the CDN CSS */
+		body::before, body::after {
+			display: none !important;
+			content: none !important;
+			background: none !important;
+			animation: none !important;
+		}
+		.webgl-content .logo, .webgl-content .progress {
+			display: none !important;
+		}
 	</style>
 	<script>
 		var gameInstance = UnityLoader.instantiate("gameContainer", "Build/Bad Piggies.json", {
