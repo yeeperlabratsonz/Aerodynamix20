@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dynamix Connect</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="main.css">
+  <link rel="stylesheet" href="dynamix-connect.css">
+  <script src="theme.js"></script>
+  <script src="auth-overlay.js" defer></script>
+  <script src="dynamix-connect.js" defer></script>
+</head>
+<body>
+  <nav>
+    <img src="images/logo.gif" alt="logo" onclick="window.location='index.html'">
+    <h1><span class="logo-a" id="logo-a">D</span>YNAMIX <span style="color:#2c7ffc">CONNECT</span></h1>
+    <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:0.4vw;">
+      <a href="index.html">Games</a>
+      <a href="media-player.html">Media Player</a>
+      <a href="dynamix-connect.html" class="active">Connect</a>
+    </div>
+    <a href="colors.html">Settings</a>
+  </nav>
+
+  <div class="dc-container">
+    <div class="dc-header">
+      <h1>What's on your mind?</h1>
+      <p>Share thoughts, moments, and connect with the Aerodynamix community.</p>
+    </div>
+
+    <div id="auth-section" class="dc-card">
+      <div class="dc-tabs">
+        <button class="dc-tab active" data-tab="login">Log In</button>
+        <button class="dc-tab" data-tab="register">Create Account</button>
+      </div>
+
+      <form id="login-form" class="dc-form">
+        <input type="text" id="login-username" placeholder="Username" required autocomplete="username">
+        <input type="password" id="login-password" placeholder="Password" required autocomplete="current-password">
+        <button type="submit" class="dc-btn">Log In</button>
+        <p class="dc-error" id="login-error"></p>
+      </form>
+
+      <form id="register-form" class="dc-form hidden">
+        <input type="text" id="register-username" placeholder="Username" required autocomplete="username">
+        <input type="password" id="register-password" placeholder="Password" required autocomplete="new-password">
+        <button type="submit" class="dc-btn">Create Account</button>
+        <p class="dc-error" id="register-error"></p>
+      </form>
+    </div>
+
+    <div id="post-section" class="dc-card hidden">
+      <div class="dc-user-bar">
+        <span>Logged in as <strong id="current-username">User</strong></span>
+        <button id="logout-btn" class="dc-btn-secondary">Log Out</button>
+      </div>
+      <form id="post-form" class="dc-form">
+        <textarea id="post-text" placeholder="I like Ping Pong..." maxlength="500" required></textarea>
+        <div class="dc-char-count"><span id="char-count">0</span>/500</div>
+        <div class="dc-file-row">
+          <label for="post-image" class="dc-file-label"><i class="fas fa-image"></i> Attach an image</label>
+          <input type="file" id="post-image" accept="image/*">
+          <span id="file-name">No image selected</span>
+        </div>
+        <button type="submit" class="dc-btn">Post</button>
+        <p class="dc-error" id="post-error"></p>
+        <p class="dc-success" id="post-success"></p>
+      </form>
+    </div>
+
+    <div class="dc-feed-header">
+      <h2>Community Feed</h2>
+    </div>
+    <div id="feed" class="dc-feed">
+      <div class="dc-loading">Loading posts...</div>
+    </div>
+  </div>
+</body>
+</html>
