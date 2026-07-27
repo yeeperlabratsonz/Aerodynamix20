@@ -377,11 +377,11 @@
     <!-- Media Player unlock overlay (free trial users must pay 1000 discs once) -->
     <div id="media-unlock-overlay" style="display:flex; position:fixed; top:7vw; left:0; width:100%; height:calc(100% - 7vw); backdrop-filter:blur(12px) saturate(120%); background:rgba(0,0,0,0.65); z-index:9998; align-items:center; justify-content:center; pointer-events:auto;">
         <div style="text-align:center; color:#fff; font-family:'Montserrat',sans-serif; padding:2rem; max-width:420px;">
-            <img src="images/disc.png" alt="Dynamix Disc" style="width:72px; height:72px; border-radius:50%; margin-bottom:1rem; box-shadow:0 0 30px rgba(255,255,255,0.25);">
+            <img src="images/disc.png" alt="Dynamix Disc" style="width:96px; height:96px; border-radius:50%; margin-bottom:1rem; box-shadow:0 0 30px rgba(255,255,255,0.25);">
             <h2 style="font-size:2rem; margin-bottom:0.6rem; text-shadow:0 0 20px rgba(255,255,255,0.3);">Unlock Media Player</h2>
             <p style="font-size:1rem; color:#ccc; margin-bottom:1.5rem;">Free trial users can unlock the Media Player for 1,000 Dynamix Discs.</p>
             <button id="media-unlock-btn" class="dz-btn primary" style="font-size:1rem; padding:14px 28px;">
-                Unlock for 1,000 <img src="images/disc.png" alt="Disc" style="width:18px; height:18px; border-radius:50%; vertical-align:middle; margin-left:6px;">
+                Unlock for 1,000 <img src="images/disc.png" alt="Disc" style="width:24px; height:24px; border-radius:50%; vertical-align:middle; margin-left:6px;">
             </button>
             <p style="margin-top:1rem; font-size:0.85rem; color:#888;">Claim your daily bonus from the nav bar to earn more Discs.</p>
             <p id="media-unlock-error" style="color:#ff5b6a; margin-top:1rem; display:none;"></p>
@@ -443,7 +443,7 @@
                 errorEl.style.display = 'block';
             } finally {
                 unlockBtn.disabled = false;
-                unlockBtn.innerHTML = 'Unlock for 1,000 <img src="images/disc.png" alt="Disc" style="width:18px; height:18px; border-radius:50%; vertical-align:middle; margin-left:6px;">';
+                unlockBtn.innerHTML = 'Unlock for 1,000 <img src="images/disc.png" alt="Disc" style="width:24px; height:24px; border-radius:50%; vertical-align:middle; margin-left:6px;">';
             }
         });
 

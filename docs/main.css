@@ -260,8 +260,8 @@ nav img {
 }
 
 .disc-balance .disc-icon {
-    width: 1.1vw;
-    height: 1.1vw;
+    width: 1.5vw;
+    height: 1.5vw;
     border-radius: 50%;
     object-fit: cover;
     box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
@@ -304,21 +304,21 @@ nav img {
 }
 
 .disc-icon {
-    width: 18px;
-    height: 18px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     object-fit: cover;
     vertical-align: middle;
 }
 
 .disc-icon.sm {
-    width: 14px;
-    height: 14px;
+    width: 18px;
+    height: 18px;
 }
 
 .disc-icon.lg {
-    width: 32px;
-    height: 32px;
+    width: 44px;
+    height: 44px;
 }
 
 @media (max-width: 768px) {
@@ -331,8 +331,8 @@ nav img {
         font-size: 2.5vw;
     }
     .disc-balance .disc-icon {
-        width: 3vw;
-        height: 3vw;
+        width: 4vw;
+        height: 4vw;
     }
     .disc-claim-btn {
         font-size: 2.2vw;
