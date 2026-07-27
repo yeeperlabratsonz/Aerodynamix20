@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "rJYFOMCaShrogX4hGMgJG"
+uri = "file://docs/images/disc.png"
+type = "image"
+title = "Updated disc icon (white background removed)"
