@@ -43,6 +43,14 @@
         });
     }
 
+    async function purchaseGame(game) {
+        return api('/api/discs/purchase-game', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ game })
+        });
+    }
+
     async function purchaseTheme(theme) {
         return api('/api/discs/purchase-theme', {
             method: 'POST',
@@ -152,30 +160,30 @@
 
     // ── Feature gating ───────────────────────────────────────────────────────
 
+    function getPurchasedGames() {
+        try {
+            return JSON.parse(localStorage.getItem('aerodynamixPurchasedGames') || '[]');
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function addPurchasedGame(game) {
+        const games = getPurchasedGames();
+        if (!games.includes(game)) {
+            games.push(game);
+            localStorage.setItem('aerodynamixPurchasedGames', JSON.stringify(games));
+        }
+    }
+
     async function tryLaunchGame(gameUrl) {
         if (isPaid()) {
             window.location.href = gameUrl;
             return;
         }
         if (!isFreeTrial()) return;
-        const info = await getBalance();
-        if (!info) {
-            alert('Could not load your Dynamix Discs. Please try again.');
-            return;
-        }
-        if ((info.disc_balance || 0) < COSTS.GAME) {
-            alert(`You need ${COSTS.GAME} Dynamix Discs to play. Claim your daily bonus or log in again tomorrow.`);
-            return;
-        }
-        if (confirm(`Play this game for ${COSTS.GAME} Dynamix Discs?`)) {
-            try {
-                const result = await spendGame();
-                await updateNavWidget(result.disc_balance, false);
-                window.location.href = gameUrl;
-            } catch (e) {
-                alert(e.message);
-            }
-        }
+        // Free trial users are sent to the game page where the unlock overlay handles purchase
+        window.location.href = gameUrl;
     }
 
     async function tryUnlockMedia() {
@@ -254,12 +262,15 @@
         getBalance,
         claimDaily,
         spendGame,
+        purchaseGame,
         purchaseTheme,
         unlockMedia,
         hasVisualTheme,
         tryLaunchGame,
         tryUnlockMedia,
         tryUseTheme,
+        getPurchasedGames,
+        addPurchasedGame,
         wireGameLinks,
         refreshNavWidget,
         updateNavWidget,

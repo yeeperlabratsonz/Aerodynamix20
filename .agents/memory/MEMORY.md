@@ -1,2 +1,3 @@
 - [Attached assets serving path](attached-assets-serving.md) — uploaded files land in root `attached_assets`; the web server only serves `docs/`, so game files must be copied to `docs/attached_assets`.
 - [Scoped session nesting](scoped-session-nesting.md) — helper functions in `server.py` must not close the shared scoped session when called from inside another database operation, or the caller's object becomes detached.
+- [Game purchase persistence](game-purchase-persistence.md) — game unlocks are stored in both localStorage (anonymous users, same-device replay) and the DB (logged-in users, cross-device replay), synced on game-frame load.

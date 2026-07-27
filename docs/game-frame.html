@@ -5,8 +5,8 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game - Aerodynamix</title>
-    <script src="auth-overlay.js" defer></script>
     <script src="discs.js" defer></script>
+    <script src="auth-overlay.js" defer></script>
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -224,6 +224,77 @@
             display: inline-flex; align-items: center; gap: 6px;
         }
         .game-footer .gf-extras button.fullscreen-btn:hover { color: #fff; border-color: #666; background: #222; }
+
+        /* Game unlock overlay (free trial users) */
+        #game-unlock-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            backdrop-filter: blur(12px) saturate(120%);
+            background: rgba(0, 0, 0, 0.65);
+            z-index: 9998;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+        }
+        .game-unlock-card {
+            text-align: center;
+            color: #fff;
+            font-family: 'Montserrat', sans-serif;
+            padding: 2rem;
+            max-width: 420px;
+        }
+        .game-unlock-card img.disc-hero {
+            width: 96px; height: 96px;
+            border-radius: 50%;
+            margin-bottom: 1rem;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.25);
+        }
+        .game-unlock-card h2 {
+            font-size: 2rem;
+            margin-bottom: 0.6rem;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+        .game-unlock-card p {
+            font-size: 1rem;
+            color: #ccc;
+            margin-bottom: 1.5rem;
+        }
+        .game-unlock-card .gu-btn {
+            background: linear-gradient(135deg, #2c7ffc 0%, #1a5fd0 100%);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            padding: 14px 28px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            font-family: 'Montserrat', sans-serif;
+            box-shadow: 0 10px 30px rgba(44, 127, 252, 0.35);
+        }
+        .game-unlock-card .gu-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 40px rgba(44, 127, 252, 0.5);
+            filter: brightness(1.1);
+        }
+        .game-unlock-card .gu-btn:disabled {
+            opacity: 0.6;
+            cursor: default;
+            transform: none;
+            filter: none;
+        }
+        .game-unlock-card .gu-hint {
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            color: #888;
+        }
+        .game-unlock-card .gu-error {
+            color: #ff5b6a;
+            margin-top: 1rem;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -238,6 +309,20 @@
 
     <div class="game-container">
         <iframe id="gameFrame"></iframe>
+    </div>
+
+    <!-- Game unlock overlay (free trial users must pay 100 discs once per game) -->
+    <div id="game-unlock-overlay">
+        <div class="game-unlock-card">
+            <img src="images/disc.png" alt="Dynamix Disc" class="disc-hero">
+            <h2>Unlock Game</h2>
+            <p>Free trial users can play this game for 100 Dynamix Discs. Once unlocked, it stays unlocked.</p>
+            <button id="game-unlock-btn" class="gu-btn">
+                Play for 100 <img src="images/disc.png" alt="Disc" style="width:24px; height:24px; border-radius:50%; vertical-align:middle; margin-left:6px;">
+            </button>
+            <p class="gu-hint">Claim your daily bonus from the nav bar to earn more Discs.</p>
+            <p class="gu-error" id="game-unlock-error"></p>
+        </div>
     </div>
 
     <div class="game-footer" id="game-footer">
@@ -281,12 +366,104 @@
         // Get the game parameter from URL
         const params = new URLSearchParams(window.location.search);
         const gamePath = params.get('game');
+        const gameFrame = document.getElementById('gameFrame');
+        const unlockOverlay = document.getElementById('game-unlock-overlay');
+        const unlockBtn = document.getElementById('game-unlock-btn');
+        const unlockError = document.getElementById('game-unlock-error');
 
-        if (gamePath) {
-            document.getElementById('gameFrame').src = gamePath;
-        } else {
+        if (!gamePath) {
             goHome();
         }
+
+        function isPaid() { return sessionStorage.getItem('authorized') === 'true'; }
+        function isFreeTrial() { return sessionStorage.getItem('free_trial') === 'true'; }
+
+        function loadGame() {
+            if (gamePath) gameFrame.src = gamePath;
+            if (unlockOverlay) unlockOverlay.style.display = 'none';
+        }
+
+        function showUnlockOverlay() {
+            if (unlockOverlay) {
+                unlockOverlay.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function isGamePurchased() {
+            if (!window.AeroDiscs || !window.AeroDiscs.getPurchasedGames) return false;
+            return window.AeroDiscs.getPurchasedGames().includes(gamePath);
+        }
+
+        async function syncPurchasedGames() {
+            try {
+                const res = await fetch('/api/discs/purchased-games', { credentials: 'same-origin' });
+                const data = await res.json();
+                if (!data.games || !Array.isArray(data.games)) return;
+                const existing = (window.AeroDiscs && window.AeroDiscs.getPurchasedGames) ? window.AeroDiscs.getPurchasedGames() : [];
+                let changed = false;
+                data.games.forEach(g => {
+                    if (!existing.includes(g)) {
+                        existing.push(g);
+                        changed = true;
+                    }
+                });
+                if (changed) {
+                    localStorage.setItem('aerodynamixPurchasedGames', JSON.stringify(existing));
+                }
+            } catch (e) {
+                console.error('Could not sync purchased games', e);
+            }
+        }
+
+        let accessChecked = false;
+        async function checkGameAccess() {
+            if (accessChecked) return;
+            accessChecked = true;
+            if (isPaid()) {
+                loadGame();
+                return;
+            }
+            if (!isFreeTrial()) {
+                goHome();
+                return;
+            }
+            if (isGamePurchased()) {
+                loadGame();
+                return;
+            }
+            // Sync with backend so logged-in users see cross-device purchases
+            await syncPurchasedGames();
+            if (isGamePurchased()) {
+                loadGame();
+            } else {
+                showUnlockOverlay();
+            }
+        }
+
+        if (unlockBtn) {
+            unlockBtn.addEventListener('click', async () => {
+                if (!window.AeroDiscs) return;
+                unlockBtn.disabled = true;
+                unlockBtn.textContent = 'Unlocking…';
+                try {
+                    const result = await window.AeroDiscs.purchaseGame(gamePath);
+                    window.AeroDiscs.addPurchasedGame(gamePath);
+                    if (window.AeroDiscs.updateNavWidget) {
+                        window.AeroDiscs.updateNavWidget(result.disc_balance, false);
+                    }
+                    loadGame();
+                } catch (e) {
+                    unlockError.textContent = e.message;
+                    unlockError.style.display = 'block';
+                    unlockBtn.disabled = false;
+                    unlockBtn.innerHTML = 'Play for 100 <img src="images/disc.png" alt="Disc" style="width:24px; height:24px; border-radius:50%; vertical-align:middle; margin-left:6px;">';
+                }
+            });
+        }
+
+        window.addEventListener('aerodynamixAuthorized', checkGameAccess);
+        window.addEventListener('aerodynamixFreeTrial', checkGameAccess);
 
         function toggleFullscreen() {
             const container = document.querySelector('.game-container');

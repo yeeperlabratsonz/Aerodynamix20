@@ -43,6 +43,7 @@ class User(Base):
     disc_balance   = Column(Integer, default=0)
     last_daily_login = Column(DateTime, nullable=True)
     purchased_themes = Column(Text, nullable=True, default='[]')
+    purchased_games  = Column(Text, nullable=True, default='[]')
     media_unlocked = Column(Boolean, default=False)
     first_login_bonus_claimed = Column(Boolean, default=False)
     created_at     = Column(DateTime, default=datetime.datetime.utcnow)
@@ -80,6 +81,7 @@ _new_user_cols = [
     ('disc_balance',   'INTEGER DEFAULT 0'),
     ('last_daily_login', 'TIMESTAMP'                       if _is_pg else 'DATETIME'),
     ('purchased_themes', 'TEXT DEFAULT \'[]\''),
+    ('purchased_games',  'TEXT DEFAULT \'[]\''),
     ('media_unlocked', 'BOOLEAN DEFAULT FALSE'             if _is_pg else 'INTEGER DEFAULT 0'),
     ('first_login_bonus_claimed', 'BOOLEAN DEFAULT FALSE' if _is_pg else 'INTEGER DEFAULT 0'),
 ]
@@ -110,6 +112,7 @@ def user_to_dict(user):
         'disc_balance':     user.disc_balance or 0,
         'media_unlocked': bool(user.media_unlocked),
         'purchased_themes': json.loads(user.purchased_themes or '[]') if user.purchased_themes else [],
+        'purchased_games':  json.loads(user.purchased_games  or '[]') if user.purchased_games  else [],
         'daily_available': user.last_daily_login is None or (datetime.datetime.utcnow() - user.last_daily_login).days >= 1,
     }
 
@@ -203,6 +206,17 @@ def _is_session_media_unlocked():
 
 def _set_session_media_unlocked():
     session['media_unlocked'] = True
+
+
+def _get_session_purchased_games():
+    try:
+        return json.loads(session.get('purchased_games', '[]') or '[]')
+    except Exception:
+        return []
+
+
+def _set_session_purchased_games(games):
+    session['purchased_games'] = json.dumps(list(games))
 
 
 def _anonymous_discs_dict():
@@ -638,6 +652,61 @@ def unlock_media_player():
     _set_session_discs(balance - cost)
     _set_session_media_unlocked()
     return jsonify({'success': True, 'unlocked': True, 'disc_balance': _get_session_discs()})
+
+
+@app.route('/api/discs/purchased-games', methods=['GET'])
+def get_purchased_games():
+    if 'user_id' in session:
+        user = _user_disc_row(session['user_id'])
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        return jsonify({'games': json.loads(user.purchased_games or '[]') if user.purchased_games else []})
+    return jsonify({'games': _get_session_purchased_games()})
+
+
+@app.route('/api/discs/purchase-game', methods=['POST'])
+def purchase_game():
+    data = request.get_json() or {}
+    game = (data.get('game') or '').strip()
+    cost = 100
+
+    if not game:
+        return jsonify({'error': 'Game name required'}), 400
+
+    if 'user_id' in session:
+        db = DBSession()
+        user = db.query(User).filter_by(id=session['user_id']).first()
+        if not user:
+            db.close()
+            return jsonify({'error': 'User not found'}), 404
+
+        purchased = json.loads(user.purchased_games or '[]') if user.purchased_games else []
+        if game in purchased:
+            db.close()
+            return jsonify({'success': True, 'purchased': True, 'disc_balance': user.disc_balance or 0})
+
+        if (user.disc_balance or 0) < cost:
+            db.close()
+            return jsonify({'error': 'Not enough Dynamix Discs', 'disc_balance': user.disc_balance or 0}), 402
+
+        user.disc_balance = (user.disc_balance or 0) - cost
+        purchased.append(game)
+        user.purchased_games = json.dumps(purchased)
+        db.commit()
+        db.refresh(user)
+        db.close()
+        return jsonify({'success': True, 'purchased': True, 'disc_balance': user.disc_balance})
+
+    purchased = _get_session_purchased_games()
+    if game in purchased:
+        return jsonify({'success': True, 'purchased': True, 'disc_balance': _get_session_discs()})
+    balance = _get_session_discs()
+    if balance < cost:
+        return jsonify({'error': 'Not enough Dynamix Discs', 'disc_balance': balance}), 402
+    purchased.append(game)
+    _set_session_purchased_games(purchased)
+    _set_session_discs(balance - cost)
+    return jsonify({'success': True, 'purchased': True, 'disc_balance': _get_session_discs()})
 
 
 # ── Posts ─────────────────────────────────────────────────────────────────────
