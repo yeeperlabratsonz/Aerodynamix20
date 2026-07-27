@@ -242,7 +242,9 @@
         }
 
         // Load saved theme and lite mode on page load
-        applyLiteMode(localStorage.getItem('aerodynamixLite') === 'true');
+        document.addEventListener('DOMContentLoaded', () => {
+            applyLiteMode(localStorage.getItem('aerodynamixLite') === 'true');
+        });
 
         function enableTabCloak() {
             document.title = 'Google';

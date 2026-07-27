@@ -122,9 +122,9 @@
             return;
         }
 
-        // Free trial: need account login
+        // Free trial: could not load balance
         if (balance === null || balance === undefined) {
-            display.innerHTML = discIconHTML('sm') + ' <span class="disc-login">Log in to Connect</span>';
+            display.innerHTML = discIconHTML('sm') + ' <span class="disc-login">--</span>';
             claimBtn.style.display = 'none';
             return;
         }
@@ -160,7 +160,7 @@
         if (!isFreeTrial()) return;
         const info = await getBalance();
         if (!info) {
-            alert('Create a free Dynamix Connect account and log in to play games with Dynamix Discs.');
+            alert('Could not load your Dynamix Discs. Please try again.');
             return;
         }
         if ((info.disc_balance || 0) < COSTS.GAME) {
@@ -183,7 +183,7 @@
         if (!isFreeTrial()) return false;
         const info = await getBalance();
         if (!info) {
-            alert('Create a free Dynamix Connect account and log in to unlock features with Dynamix Discs.');
+            alert('Could not load your Dynamix Discs. Please try again.');
             return false;
         }
         if (info.media_unlocked) return true;
@@ -209,7 +209,7 @@
         if (!isFreeTrial()) return { purchased: false, apply: false };
         const info = await getBalance();
         if (!info) {
-            alert('Create a free Dynamix Connect account and log in to buy themes with Dynamix Discs.');
+            alert('Could not load your Dynamix Discs. Please try again.');
             return { purchased: false, apply: false };
         }
         const purchased = info.purchased_themes || [];

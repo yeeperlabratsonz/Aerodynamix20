@@ -4,7 +4,7 @@ import re
 import uuid
 import mimetypes
 from io import BytesIO
-from flask import Flask, request, jsonify, session, send_from_directory, abort, Response
+from flask import Flask, request, jsonify, session, send_from_directory, abort, Response, g
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from sqlalchemy import create_engine, Column, String, Integer, DateTime, LargeBinary, Text, Float, Boolean, ForeignKey, text
@@ -44,8 +44,15 @@ class User(Base):
     last_daily_login = Column(DateTime, nullable=True)
     purchased_themes = Column(Text, nullable=True, default='[]')
     media_unlocked = Column(Boolean, default=False)
+    first_login_bonus_claimed = Column(Boolean, default=False)
     created_at     = Column(DateTime, default=datetime.datetime.utcnow)
     posts          = relationship('Post', back_populates='user', cascade='all, delete-orphan')
+
+
+class DeviceBonusClaim(Base):
+    __tablename__ = 'device_bonus_claims'
+    device_id    = Column(String(64), primary_key=True)
+    claimed_at   = Column(DateTime, default=datetime.datetime.utcnow)
 
 
 class Post(Base):
@@ -74,6 +81,7 @@ _new_user_cols = [
     ('last_daily_login', 'TIMESTAMP'                       if _is_pg else 'DATETIME'),
     ('purchased_themes', 'TEXT DEFAULT \'[]\''),
     ('media_unlocked', 'BOOLEAN DEFAULT FALSE'             if _is_pg else 'INTEGER DEFAULT 0'),
+    ('first_login_bonus_claimed', 'BOOLEAN DEFAULT FALSE' if _is_pg else 'INTEGER DEFAULT 0'),
 ]
 _if_not_exists = 'IF NOT EXISTS' if _is_pg else ''
 for _col, _typedef in _new_user_cols:
@@ -127,9 +135,118 @@ def _save_user_discs(user, db=None):
             db.close()
 
 
+def _device_has_claimed_bonus(device_id, db=None):
+    close_db = db is None
+    if close_db:
+        db = DBSession()
+    try:
+        claim = db.query(DeviceBonusClaim).filter_by(device_id=device_id).first()
+        return claim is not None
+    finally:
+        if close_db:
+            db.close()
+
+
+def _mark_device_bonus_claimed(device_id, db=None):
+    close_db = db is None
+    if close_db:
+        db = DBSession()
+    try:
+        db.add(DeviceBonusClaim(device_id=device_id))
+        db.commit()
+    except Exception:
+        if close_db:
+            db.rollback()
+    finally:
+        if close_db:
+            db.close()
+
+
+# ── Anonymous Dynamix Discs helpers (stored in Flask session) ───────────────────
+
+def _get_session_discs():
+    return int(session.get('disc_balance', 0) or 0)
+
+
+def _set_session_discs(amount):
+    session['disc_balance'] = max(0, int(amount))
+
+
+def _get_session_last_daily():
+    last = session.get('last_daily_login')
+    if last:
+        try:
+            return datetime.datetime.fromisoformat(last)
+        except ValueError:
+            return None
+    return None
+
+
+def _set_session_last_daily(dt):
+    session['last_daily_login'] = dt.isoformat()
+
+
+def _get_session_purchased_themes():
+    try:
+        return json.loads(session.get('purchased_themes', '[]') or '[]')
+    except Exception:
+        return []
+
+
+def _set_session_purchased_themes(themes):
+    session['purchased_themes'] = json.dumps(list(themes))
+
+
+def _is_session_media_unlocked():
+    return bool(session.get('media_unlocked', False))
+
+
+def _set_session_media_unlocked():
+    session['media_unlocked'] = True
+
+
+def _anonymous_discs_dict():
+    last = _get_session_last_daily()
+    return {
+        'id':               None,
+        'username':         None,
+        'bio':              '',
+        'pfp_url':          None,
+        'pfp_offset_x':     50.0,
+        'pfp_offset_y':     50.0,
+        'disc_balance':     _get_session_discs(),
+        'media_unlocked': _is_session_media_unlocked(),
+        'purchased_themes': _get_session_purchased_themes(),
+        'daily_available':  last is None or (datetime.datetime.utcnow() - last).days >= 1,
+    }
+
+
+def _maybe_award_first_login_bonus(user, db):
+    """Give one-time 200-disc bonus when an account is first used on a device."""
+    if user.first_login_bonus_claimed:
+        return False
+    device_id = getattr(g, 'device_id', None)
+    if not device_id or _device_has_claimed_bonus(device_id, db):
+        return False
+    user.disc_balance = (user.disc_balance or 0) + 200
+    user.first_login_bonus_claimed = True
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    _mark_device_bonus_claimed(device_id, db)
+    return True
+
+
 @app.teardown_appcontext
 def remove_session(exception=None):
     DBSession.remove()
+
+
+@app.before_request
+def ensure_device_id():
+    g.device_id = request.cookies.get('aerodynamix_device_id')
+    if not g.device_id:
+        g.device_id = uuid.uuid4().hex
 
 
 @app.after_request
@@ -137,6 +254,14 @@ def add_no_cache_headers(response):
     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     response.headers['Pragma']  = 'no-cache'
     response.headers['Expires'] = '0'
+    if not request.cookies.get('aerodynamix_device_id'):
+        response.set_cookie(
+            'aerodynamix_device_id',
+            g.device_id,
+            max_age=365 * 24 * 60 * 60,
+            httponly=True,
+            samesite='Lax'
+        )
     return response
 
 
@@ -169,11 +294,13 @@ def register():
         db.add(user)
         db.commit()
         db.refresh(user)
+        _maybe_award_first_login_bonus(user, db)
         session['user_id']  = user.id
         session['username'] = user.username
         return jsonify({'success': True, 'user': user_to_dict(user)})
     except Exception as e:
         db.rollback()
+        app.logger.error('Registration error: %s', e)
         if 'unique' in str(e).lower() or 'duplicate' in str(e).lower():
             return jsonify({'error': 'Username already taken'}), 409
         return jsonify({'error': 'Could not create account'}), 500
@@ -192,6 +319,7 @@ def login():
     db.close()
 
     if user and check_password_hash(user.password_hash, password):
+        _maybe_award_first_login_bonus(user, db)
         session['user_id']  = user.id
         session['username'] = user.username
         return jsonify({'success': True, 'user': user_to_dict(user)})
@@ -355,43 +483,49 @@ def get_user_profile(username):
 
 @app.route('/api/discs', methods=['GET'])
 def get_discs():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not logged in'}), 401
-    user = _user_disc_row(session['user_id'])
-    if not user:
-        return jsonify({'error': 'User not found'}), 404
-    return jsonify({'discs': user_to_dict(user)})
+    if 'user_id' in session:
+        user = _user_disc_row(session['user_id'])
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        return jsonify({'discs': user_to_dict(user)})
+    return jsonify({'discs': _anonymous_discs_dict()})
 
 
 @app.route('/api/discs/claim', methods=['POST'])
 def claim_daily_discs():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not logged in'}), 401
-
-    db = DBSession()
-    user = db.query(User).filter_by(id=session['user_id']).first()
-    if not user:
-        db.close()
-        return jsonify({'error': 'User not found'}), 404
-
     now = datetime.datetime.utcnow()
-    if user.last_daily_login and (now - user.last_daily_login).days < 1:
+
+    if 'user_id' in session:
+        db = DBSession()
+        user = db.query(User).filter_by(id=session['user_id']).first()
+        if not user:
+            db.close()
+            return jsonify({'error': 'User not found'}), 404
+
+        if user.last_daily_login and (now - user.last_daily_login).days < 1:
+            db.close()
+            return jsonify({'error': 'Daily bonus already claimed'}), 429
+
+        user.disc_balance = (user.disc_balance or 0) + 100
+        user.last_daily_login = now
+        db.commit()
+        db.refresh(user)
         db.close()
+        return jsonify({'success': True, 'disc_balance': user.disc_balance, 'claimed': 100})
+
+    # Anonymous users use session-based balance
+    last = _get_session_last_daily()
+    if last and (now - last).days < 1:
         return jsonify({'error': 'Daily bonus already claimed'}), 429
 
-    user.disc_balance = (user.disc_balance or 0) + 100
-    user.last_daily_login = now
-    db.commit()
-    db.refresh(user)
-    db.close()
-    return jsonify({'success': True, 'disc_balance': user.disc_balance, 'claimed': 100})
+    new_balance = _get_session_discs() + 100
+    _set_session_discs(new_balance)
+    _set_session_last_daily(now)
+    return jsonify({'success': True, 'disc_balance': new_balance, 'claimed': 100})
 
 
 @app.route('/api/discs/spend', methods=['POST'])
 def spend_discs():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not logged in'}), 401
-
     data = request.get_json() or {}
     amount = int(data.get('amount', 0))
     feature = (data.get('feature') or '').strip()
@@ -399,28 +533,33 @@ def spend_discs():
     if amount <= 0:
         return jsonify({'error': 'Invalid amount'}), 400
 
-    db = DBSession()
-    user = db.query(User).filter_by(id=session['user_id']).first()
-    if not user:
-        db.close()
-        return jsonify({'error': 'User not found'}), 404
+    if 'user_id' in session:
+        db = DBSession()
+        user = db.query(User).filter_by(id=session['user_id']).first()
+        if not user:
+            db.close()
+            return jsonify({'error': 'User not found'}), 404
 
-    if (user.disc_balance or 0) < amount:
-        db.close()
-        return jsonify({'error': 'Not enough Dynamix Discs', 'disc_balance': user.disc_balance or 0}), 402
+        if (user.disc_balance or 0) < amount:
+            db.close()
+            return jsonify({'error': 'Not enough Dynamix Discs', 'disc_balance': user.disc_balance or 0}), 402
 
-    user.disc_balance = (user.disc_balance or 0) - amount
-    db.commit()
-    db.refresh(user)
-    db.close()
-    return jsonify({'success': True, 'disc_balance': user.disc_balance, 'feature': feature, 'spent': amount})
+        user.disc_balance = (user.disc_balance or 0) - amount
+        db.commit()
+        db.refresh(user)
+        db.close()
+        return jsonify({'success': True, 'disc_balance': user.disc_balance, 'feature': feature, 'spent': amount})
+
+    balance = _get_session_discs()
+    if balance < amount:
+        return jsonify({'error': 'Not enough Dynamix Discs', 'disc_balance': balance}), 402
+    new_balance = balance - amount
+    _set_session_discs(new_balance)
+    return jsonify({'success': True, 'disc_balance': new_balance, 'feature': feature, 'spent': amount})
 
 
 @app.route('/api/discs/purchase-theme', methods=['POST'])
 def purchase_theme():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not logged in'}), 401
-
     data  = request.get_json() or {}
     theme = (data.get('theme') or '').strip()
     cost  = 200
@@ -428,56 +567,77 @@ def purchase_theme():
     if not theme:
         return jsonify({'error': 'Theme name required'}), 400
 
-    db = DBSession()
-    user = db.query(User).filter_by(id=session['user_id']).first()
-    if not user:
-        db.close()
-        return jsonify({'error': 'User not found'}), 404
+    if 'user_id' in session:
+        db = DBSession()
+        user = db.query(User).filter_by(id=session['user_id']).first()
+        if not user:
+            db.close()
+            return jsonify({'error': 'User not found'}), 404
 
-    purchased = json.loads(user.purchased_themes or '[]') if user.purchased_themes else []
+        purchased = json.loads(user.purchased_themes or '[]') if user.purchased_themes else []
+        if theme in purchased:
+            db.close()
+            return jsonify({'success': True, 'purchased': True, 'disc_balance': user.disc_balance or 0})
+
+        if (user.disc_balance or 0) < cost:
+            db.close()
+            return jsonify({'error': 'Not enough Dynamix Discs', 'disc_balance': user.disc_balance or 0}), 402
+
+        user.disc_balance = (user.disc_balance or 0) - cost
+        purchased.append(theme)
+        user.purchased_themes = json.dumps(purchased)
+        db.commit()
+        db.refresh(user)
+        db.close()
+        return jsonify({'success': True, 'purchased': True, 'disc_balance': user.disc_balance})
+
+    purchased = _get_session_purchased_themes()
     if theme in purchased:
-        db.close()
-        return jsonify({'success': True, 'purchased': True, 'disc_balance': user.disc_balance or 0})
-
-    if (user.disc_balance or 0) < cost:
-        db.close()
-        return jsonify({'error': 'Not enough Dynamix Discs', 'disc_balance': user.disc_balance or 0}), 402
-
-    user.disc_balance = (user.disc_balance or 0) - cost
+        return jsonify({'success': True, 'purchased': True, 'disc_balance': _get_session_discs()})
+    balance = _get_session_discs()
+    if balance < cost:
+        return jsonify({'error': 'Not enough Dynamix Discs', 'disc_balance': balance}), 402
     purchased.append(theme)
-    user.purchased_themes = json.dumps(purchased)
-    db.commit()
-    db.refresh(user)
-    db.close()
-    return jsonify({'success': True, 'purchased': True, 'disc_balance': user.disc_balance})
+    _set_session_purchased_themes(purchased)
+    _set_session_discs(balance - cost)
+    return jsonify({'success': True, 'purchased': True, 'disc_balance': _get_session_discs()})
 
 
 @app.route('/api/discs/unlock-media', methods=['POST'])
 def unlock_media_player():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not logged in'}), 401
-
     cost = 1000
-    db = DBSession()
-    user = db.query(User).filter_by(id=session['user_id']).first()
-    if not user:
-        db.close()
-        return jsonify({'error': 'User not found'}), 404
 
-    if user.media_unlocked:
-        db.close()
-        return jsonify({'success': True, 'unlocked': True, 'disc_balance': user.disc_balance or 0})
+    if 'user_id' in session:
+        db = DBSession()
+        user = db.query(User).filter_by(id=session['user_id']).first()
+        if not user:
+            db.close()
+            return jsonify({'error': 'User not found'}), 404
 
-    if (user.disc_balance or 0) < cost:
-        db.close()
-        return jsonify({'error': 'Not enough Dynamix Discs', 'disc_balance': user.disc_balance or 0}), 402
+        if user.media_unlocked:
+            db.close()
+            return jsonify({'success': True, 'unlocked': True, 'disc_balance': user.disc_balance or 0})
 
-    user.disc_balance = (user.disc_balance or 0) - cost
-    user.media_unlocked = True
-    db.commit()
-    db.refresh(user)
-    db.close()
-    return jsonify({'success': True, 'unlocked': True, 'disc_balance': user.disc_balance})
+        if (user.disc_balance or 0) < cost:
+            db.close()
+            return jsonify({'error': 'Not enough Dynamix Discs', 'disc_balance': user.disc_balance or 0}), 402
+
+        user.disc_balance = (user.disc_balance or 0) - cost
+        user.media_unlocked = True
+        db.commit()
+        db.refresh(user)
+        db.close()
+        return jsonify({'success': True, 'unlocked': True, 'disc_balance': user.disc_balance})
+
+    if _is_session_media_unlocked():
+        return jsonify({'success': True, 'unlocked': True, 'disc_balance': _get_session_discs()})
+
+    balance = _get_session_discs()
+    if balance < cost:
+        return jsonify({'error': 'Not enough Dynamix Discs', 'disc_balance': balance}), 402
+    _set_session_discs(balance - cost)
+    _set_session_media_unlocked()
+    return jsonify({'success': True, 'unlocked': True, 'disc_balance': _get_session_discs()})
 
 
 # ── Posts ─────────────────────────────────────────────────────────────────────
