@@ -3,37 +3,16 @@
     'use strict';
 
     function isAuthorized() { return sessionStorage.getItem('authorized') === 'true'; }
-    function isTrialActive() { return !!sessionStorage.getItem('trial_start') && !isAuthorized(); }
-    function trialUsed() { return sessionStorage.getItem('trial_used') === 'true'; }
+    function isFreeTrial()  { return sessionStorage.getItem('free_trial') === 'true'; }
 
-    // Already authorized — just dispatch event and let page load normally
-    if (isAuthorized()) {
+    // Already authorized or free trial — dispatch event and let page load normally
+    if (isAuthorized() || isFreeTrial()) {
         window.dispatchEvent(new CustomEvent('aerodynamixAuthorized'));
+        if (isFreeTrial()) window.dispatchEvent(new CustomEvent('aerodynamixFreeTrial'));
+        revealGames();
         return;
     }
 
-    // Trial already in progress on this page load
-    if (isTrialActive()) {
-        sessionStorage.setItem('trial_used', 'true');
-        injectTrialTimer();
-        // Reveal content that would normally be shown after dismissing the overlay
-        const msg = document.getElementById('no-games-msg');
-        if (msg) msg.style.display = 'none';
-        const games = document.getElementById('games');
-        if (games) games.classList.add('revealed');
-        document.body.style.overflow = '';
-        window.dispatchEvent(new CustomEvent('aerodynamixAuthorized'));
-        window.dispatchEvent(new CustomEvent('aerodynamixTrialActive'));
-        return;
-    }
-
-    // If trial was used in this session and not authorized, show password screen again
-    if (trialUsed()) {
-        injectOverlay();
-        return;
-    }
-
-    // Otherwise: show password overlay
     injectStyles();
     injectOverlay();
 
@@ -91,24 +70,6 @@
             #submit-key:hover { transform: translateY(-1px); box-shadow: 0 14px 40px rgba(44,127,252,0.5); filter: brightness(1.1); }
             #submit-key:active { transform: translateY(0); filter: brightness(0.95); }
             #error-msg { color: #ff5b6a; margin: 16px 0 0; display: none; font-weight: 500; font-size: 0.82rem; letter-spacing: 0.05em; }
-
-            #trial-timer {
-                position: fixed; top: 10px; right: 10px;
-                background: rgba(10,14,24,0.9); color: #7eb8ff;
-                padding: 10px 20px; border: 1px solid rgba(44,127,252,0.4);
-                border-radius: 10px; font-family: 'Segoe UI', Arial, sans-serif;
-                z-index: 10000; display: none; font-weight: 600; letter-spacing: 0.05em;
-                box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 20px rgba(44,127,252,0.15);
-            }
-            #auth-lockout {
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background: #030509; z-index: 99999;
-                display: flex; align-items: center; justify-content: center; flex-direction: column;
-                color: rgba(255,255,255,0.5); font-family: 'Segoe UI', Arial, sans-serif;
-                text-align: center; padding: 20px;
-            }
-            #auth-lockout h2 { color: #fff; font-size: 1.8rem; font-weight: 700; letter-spacing: 0.2em; margin-bottom: 12px; }
-            #auth-lockout p { font-size: 0.9rem; letter-spacing: 0.05em; max-width: 400px; }
         `;
         document.head.appendChild(style);
     }
@@ -133,18 +94,10 @@
         `;
         document.body.appendChild(overlay);
 
-        // Trial timer (hidden by default)
-        const timer = document.createElement('div');
-        timer.id = 'trial-timer';
-        timer.innerHTML = 'TRIAL TIME: <span id="time-left">05:00</span>';
-        document.body.appendChild(timer);
-
         const input = document.getElementById('game-key-input');
         const button = document.getElementById('submit-key');
         const toggleBtn = document.getElementById('toggle-password');
         const error = document.getElementById('error-msg');
-        const timerDisplay = document.getElementById('trial-timer');
-        const timeLeftSpan = document.getElementById('time-left');
         const validKey = atob('U2Vld2l0aHlvdXJtaW5kNjY2JA==').trim();
         const trialKey = atob('ZnJlZXRyaWFs');
 
@@ -171,18 +124,20 @@
                 error.className = 'rainbow-text'; error.style.display = 'block'; input.value = ''; return;
             } else if (val === validKey || val.toLowerCase() === validKey.toLowerCase()) {
                 sessionStorage.setItem('authorized', 'true');
+                sessionStorage.removeItem('free_trial');
                 dismissOverlay();
                 window.dispatchEvent(new CustomEvent('aerodynamixAuthorized'));
                 var _tries = 0;
                 (function tryApply() {
-                    if (typeof applyTheme === 'function') {
-                        applyTheme('black');
-                    } else if (++_tries < 50) { setTimeout(tryApply, 80); }
+                    if (typeof applyTheme === 'function') { applyTheme('black'); }
+                    else if (++_tries < 50) { setTimeout(tryApply, 80); }
                 })();
             } else if (val === trialKey) {
-                if (trialUsed()) {
-                    error.innerText = 'Free Trial Cannot Be Used Again'; error.className = ''; error.style.display = 'block'; input.value = '';
-                } else { startTrial(); }
+                sessionStorage.setItem('free_trial', 'true');
+                dismissOverlay();
+                window.dispatchEvent(new CustomEvent('aerodynamixAuthorized'));
+                window.dispatchEvent(new CustomEvent('aerodynamixFreeTrial'));
+                revealGames();
             } else {
                 error.innerText = val.length === validKey.length ? 'Incorrect access key' : 'Incorrect access key (' + val.length + '/' + validKey.length + ')';
                 error.className = ''; error.style.display = 'block'; input.value = '';
@@ -191,78 +146,25 @@
 
         function dismissOverlay() {
             overlay.remove();
-            timerDisplay.style.display = 'none';
             const msg = document.getElementById('no-games-msg');
             if (msg) msg.style.display = 'none';
-            const oldGames = document.getElementById('games');
-            if (oldGames) {
-                const parent = oldGames.parentElement;
-                const newGames = oldGames.cloneNode(true);
-                newGames.classList.add('revealed');
-                parent.replaceChild(newGames, oldGames);
-            }
             document.body.style.overflow = '';
-        }
-
-        function startTrial() {
-            dismissOverlay();
-            sessionStorage.setItem('trial_used', 'true');
-            timerDisplay.style.display = 'block';
-            let startTime = sessionStorage.getItem('trial_start');
-            if (!startTime) { startTime = Date.now().toString(); sessionStorage.setItem('trial_start', startTime); }
-            const startTimestamp = parseInt(startTime);
-            const interval = setInterval(() => {
-                const now = Date.now();
-                const elapsed = Math.floor((now - startTimestamp) / 1000);
-                let timeLeft = 300 - elapsed;
-                if (timeLeft <= 0) {
-                    clearInterval(interval);
-                    sessionStorage.removeItem('trial_start');
-                    timerDisplay.style.display = 'none';
-                    injectOverlay();
-                } else {
-                    const mins = Math.floor(timeLeft / 60);
-                    const secs = timeLeft % 60;
-                    timeLeftSpan.innerText = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
-                }
-            }, 1000);
         }
 
         button.addEventListener('click', checkKey);
         input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); checkKey(); } });
     }
 
-    function injectTrialTimer() {
-        const timer = document.createElement('div');
-        timer.id = 'trial-timer';
-        timer.style.cssText = `
-            position: fixed; top: 10px; right: 10px;
-            background: rgba(10,14,24,0.9); color: #7eb8ff;
-            padding: 10px 20px; border: 1px solid rgba(44,127,252,0.4);
-            border-radius: 10px; font-family: 'Segoe UI', Arial, sans-serif;
-            z-index: 10000; font-weight: 600; letter-spacing: 0.05em;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 20px rgba(44,127,252,0.15);
-        `;
-        timer.innerHTML = 'TRIAL TIME: <span id="time-left">05:00</span>';
-        document.body.appendChild(timer);
-
-        const timeLeftSpan = document.getElementById('time-left');
-        const startTimestamp = parseInt(sessionStorage.getItem('trial_start'));
-        const interval = setInterval(() => {
-            const now = Date.now();
-            const elapsed = Math.floor((now - startTimestamp) / 1000);
-            let timeLeft = 300 - elapsed;
-            if (timeLeft <= 0) {
-                clearInterval(interval);
-                sessionStorage.removeItem('trial_start');
-                timer.remove();
-                injectOverlay();
-            } else {
-                const mins = Math.floor(timeLeft / 60);
-                const secs = timeLeft % 60;
-                timeLeftSpan.innerText = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
-            }
-        }, 1000);
+    function revealGames() {
+        const msg = document.getElementById('no-games-msg');
+        if (msg) msg.style.display = 'none';
+        const oldGames = document.getElementById('games');
+        if (oldGames) {
+            const parent = oldGames.parentElement;
+            const newGames = oldGames.cloneNode(true);
+            newGames.classList.add('revealed');
+            parent.replaceChild(newGames, oldGames);
+        }
+        document.body.style.overflow = '';
     }
-
 })();

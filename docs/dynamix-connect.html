@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="main.css">
   <link rel="stylesheet" href="dynamix-connect.css">
   <script src="theme.js"></script>
+  <script src="discs.js" defer></script>
   <script src="snow-overlay.js" defer></script>
   <script src="auth-overlay.js" defer></script>
   <script src="dynamix-connect.js" defer></script>
@@ -55,7 +56,10 @@
     <div id="post-section" class="dc-card hidden">
       <div class="dc-user-bar">
         <span>Logged in as <strong id="current-username">User</strong></span>
-        <button id="logout-btn" class="dc-btn-secondary">Log Out</button>
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          <button id="dc-claim-btn" class="dc-btn-sm" style="display:none;">+100 <img src="images/disc.png" alt="Disc" class="disc-icon" style="margin-left:4px;"></button>
+          <button id="logout-btn" class="dc-btn-secondary">Log Out</button>
+        </div>
       </div>
 
       <!-- My profile section -->

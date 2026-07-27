@@ -68,7 +68,7 @@
   }
 
   // ── Auth UI ─────────────────────────────────────────────────────────────────
-  function updateAuthUI() {
+  async function updateAuthUI() {
     if (currentUser) {
       authSection.classList.add('hidden');
       postSection.classList.remove('hidden');
@@ -77,6 +77,15 @@
       if (bioInput) {
         bioInput.value = currentUser.bio || '';
         if (bioCharCount) bioCharCount.textContent = bioInput.value.length;
+      }
+      const claimBtn = document.getElementById('dc-claim-btn');
+      if (claimBtn && window.AeroDiscs) {
+        try {
+          const info = await AeroDiscs.getBalance();
+          claimBtn.style.display = (info && info.daily_available) ? 'inline-flex' : 'none';
+        } catch (e) {
+          claimBtn.style.display = 'none';
+        }
       }
     } else {
       authSection.classList.remove('hidden');
@@ -302,6 +311,28 @@
       } finally {
         saveBioBtn.disabled = false;
         saveBioBtn.textContent = 'Save Bio';
+      }
+    });
+  }
+
+  const dcClaimBtn = document.getElementById('dc-claim-btn');
+  if (dcClaimBtn) {
+    dcClaimBtn.addEventListener('click', async () => {
+      if (!window.AeroDiscs) return;
+      dcClaimBtn.disabled = true;
+      dcClaimBtn.textContent = '…';
+      try {
+        const result = await AeroDiscs.claimDaily();
+        dcClaimBtn.textContent = 'Got it!';
+        setTimeout(() => { dcClaimBtn.style.display = 'none'; }, 1500);
+        if (currentUser) currentUser.disc_balance = result.disc_balance;
+        if (window.AeroDiscs.updateNavWidget) {
+          AeroDiscs.updateNavWidget(result.disc_balance, false);
+        }
+      } catch (e) {
+        alert(e.message);
+        dcClaimBtn.disabled = false;
+        dcClaimBtn.textContent = '+100 Discs';
       }
     });
   }

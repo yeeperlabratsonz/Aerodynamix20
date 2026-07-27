@@ -7,9 +7,11 @@ from io import BytesIO
 from flask import Flask, request, jsonify, session, send_from_directory, abort, Response
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from sqlalchemy import create_engine, Column, String, Integer, DateTime, LargeBinary, Text, Float, ForeignKey, text
+from sqlalchemy import create_engine, Column, String, Integer, DateTime, LargeBinary, Text, Float, Boolean, ForeignKey, text
 from sqlalchemy.orm import declarative_base, sessionmaker, scoped_session, relationship
+from sqlalchemy.sql import func
 from bad_words import contains_bad_words
+import json
 
 PORT = int(os.environ.get('PORT', 5000))
 DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///dynamix.db')
@@ -30,16 +32,20 @@ DBSession = scoped_session(sessionmaker(bind=engine))
 
 class User(Base):
     __tablename__ = 'users'
-    id            = Column(Integer, primary_key=True, autoincrement=True)
-    username      = Column(String(20), unique=True, nullable=False)
-    password_hash = Column(String(255), nullable=False)
-    bio           = Column(Text, nullable=True)
-    pfp_data      = Column(LargeBinary, nullable=True)
-    pfp_mimetype  = Column(String(50), nullable=True)
-    pfp_offset_x  = Column(Float, default=50.0)
-    pfp_offset_y  = Column(Float, default=50.0)
-    created_at    = Column(DateTime, default=datetime.datetime.utcnow)
-    posts         = relationship('Post', back_populates='user', cascade='all, delete-orphan')
+    id             = Column(Integer, primary_key=True, autoincrement=True)
+    username       = Column(String(20), unique=True, nullable=False)
+    password_hash  = Column(String(255), nullable=False)
+    bio            = Column(Text, nullable=True)
+    pfp_data       = Column(LargeBinary, nullable=True)
+    pfp_mimetype   = Column(String(50), nullable=True)
+    pfp_offset_x   = Column(Float, default=50.0)
+    pfp_offset_y   = Column(Float, default=50.0)
+    disc_balance   = Column(Integer, default=0)
+    last_daily_login = Column(DateTime, nullable=True)
+    purchased_themes = Column(Text, nullable=True, default='[]')
+    media_unlocked = Column(Boolean, default=False)
+    created_at     = Column(DateTime, default=datetime.datetime.utcnow)
+    posts          = relationship('Post', back_populates='user', cascade='all, delete-orphan')
 
 
 class Post(Base):
@@ -59,11 +65,15 @@ Base.metadata.create_all(engine)
 # Migrate existing DB to add new User columns if they don't exist yet
 _is_pg = engine.dialect.name == 'postgresql'
 _new_user_cols = [
-    ('bio',          'TEXT'),
-    ('pfp_data',     'BYTEA'                           if _is_pg else 'BLOB'),
-    ('pfp_mimetype', 'VARCHAR(50)'),
-    ('pfp_offset_x', 'DOUBLE PRECISION DEFAULT 50.0'   if _is_pg else 'FLOAT DEFAULT 50.0'),
-    ('pfp_offset_y', 'DOUBLE PRECISION DEFAULT 50.0'   if _is_pg else 'FLOAT DEFAULT 50.0'),
+    ('bio',            'TEXT'),
+    ('pfp_data',       'BYTEA'                            if _is_pg else 'BLOB'),
+    ('pfp_mimetype',   'VARCHAR(50)'),
+    ('pfp_offset_x',   'DOUBLE PRECISION DEFAULT 50.0'    if _is_pg else 'FLOAT DEFAULT 50.0'),
+    ('pfp_offset_y',   'DOUBLE PRECISION DEFAULT 50.0'    if _is_pg else 'FLOAT DEFAULT 50.0'),
+    ('disc_balance',   'INTEGER DEFAULT 0'),
+    ('last_daily_login', 'TIMESTAMP'                       if _is_pg else 'DATETIME'),
+    ('purchased_themes', 'TEXT DEFAULT \'[]\''),
+    ('media_unlocked', 'BOOLEAN DEFAULT FALSE'             if _is_pg else 'INTEGER DEFAULT 0'),
 ]
 _if_not_exists = 'IF NOT EXISTS' if _is_pg else ''
 for _col, _typedef in _new_user_cols:
@@ -83,13 +93,38 @@ def allowed_file(filename):
 
 def user_to_dict(user):
     return {
-        'id':           user.id,
-        'username':     user.username,
-        'bio':          user.bio or '',
-        'pfp_url':      f'/api/pfp/{user.id}' if user.pfp_data else None,
-        'pfp_offset_x': user.pfp_offset_x if user.pfp_offset_x is not None else 50.0,
-        'pfp_offset_y': user.pfp_offset_y if user.pfp_offset_y is not None else 50.0,
+        'id':               user.id,
+        'username':         user.username,
+        'bio':              user.bio or '',
+        'pfp_url':          f'/api/pfp/{user.id}' if user.pfp_data else None,
+        'pfp_offset_x':     user.pfp_offset_x if user.pfp_offset_x is not None else 50.0,
+        'pfp_offset_y':     user.pfp_offset_y if user.pfp_offset_y is not None else 50.0,
+        'disc_balance':     user.disc_balance or 0,
+        'media_unlocked': bool(user.media_unlocked),
+        'purchased_themes': json.loads(user.purchased_themes or '[]') if user.purchased_themes else [],
+        'daily_available': user.last_daily_login is None or (datetime.datetime.utcnow() - user.last_daily_login).days >= 1,
     }
+
+
+def _user_disc_row(user_id):
+    db   = DBSession()
+    user = db.query(User).filter_by(id=user_id).first()
+    db.close()
+    if not user:
+        return None
+    return user
+
+
+def _save_user_discs(user, db=None):
+    owns = db is not None
+    if not owns:
+        db = DBSession()
+    try:
+        db.add(user)
+        db.commit()
+    finally:
+        if not owns:
+            db.close()
 
 
 @app.teardown_appcontext
@@ -314,6 +349,135 @@ def get_user_profile(username):
         },
         'posts': posts_data,
     })
+
+
+# ── Dynamix Discs ─────────────────────────────────────────────────────────────
+
+@app.route('/api/discs', methods=['GET'])
+def get_discs():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    user = _user_disc_row(session['user_id'])
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    return jsonify({'discs': user_to_dict(user)})
+
+
+@app.route('/api/discs/claim', methods=['POST'])
+def claim_daily_discs():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    db = DBSession()
+    user = db.query(User).filter_by(id=session['user_id']).first()
+    if not user:
+        db.close()
+        return jsonify({'error': 'User not found'}), 404
+
+    now = datetime.datetime.utcnow()
+    if user.last_daily_login and (now - user.last_daily_login).days < 1:
+        db.close()
+        return jsonify({'error': 'Daily bonus already claimed'}), 429
+
+    user.disc_balance = (user.disc_balance or 0) + 100
+    user.last_daily_login = now
+    db.commit()
+    db.refresh(user)
+    db.close()
+    return jsonify({'success': True, 'disc_balance': user.disc_balance, 'claimed': 100})
+
+
+@app.route('/api/discs/spend', methods=['POST'])
+def spend_discs():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    data = request.get_json() or {}
+    amount = int(data.get('amount', 0))
+    feature = (data.get('feature') or '').strip()
+
+    if amount <= 0:
+        return jsonify({'error': 'Invalid amount'}), 400
+
+    db = DBSession()
+    user = db.query(User).filter_by(id=session['user_id']).first()
+    if not user:
+        db.close()
+        return jsonify({'error': 'User not found'}), 404
+
+    if (user.disc_balance or 0) < amount:
+        db.close()
+        return jsonify({'error': 'Not enough Dynamix Discs', 'disc_balance': user.disc_balance or 0}), 402
+
+    user.disc_balance = (user.disc_balance or 0) - amount
+    db.commit()
+    db.refresh(user)
+    db.close()
+    return jsonify({'success': True, 'disc_balance': user.disc_balance, 'feature': feature, 'spent': amount})
+
+
+@app.route('/api/discs/purchase-theme', methods=['POST'])
+def purchase_theme():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    data  = request.get_json() or {}
+    theme = (data.get('theme') or '').strip()
+    cost  = 200
+
+    if not theme:
+        return jsonify({'error': 'Theme name required'}), 400
+
+    db = DBSession()
+    user = db.query(User).filter_by(id=session['user_id']).first()
+    if not user:
+        db.close()
+        return jsonify({'error': 'User not found'}), 404
+
+    purchased = json.loads(user.purchased_themes or '[]') if user.purchased_themes else []
+    if theme in purchased:
+        db.close()
+        return jsonify({'success': True, 'purchased': True, 'disc_balance': user.disc_balance or 0})
+
+    if (user.disc_balance or 0) < cost:
+        db.close()
+        return jsonify({'error': 'Not enough Dynamix Discs', 'disc_balance': user.disc_balance or 0}), 402
+
+    user.disc_balance = (user.disc_balance or 0) - cost
+    purchased.append(theme)
+    user.purchased_themes = json.dumps(purchased)
+    db.commit()
+    db.refresh(user)
+    db.close()
+    return jsonify({'success': True, 'purchased': True, 'disc_balance': user.disc_balance})
+
+
+@app.route('/api/discs/unlock-media', methods=['POST'])
+def unlock_media_player():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    cost = 1000
+    db = DBSession()
+    user = db.query(User).filter_by(id=session['user_id']).first()
+    if not user:
+        db.close()
+        return jsonify({'error': 'User not found'}), 404
+
+    if user.media_unlocked:
+        db.close()
+        return jsonify({'success': True, 'unlocked': True, 'disc_balance': user.disc_balance or 0})
+
+    if (user.disc_balance or 0) < cost:
+        db.close()
+        return jsonify({'error': 'Not enough Dynamix Discs', 'disc_balance': user.disc_balance or 0}), 402
+
+    user.disc_balance = (user.disc_balance or 0) - cost
+    user.media_unlocked = True
+    db.commit()
+    db.refresh(user)
+    db.close()
+    return jsonify({'success': True, 'unlocked': True, 'disc_balance': user.disc_balance})
 
 
 # ── Posts ─────────────────────────────────────────────────────────────────────

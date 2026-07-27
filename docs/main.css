@@ -233,6 +233,113 @@ nav img {
     text-shadow: none !important;
 }
 
+/* ── Dynamix Discs nav widget ─────────────────────────────────────────────── */
+.disc-nav-widget {
+    position: absolute;
+    right: 1.5vw;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0.6vw;
+    background: rgba(10, 14, 24, 0.7);
+    border: 1px solid rgba(44, 127, 252, 0.25);
+    border-radius: 0.6vw;
+    padding: 0.4vw 0.8vw;
+    backdrop-filter: blur(10px);
+    font-family: 'Montserrat', sans-serif;
+}
+
+.disc-balance {
+    display: flex;
+    align-items: center;
+    gap: 0.35vw;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85vw;
+}
+
+.disc-balance .disc-icon {
+    width: 1.1vw;
+    height: 1.1vw;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
+}
+
+.disc-balance .disc-unlimited {
+    color: #7db8ff;
+}
+
+.disc-balance .disc-login {
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.7vw;
+    font-weight: 600;
+}
+
+.disc-claim-btn {
+    background: linear-gradient(135deg, #2c7ffc 0%, #1a5fd0 100%);
+    border: none;
+    border-radius: 0.4vw;
+    color: #fff;
+    padding: 0.35vw 0.6vw;
+    font-size: 0.7vw;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2vw;
+}
+
+.disc-claim-btn:hover {
+    filter: brightness(1.15);
+    transform: translateY(-1px);
+}
+
+.disc-claim-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+    transform: none;
+}
+
+.disc-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    object-fit: cover;
+    vertical-align: middle;
+}
+
+.disc-icon.sm {
+    width: 14px;
+    height: 14px;
+}
+
+.disc-icon.lg {
+    width: 32px;
+    height: 32px;
+}
+
+@media (max-width: 768px) {
+    .disc-nav-widget {
+        right: 2vw;
+        padding: 1vw 2vw;
+        gap: 1.5vw;
+    }
+    .disc-balance {
+        font-size: 2.5vw;
+    }
+    .disc-balance .disc-icon {
+        width: 3vw;
+        height: 3vw;
+    }
+    .disc-claim-btn {
+        font-size: 2.2vw;
+        padding: 1vw 1.5vw;
+    }
+}
+
 @keyframes rainbow-animation {
     0% { background-position: 0% 50%; }
     100% { background-position: 100% 50%; }

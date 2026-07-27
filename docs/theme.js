@@ -97,9 +97,26 @@
 
     };
 
-    function autoApply() {
+    async function autoApply() {
         var authorized = sessionStorage.getItem('authorized') === 'true';
-        var theme = authorized ? (localStorage.getItem('aerodynamixTheme') || 'black') : 'black';
+        var freeTrial = sessionStorage.getItem('free_trial') === 'true';
+        var theme = localStorage.getItem('aerodynamixTheme') || 'black';
+
+        if (!authorized && freeTrial && theme !== 'black') {
+            // Verify the saved theme is purchased; fall back to black otherwise
+            try {
+                if (window.AeroDiscs && window.AeroDiscs.getBalance) {
+                    const info = await AeroDiscs.getBalance();
+                    const purchased = (info && info.purchased_themes) || [];
+                    if (!purchased.includes(theme)) theme = 'black';
+                } else {
+                    theme = 'black';
+                }
+            } catch (e) {
+                theme = 'black';
+            }
+        }
+        if (!authorized && !freeTrial) theme = 'black';
         window.applyTheme(theme);
     }
 
@@ -110,4 +127,5 @@
     }
 
     window.addEventListener('aerodynamixAuthorized', autoApply);
+    window.addEventListener('aerodynamixFreeTrial', autoApply);
 })();
