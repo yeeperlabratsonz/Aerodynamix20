@@ -31,19 +31,18 @@
       <p>Share thoughts, moments, and connect with the Aerodynamix community.</p>
     </div>
 
+    <!-- Auth card -->
     <div id="auth-section" class="dc-card">
       <div class="dc-tabs">
         <button class="dc-tab active" data-tab="login">Log In</button>
         <button class="dc-tab" data-tab="register">Create Account</button>
       </div>
-
       <form id="login-form" class="dc-form">
         <input type="text" id="login-username" placeholder="Username" required autocomplete="username">
         <input type="password" id="login-password" placeholder="Password" required autocomplete="current-password">
         <button type="submit" class="dc-btn">Log In</button>
         <p class="dc-error" id="login-error"></p>
       </form>
-
       <form id="register-form" class="dc-form hidden">
         <input type="text" id="register-username" placeholder="Username" required autocomplete="username">
         <input type="password" id="register-password" placeholder="Password" required autocomplete="new-password">
@@ -52,13 +51,34 @@
       </form>
     </div>
 
+    <!-- Post card (shown when logged in) -->
     <div id="post-section" class="dc-card hidden">
       <div class="dc-user-bar">
         <span>Logged in as <strong id="current-username">User</strong></span>
         <button id="logout-btn" class="dc-btn-secondary">Log Out</button>
       </div>
-      <form id="post-form" class="dc-form">
-        <textarea id="post-text" placeholder="I like Ping Pong..." maxlength="500" required></textarea>
+
+      <!-- My profile section -->
+      <div class="dc-my-profile">
+        <div class="dc-my-pfp-wrap">
+          <div class="dc-avatar dc-avatar-lg" id="my-avatar"></div>
+          <button class="dc-pfp-change-btn" id="change-pfp-btn" title="Change profile picture">
+            <i class="fas fa-camera"></i>
+          </button>
+        </div>
+        <div class="dc-my-bio">
+          <textarea id="bio-input" maxlength="200" placeholder="Write a short bio…"></textarea>
+          <div class="dc-bio-footer">
+            <span class="dc-char-count"><span id="bio-char-count">0</span>/200</span>
+            <button class="dc-btn-sm" id="save-bio-btn">Save Bio</button>
+          </div>
+          <p class="dc-success" id="bio-success"></p>
+        </div>
+      </div>
+
+      <!-- Post form -->
+      <form id="post-form" class="dc-form dc-post-form">
+        <textarea id="post-text" placeholder="I like Ping Pong…" maxlength="500" required></textarea>
         <div class="dc-char-count"><span id="char-count">0</span>/500</div>
         <div class="dc-file-row">
           <label for="post-image" class="dc-file-label"><i class="fas fa-image"></i> Attach an image</label>
@@ -75,7 +95,47 @@
       <h2>Community Feed</h2>
     </div>
     <div id="feed" class="dc-feed">
-      <div class="dc-loading">Loading posts...</div>
+      <div class="dc-loading">Loading posts…</div>
+    </div>
+  </div>
+
+  <!-- PFP Editor Modal -->
+  <div id="pfp-modal" class="dc-modal-overlay hidden">
+    <div class="dc-modal-content">
+      <h3 class="dc-modal-title">Profile Picture</h3>
+      <div id="pfp-crop-circle" class="dc-pfp-crop-circle">
+        <span class="dc-pfp-drag-hint" id="pfp-drag-hint">
+          <i class="fas fa-image"></i><br>Choose an image
+        </span>
+      </div>
+      <p class="dc-pfp-tip">Drag to reposition</p>
+      <label for="pfp-file-input" class="dc-file-label dc-pfp-file-label">
+        <i class="fas fa-upload"></i> Choose Image
+      </label>
+      <input type="file" id="pfp-file-input" accept="image/*">
+      <div class="dc-modal-actions">
+        <button id="pfp-save-btn" class="dc-btn" disabled>Save</button>
+        <button id="pfp-cancel-btn" class="dc-btn-secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Profile Modal -->
+  <div id="profile-modal" class="dc-modal-overlay hidden">
+    <div class="dc-modal-content dc-profile-modal-content">
+      <button class="dc-modal-close-btn" id="profile-modal-close">
+        <i class="fas fa-times"></i>
+      </button>
+      <div class="dc-profile-header">
+        <div class="dc-avatar dc-avatar-xl" id="profile-view-avatar"></div>
+        <div class="dc-profile-info">
+          <h2 id="profile-view-username"></h2>
+          <p id="profile-view-bio" class="dc-profile-bio"></p>
+          <p id="profile-view-joined" class="dc-profile-joined"></p>
+        </div>
+      </div>
+      <div class="dc-profile-posts-label">Posts</div>
+      <div id="profile-view-posts" class="dc-profile-posts"></div>
     </div>
   </div>
 </body>

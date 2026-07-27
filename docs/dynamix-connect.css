@@ -352,3 +352,339 @@ nav a.active:hover {
     padding: 0.5vw 1vw;
   }
 }
+
+/* ── My Profile section ─────────────────────────────────────────────────── */
+.dc-my-profile {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.2rem;
+  margin-bottom: 1.4rem;
+  padding-bottom: 1.4rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.dc-my-pfp-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.dc-avatar-lg {
+  width: 64px !important;
+  height: 64px !important;
+  font-size: 1.3rem !important;
+  border: 2px solid rgba(44,127,252,0.4);
+}
+
+.dc-pfp-change-btn {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #2c7ffc;
+  border: 2px solid #0a0e18;
+  color: #fff;
+  font-size: 0.6rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+  padding: 0;
+}
+
+.dc-pfp-change-btn:hover {
+  background: #1a5fd0;
+}
+
+.dc-my-bio {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.dc-my-bio textarea {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  color: #fff;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.88rem;
+  font-family: inherit;
+  outline: none;
+  resize: none;
+  min-height: 60px;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.dc-my-bio textarea:focus {
+  border-color: rgba(44,127,252,0.65);
+  box-shadow: 0 0 0 3px rgba(44,127,252,0.12);
+}
+
+.dc-my-bio textarea::placeholder {
+  color: rgba(255,255,255,0.3);
+}
+
+.dc-bio-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dc-btn-sm {
+  background: rgba(44,127,252,0.18);
+  border: 1px solid rgba(44,127,252,0.35);
+  border-radius: 8px;
+  color: #7db8ff;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.dc-btn-sm:hover {
+  background: rgba(44,127,252,0.3);
+  color: #fff;
+}
+
+.dc-btn-sm:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.dc-post-form {
+  padding-top: 0 !important;
+}
+
+/* ── Avatars: image support ─────────────────────────────────────────────── */
+.dc-avatar {
+  background-repeat: no-repeat;
+}
+
+.dc-avatar-xl {
+  width: 72px !important;
+  height: 72px !important;
+  font-size: 1.5rem !important;
+  border: 2px solid rgba(44,127,252,0.4);
+  flex-shrink: 0;
+}
+
+/* ── Clickable username ──────────────────────────────────────────────────── */
+.dc-username-link {
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.dc-username-link:hover {
+  color: #7db8ff;
+  text-decoration: underline;
+}
+
+/* ── Modals shared ──────────────────────────────────────────────────────── */
+.dc-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+}
+
+.dc-modal-content {
+  background: rgba(10,14,24,0.97);
+  border: 1px solid rgba(44,127,252,0.25);
+  border-radius: 22px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.7), 0 0 60px rgba(44,127,252,0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.dc-modal-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  text-align: center;
+}
+
+.dc-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.dc-modal-actions .dc-btn,
+.dc-modal-actions .dc-btn-secondary {
+  flex: 1;
+}
+
+/* ── PFP Editor Modal ───────────────────────────────────────────────────── */
+.dc-pfp-crop-circle {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid rgba(44,127,252,0.5);
+  background: rgba(255,255,255,0.05);
+  position: relative;
+  cursor: default;
+  user-select: none;
+  flex-shrink: 0;
+  background-repeat: no-repeat;
+}
+
+.dc-pfp-drag-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.35);
+  font-size: 0.85rem;
+  text-align: center;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+.dc-pfp-drag-hint i {
+  font-size: 1.8rem;
+}
+
+.dc-pfp-tip {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.35);
+  margin: 0;
+  text-align: center;
+}
+
+.dc-pfp-file-label {
+  width: 100%;
+  justify-content: center;
+}
+
+/* ── User Profile Modal ─────────────────────────────────────────────────── */
+.dc-profile-modal-content {
+  max-width: 520px;
+  align-items: stretch;
+}
+
+.dc-modal-close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+}
+
+.dc-modal-close-btn:hover {
+  background: rgba(255,255,255,0.14);
+  color: #fff;
+}
+
+.dc-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding-bottom: 1.2rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  width: 100%;
+}
+
+.dc-profile-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.dc-profile-info h2 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin: 0 0 0.25rem;
+  color: #fff;
+}
+
+.dc-profile-bio {
+  color: rgba(255,255,255,0.7);
+  font-size: 0.88rem;
+  margin: 0 0 0.3rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.dc-profile-joined {
+  color: rgba(255,255,255,0.35);
+  font-size: 0.78rem;
+  margin: 0;
+}
+
+.dc-profile-posts-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  width: 100%;
+  padding-top: 0.5rem;
+}
+
+.dc-profile-posts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-height: 380px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.dc-profile-posts::-webkit-scrollbar {
+  width: 4px;
+}
+
+.dc-profile-posts::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dc-profile-posts::-webkit-scrollbar-thumb {
+  background: rgba(44,127,252,0.3);
+  border-radius: 2px;
+}
+
+.dc-profile-post-time {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.35);
+  margin-top: 0.5rem;
+}
+
+/* Profile modal: smaller post cards */
+.dc-profile-posts .dc-post {
+  padding: 0.9rem;
+}
+
