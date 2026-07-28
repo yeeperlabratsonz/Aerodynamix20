@@ -56,9 +56,27 @@
         }
     }
 
+    async function purchaseTheme(card) {
+        const theme = card.dataset.theme;
+        const button = card.querySelector('.theme-buy');
+        button.disabled = true;
+        button.textContent = 'Unlocking…';
+        try {
+            const result = await window.AeroDiscs.purchaseTheme(theme);
+            window.AeroDiscs.updateNavWidget(result.disc_balance, false);
+            card.classList.add('owned');
+            button.textContent = 'Owned';
+        } catch (e) {
+            alert(e.message);
+            button.disabled = false;
+            button.textContent = 'Buy for 200';
+        }
+    }
+
     async function init() {
         const owned = await loadOwned();
         document.querySelectorAll('.shop-card').forEach(card => {
+            if (card.classList.contains('theme-shop-card')) return;
             const button = card.querySelector('.shop-buy');
             if (isPaid() || owned.includes(card.dataset.game)) {
                 card.classList.add('owned');
@@ -66,6 +84,20 @@
                 button.disabled = true;
             } else {
                 button.addEventListener('click', () => purchase(card));
+            }
+        });
+        let purchasedThemes = [];
+        const info = await window.AeroDiscs.getBalance();
+        if (isPaid()) purchasedThemes = window.AeroDiscs.VISUAL_THEMES;
+        else if (info) purchasedThemes = info.purchased_themes || [];
+        document.querySelectorAll('.theme-shop-card').forEach(card => {
+            const button = card.querySelector('.theme-buy');
+            if (isPaid() || purchasedThemes.includes(card.dataset.theme)) {
+                card.classList.add('owned');
+                button.textContent = isPaid() ? 'Included' : 'Owned';
+                button.disabled = true;
+            } else {
+                button.addEventListener('click', () => purchaseTheme(card));
             }
         });
     }

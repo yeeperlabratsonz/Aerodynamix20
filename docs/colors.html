@@ -114,6 +114,7 @@
         <h1><span class="logo-a" id="logo-a">A</span>ERODYNAMIX</h1>
         <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:0.4vw;">
             <a href="index.html" style="color:#fff; text-decoration:none; padding:0.55vw 1.3vw; border-radius:0.5vw; font-weight:600; font-size:0.95vw; transition:all 0.3s ease;">Games</a>
+            <a href="shop.html" style="color:#fff; text-decoration:none; padding:0.55vw 1.3vw; border-radius:0.5vw; font-weight:600; font-size:0.95vw; transition:all 0.3s ease;">Shop</a>
             <a href="media-player.html" style="color:#fff; text-decoration:none; padding:0.55vw 1.3vw; border-radius:0.5vw; font-weight:600; font-size:0.95vw; transition:all 0.3s ease;">Media Player</a>
             <a href="dynamix-connect.html" style="color:#fff; text-decoration:none; padding:0.55vw 1.3vw; border-radius:0.5vw; font-weight:600; font-size:0.95vw; transition:all 0.3s ease;">Connect</a>
         </div>
@@ -124,7 +125,8 @@
         <div class="settings-container">
             <h2>Choose Theme</h2>
             <p style="text-align:center; font-size:0.85rem; color:#aaa; margin:-1vw 0 1vw;">Themes cost 200 <img src="images/disc.png" alt="Disc" class="disc-icon sm"> each. Black is free.</p>
-            <div class="theme-options">
+            <p id="no-themes-msg" style="display:none; text-align:center; color:#fff; font-size:1.1rem; padding:1rem 0;">No themes. Visit the Shop to unlock one.</p>
+            <div class="theme-options" id="theme-options">
                 <button class="theme-button black" data-theme="black" onclick="setTheme('black')">Black</button>
                 <button class="theme-button frutiger-aero" data-theme="frutiger-aero" onclick="setTheme('frutiger-aero')">Frutiger Aero · 200 <img src="images/disc.png" alt="Disc" class="disc-icon sm"></button>
                 <button class="theme-button purple" data-theme="purple" onclick="setTheme('purple')">Midnight Purple · 200 <img src="images/disc.png" alt="Disc" class="disc-icon sm"></button>
@@ -145,26 +147,34 @@
         async function refreshPurchasedThemes() {
             if (AeroDiscs.isPaid()) {
                 purchasedThemes = AeroDiscs.VISUAL_THEMES;
-                return;
-            }
-            try {
-                const info = await AeroDiscs.getBalance();
-                purchasedThemes = (info && info.purchased_themes) || [];
-            } catch (e) {
-                purchasedThemes = [];
+            } else {
+                try {
+                    const info = await AeroDiscs.getBalance();
+                    purchasedThemes = (info && info.purchased_themes) || [];
+                } catch (e) {
+                    purchasedThemes = [];
+                }
             }
             updateThemeButtons();
         }
 
         function updateThemeButtons() {
+            const trial = AeroDiscs.isFreeTrial() && !AeroDiscs.isPaid();
+            const empty = document.getElementById('no-themes-msg');
+            const options = document.getElementById('theme-options');
             document.querySelectorAll('.theme-button[data-theme]').forEach(btn => {
                 const theme = btn.dataset.theme;
-                if (theme === 'black') return;
                 const owned = purchasedThemes.includes(theme) || AeroDiscs.isPaid();
-                if (owned) {
-                    btn.classList.add('owned');
-                }
+                // Black is the free default, but the trial page should show
+                // the requested empty state until a visual theme is owned.
+                btn.hidden = trial && (
+                    purchasedThemes.length === 0 ||
+                    (theme !== 'black' && !owned)
+                );
             });
+            const visible = purchasedThemes.length;
+            if (empty) empty.style.display = trial && !visible ? 'block' : 'none';
+            if (options) options.style.display = trial && !visible ? 'none' : '';
         }
 
         async function setTheme(theme) {
