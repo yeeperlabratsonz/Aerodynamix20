@@ -305,6 +305,34 @@ nav a.active:hover {
   font-size: 0.95rem;
 }
 
+.dc-verified-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.05em;
+  height: 1.05em;
+  margin-left: 0.35em;
+  border-radius: 50%;
+  background: #31c96b;
+  color: #071b10;
+  font-size: 0.68em;
+  vertical-align: 0.08em;
+  box-shadow: 0 0 0 2px rgba(49, 201, 107, 0.14), 0 0 10px rgba(49, 201, 107, 0.3);
+}
+
+.dc-verified-badge i {
+  line-height: 1;
+}
+
+#profile-view-username .dc-verified-badge {
+  font-size: 0.55em;
+  vertical-align: 0.18em;
+}
+
+#video-call-peer .dc-verified-badge {
+  font-size: 0.7em;
+}
+
 .dc-post-time {
   font-size: 0.75rem;
   color: rgba(255,255,255,0.45);

@@ -98,7 +98,7 @@
     if (currentUser) {
       authSection.classList.add('hidden');
       postSection.classList.remove('hidden');
-      document.getElementById('current-username').textContent = currentUser.username;
+      setUsernameWithBadge(document.getElementById('current-username'), currentUser.username, currentUser.is_verified);
       updateMyAvatar();
       if (bioInput) {
         bioInput.value = currentUser.bio || '';
@@ -136,6 +136,17 @@
       el.style.backgroundPosition = '';
       el.textContent = (username || '??').slice(0, 2).toUpperCase();
     }
+  }
+
+  function verifiedBadge(isVerified) {
+    return isVerified
+      ? '<span class="dc-verified-badge" title="Verified user" aria-label="Verified user"><i class="fas fa-check"></i></span>'
+      : '';
+  }
+
+  function setUsernameWithBadge(el, username, isVerified) {
+    if (!el) return;
+    el.innerHTML = `${escapeHtml(username || '')}${verifiedBadge(isVerified)}`;
   }
 
   // ── Error helpers ───────────────────────────────────────────────────────────
@@ -285,7 +296,7 @@
               <div class="dc-post-author">
                 <div class="dc-avatar" ${avatarInline}>${initials}</div>
                 <div class="dc-post-meta">
-                  <span class="dc-post-username dc-username-link" data-username="${escapeHtml(post.username)}">${escapeHtml(post.username)}</span>
+                  <span class="dc-post-username dc-username-link" data-username="${escapeHtml(post.username)}">${escapeHtml(post.username)}${verifiedBadge(post.is_verified)}</span>
                   <span class="dc-post-time">${formatTime(post.created_at)}</span>
                 </div>
               </div>
@@ -534,7 +545,7 @@
       const data = await api(`/api/users/${encodeURIComponent(username)}`);
       const u = data.user;
 
-      profileViewUsername.textContent = u.username;
+       setUsernameWithBadge(profileViewUsername, u.username, u.is_verified);
       profileViewBio.textContent      = u.bio || '';
       profileViewJoined.textContent   = u.created_at ? `Joined ${u.created_at}` : '';
       applyAvatarStyle(profileViewAvatar, u.pfp_url, u.pfp_offset_x, u.pfp_offset_y, u.username);
@@ -581,7 +592,13 @@
 
   function showVideoCall(call, status) {
     activeCall = call;
-    videoPeer.textContent = currentUser.id === call.caller_id ? call.recipient_username : call.caller_username;
+    const peerIsVerified = currentUser.id === call.caller_id
+      ? call.recipient_is_verified
+      : call.caller_is_verified;
+    const peerUsername = currentUser.id === call.caller_id
+      ? call.recipient_username
+      : call.caller_username;
+    setUsernameWithBadge(videoPeer, peerUsername, peerIsVerified);
     videoStatus.textContent = status || 'Connecting…';
     setVideoError('');
     videoModal.classList.remove('hidden');
@@ -700,7 +717,7 @@
       const data = await callApi('/api/calls/incoming');
       if (data.calls && data.calls.length) {
         incomingCall = data.calls[0];
-        incomingCallerName.textContent = incomingCall.caller_username;
+        setUsernameWithBadge(incomingCallerName, incomingCall.caller_username, incomingCall.caller_is_verified);
         incomingModal.classList.remove('hidden');
       }
     } catch (e) {

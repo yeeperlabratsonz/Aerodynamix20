@@ -46,6 +46,7 @@ class User(Base):
     purchased_games  = Column(Text, nullable=True, default='[]')
     media_unlocked = Column(Boolean, default=False)
     first_login_bonus_claimed = Column(Boolean, default=False)
+    is_verified    = Column(Boolean, default=False, nullable=False)
     created_at     = Column(DateTime, default=datetime.datetime.utcnow)
     posts          = relationship('Post', back_populates='user', cascade='all, delete-orphan')
 
@@ -104,6 +105,7 @@ _new_user_cols = [
     ('purchased_games',  'TEXT DEFAULT \'[]\''),
     ('media_unlocked', 'BOOLEAN DEFAULT FALSE'             if _is_pg else 'INTEGER DEFAULT 0'),
     ('first_login_bonus_claimed', 'BOOLEAN DEFAULT FALSE' if _is_pg else 'INTEGER DEFAULT 0'),
+    ('is_verified', 'BOOLEAN DEFAULT FALSE' if _is_pg else 'INTEGER DEFAULT 0'),
 ]
 _if_not_exists = 'IF NOT EXISTS' if _is_pg else ''
 for _col, _typedef in _new_user_cols:
@@ -125,6 +127,7 @@ def user_to_dict(user):
     return {
         'id':               user.id,
         'username':         user.username,
+        'is_verified':      bool(user.is_verified),
         'bio':              user.bio or '',
         'pfp_url':          f'/api/pfp/{user.id}' if user.pfp_data else None,
         'pfp_offset_x':     user.pfp_offset_x if user.pfp_offset_x is not None else 50.0,
@@ -748,8 +751,10 @@ def _call_to_dict(call, db):
         'id': call.id,
         'caller_id': call.caller_id,
         'caller_username': caller.username if caller else 'Unknown',
+        'caller_is_verified': bool(caller.is_verified) if caller else False,
         'recipient_id': call.recipient_id,
         'recipient_username': recipient.username if recipient else 'Unknown',
+        'recipient_is_verified': bool(recipient.is_verified) if recipient else False,
         'status': call.status,
         'created_at': call.created_at.strftime('%Y-%m-%d %H:%M:%S') if call.created_at else None,
     }
@@ -936,6 +941,7 @@ def get_posts():
                 'image_url':    f'/uploads/{post.image_filename}' if post.image_filename else None,
                 'created_at':   post.created_at.strftime('%Y-%m-%d %H:%M:%S') if post.created_at else None,
                 'username':     user.username,
+                'is_verified':  bool(user.is_verified),
                 'user_id':      user.id,
                 'pfp_url':      f'/api/pfp/{user.id}' if user.pfp_data else None,
                 'pfp_offset_x': user.pfp_offset_x if user.pfp_offset_x is not None else 50.0,
