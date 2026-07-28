@@ -250,6 +250,7 @@ def _set_session_last_daily(dt):
 
 
 PACIFIC_TZ = ZoneInfo('America/Los_Angeles')
+DAILY_CLAIM_REWARD = 100
 
 
 def _daily_claim_status(last_claim):
@@ -791,13 +792,14 @@ def claim_daily_discs():
                 'next_claim_at': next_midnight.isoformat(),
             }), 429
 
-        user.disc_balance = (user.disc_balance or 0) + 100
+        user.disc_balance = (user.disc_balance or 0) + DAILY_CLAIM_REWARD
         user.last_daily_login = now.replace(tzinfo=None)
         db.commit()
         db.refresh(user)
         db.close()
         return jsonify({
-            'success': True, 'disc_balance': user.disc_balance, 'claimed': 100,
+            'success': True, 'disc_balance': user.disc_balance, 'claimed': DAILY_CLAIM_REWARD,
+            'reward': DAILY_CLAIM_REWARD,
             **_daily_claim_payload(user.last_daily_login),
         })
 
@@ -810,11 +812,12 @@ def claim_daily_discs():
             'next_claim_at': next_midnight.isoformat(),
         }), 429
 
-    new_balance = _get_session_discs() + 100
+    new_balance = _get_session_discs() + DAILY_CLAIM_REWARD
     _set_session_discs(new_balance)
     _set_session_last_daily(now.replace(tzinfo=None))
     return jsonify({
-        'success': True, 'disc_balance': new_balance, 'claimed': 100,
+        'success': True, 'disc_balance': new_balance, 'claimed': DAILY_CLAIM_REWARD,
+        'reward': DAILY_CLAIM_REWARD,
         **_daily_claim_payload(now),
     })
 

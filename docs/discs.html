@@ -42,7 +42,7 @@
       <p>Claim your daily login reward once each day. Your next claim becomes available at 12:00 AM Pacific Time.</p>
       <img class="daily-disc" src="images/disc.png" alt="Dynamix Disc">
       <div class="disc-balance-large" id="disc-balance-large">Loading balance…</div>
-      <button class="daily-claim-button" id="daily-claim-button">Claim daily reward · +100</button>
+      <button class="daily-claim-button" id="daily-claim-button">Claim daily reward · +100 Discs</button>
       <p class="daily-note" id="daily-note">Your reward resets at midnight PST.</p>
     </section>
   </main>
@@ -56,7 +56,7 @@
       function countdown() {
         if (!nextClaimAt) return;
         const ms = new Date(nextClaimAt) - new Date();
-        if (ms <= 0) { button.disabled = false; button.textContent = 'Claim daily reward · +100'; note.textContent = 'Your daily reward is ready.'; clearInterval(timer); return; }
+        if (ms <= 0) { button.disabled = false; button.textContent = 'Claim daily reward · +100 Discs'; note.textContent = 'Your daily reward is ready.'; clearInterval(timer); return; }
         const total = Math.floor(ms / 1000), h = Math.floor(total / 3600), m = Math.floor(total % 3600 / 60), s = total % 60;
         button.disabled = true;
         button.textContent = `Next claim in ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
@@ -66,7 +66,7 @@
         const discs = data.discs || data;
         balance.textContent = `${Number(discs.disc_balance || 0).toLocaleString()} Dynamix Discs`;
         nextClaimAt = discs.next_claim_at;
-        if (discs.daily_available) { button.disabled = false; button.textContent = 'Claim daily reward · +100'; note.textContent = 'Your daily reward is ready.'; }
+        if (discs.daily_available) { button.disabled = false; button.textContent = 'Claim daily reward · +100 Discs'; note.textContent = 'Your daily reward is ready.'; }
         else { countdown(); clearInterval(timer); timer = setInterval(countdown, 1000); }
       }
       async function load() { apply(await api('/api/discs')); }
