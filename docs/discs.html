@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Discs - Aerodynamix</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="stylesheet" href="main.css">
+  <script src="theme.js"></script>
+  <script src="discs.js" defer></script>
+  <style>
+    .discs-page { min-height:100vh; padding:10vw 1.25rem 8rem; display:grid; place-items:center; color:#fff; background:radial-gradient(circle at 50% 25%,rgba(44,127,252,.22),transparent 30rem),#080d18; }
+    .discs-panel { width:min(100%,650px); padding:3rem 2rem 2.25rem; text-align:center; border:1px solid rgba(130,183,255,.25); border-radius:26px; background:linear-gradient(145deg,rgba(14,28,57,.97),rgba(8,14,27,.96)); box-shadow:0 28px 80px rgba(0,0,0,.4),inset 0 1px rgba(255,255,255,.07); }
+    .discs-nav-links { flex:1; display:flex; align-items:center; justify-content:center; gap:.4rem; }
+    .discs-nav-links a, .discs-nav-settings { color:#fff; text-decoration:none; padding:.55rem 1.1rem; border:1px solid transparent; border-radius:.55rem; font-size:.82rem; font-weight:700; transition:background .2s ease,border-color .2s ease,color .2s ease,transform .2s ease; }
+    .discs-nav-links a:hover, .discs-nav-settings:hover { color:#fff; border-color:rgba(130,183,255,.35); background:rgba(44,127,252,.2); transform:translateY(-1px); }
+    .discs-nav-links a.active { color:#07111f; border-color:#fff; background:#fff; box-shadow:0 4px 16px rgba(255,255,255,.12); }
+    .discs-nav-settings { margin-right:1.5vw; border-color:rgba(130,183,255,.25); background:linear-gradient(135deg,#2c7ffc,#1a5fd0); box-shadow:0 6px 18px rgba(44,127,252,.2); }
+    .discs-panel h1 { margin:0 0 .6rem; font-size:clamp(2.3rem,5vw,4rem); letter-spacing:-.05em; }
+    .discs-panel p { margin:0 auto; max-width:480px; color:#aebbd0; line-height:1.6; }
+    .daily-disc { display:block; width:min(52vw,250px); height:min(52vw,250px); margin:2rem auto 1.6rem; object-fit:contain; filter:drop-shadow(0 0 25px rgba(44,127,252,.5)); }
+    .disc-balance-large { color:#c9dcff; font-size:1rem; font-weight:800; }
+    .daily-claim-button { display:inline-flex; align-items:center; justify-content:center; min-width:230px; margin-top:1.5rem; padding:.95rem 1.5rem; border:1px solid #68a8ff; border-radius:12px; color:#fff; background:linear-gradient(135deg,#2c7ffc,#1454c5); box-shadow:0 10px 25px rgba(44,127,252,.28); font:800 .9rem Montserrat,sans-serif; cursor:pointer; transition:.2s ease; }
+    .daily-claim-button:hover:not(:disabled) { transform:translateY(-2px); filter:brightness(1.1); }
+    .daily-claim-button:disabled { border-color:#606b7a; color:#c0c7d1; background:#555d69; box-shadow:none; cursor:default; }
+    .daily-note { margin-top:1rem!important; color:#8290a5!important; font-size:.72rem; }
+    @media(max-width:700px) { .discs-page { padding-top:24vw; } .discs-panel { padding:2.2rem 1.2rem; } }
+  </style>
+</head>
+<body>
+  <nav>
+    <img src="images/logo.gif" alt="logo" onclick="window.location='index.html'">
+    <h1><span class="logo-a">A</span>ERODYNAMIX</h1>
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:.4vw;">
+      <div class="discs-nav-links"><a href="index.html">Games</a><a href="shop.html">Shop</a><a href="card-collection.html">Cards</a><a class="active" href="discs.html">Discs</a><a href="media-player.html">Media Player</a></div>
+    </div>
+    <a class="discs-nav-settings" href="colors.html">Settings</a>
+  </nav>
+  <main class="discs-page">
+    <section class="discs-panel">
+      <h1>Daily Discs</h1>
+      <p>Claim your daily login reward once each day. Your next claim becomes available at 12:00 AM Pacific Time.</p>
+      <img class="daily-disc" src="images/disc.png" alt="Dynamix Disc">
+      <div class="disc-balance-large" id="disc-balance-large">Loading balance…</div>
+      <button class="daily-claim-button" id="daily-claim-button">Claim daily reward · +100</button>
+      <p class="daily-note" id="daily-note">Your reward resets at midnight PST.</p>
+    </section>
+  </main>
+  <script>
+    (function () {
+      const button = document.getElementById('daily-claim-button');
+      const balance = document.getElementById('disc-balance-large');
+      const note = document.getElementById('daily-note');
+      let nextClaimAt = null, timer = null;
+      const api = async (path, options) => { const r = await fetch(path, { credentials:'same-origin', ...options }); const d = await r.json(); if (!r.ok) throw new Error(d.error || 'Request failed'); return d; };
+      function countdown() {
+        if (!nextClaimAt) return;
+        const ms = new Date(nextClaimAt) - new Date();
+        if (ms <= 0) { button.disabled = false; button.textContent = 'Claim daily reward · +100'; note.textContent = 'Your daily reward is ready.'; clearInterval(timer); return; }
+        const total = Math.floor(ms / 1000), h = Math.floor(total / 3600), m = Math.floor(total % 3600 / 60), s = total % 60;
+        button.disabled = true;
+        button.textContent = `Next claim in ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        note.textContent = 'Come back at 12:00 AM Pacific Time to claim again.';
+      }
+      function apply(data) {
+        const discs = data.discs || data;
+        balance.textContent = `${Number(discs.disc_balance || 0).toLocaleString()} Dynamix Discs`;
+        nextClaimAt = discs.next_claim_at;
+        if (discs.daily_available) { button.disabled = false; button.textContent = 'Claim daily reward · +100'; note.textContent = 'Your daily reward is ready.'; }
+        else { countdown(); clearInterval(timer); timer = setInterval(countdown, 1000); }
+      }
+      async function load() { apply(await api('/api/discs')); }
+      button.addEventListener('click', async () => {
+        button.disabled = true; button.textContent = 'Claiming…';
+        try { apply(await api('/api/discs/claim', { method:'POST' })); }
+        catch (e) { note.textContent = e.message; load(); }
+      });
+      load().catch(() => { balance.textContent = 'Could not load balance'; button.disabled = true; });
+    })();
+  </script>
+  <script src="bubble-overlay.js"></script><script src="snow-overlay.js"></script>
+</body>
+</html>

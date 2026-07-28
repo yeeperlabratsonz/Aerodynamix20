@@ -89,25 +89,10 @@
             widget.className = 'disc-nav-widget';
             widget.innerHTML = `
                 <div class="disc-balance" id="disc-balance-display">--</div>
-                <button class="disc-claim-btn" id="disc-claim-btn" title="Claim daily bonus">+${COSTS.DAILY_BONUS}</button>
+                <a class="disc-claim-btn" id="disc-claim-btn" href="discs.html" title="Claim daily bonus">Claim</a>
             `;
             nav.appendChild(widget);
 
-            widget.querySelector('#disc-claim-btn').addEventListener('click', async () => {
-                const btn = widget.querySelector('#disc-claim-btn');
-                btn.disabled = true;
-                btn.textContent = '…';
-                try {
-                    const result = await claimDaily();
-                    updateNavWidget(result.disc_balance, false);
-                    btn.textContent = 'Got it!';
-                    setTimeout(() => { btn.textContent = '+' + COSTS.DAILY_BONUS; btn.disabled = false; }, 1500);
-                } catch (e) {
-                    alert(e.message);
-                    btn.textContent = '+' + COSTS.DAILY_BONUS;
-                    btn.disabled = false;
-                }
-            });
         });
         return widget;
     }

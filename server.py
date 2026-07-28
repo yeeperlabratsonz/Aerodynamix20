@@ -1,5 +1,6 @@
 import os
 import datetime
+from zoneinfo import ZoneInfo
 import re
 import uuid
 import random
@@ -158,6 +159,7 @@ def allowed_file(filename):
 
 
 def user_to_dict(user):
+    daily_available, next_claim_at = _daily_claim_status(user.last_daily_login)
     return {
         'id':               user.id,
         'username':         user.username,
@@ -170,7 +172,8 @@ def user_to_dict(user):
         'media_unlocked': bool(user.media_unlocked),
         'purchased_themes': json.loads(user.purchased_themes or '[]') if user.purchased_themes else [],
         'purchased_games':  json.loads(user.purchased_games  or '[]') if user.purchased_games  else [],
-        'daily_available': user.last_daily_login is None or (datetime.datetime.utcnow() - user.last_daily_login).days >= 1,
+        'daily_available': daily_available,
+        'next_claim_at': next_claim_at.isoformat(),
     }
 
 
@@ -244,6 +247,34 @@ def _get_session_last_daily():
 
 def _set_session_last_daily(dt):
     session['last_daily_login'] = dt.isoformat()
+
+
+PACIFIC_TZ = ZoneInfo('America/Los_Angeles')
+
+
+def _daily_claim_status(last_claim):
+    """Daily claims reset at 12:00 AM America/Los_Angeles."""
+    now = datetime.datetime.now(datetime.timezone.utc)
+    today_pacific = now.astimezone(PACIFIC_TZ).date()
+    last_date = None
+    if last_claim:
+        if last_claim.tzinfo is None:
+            last_claim = last_claim.replace(tzinfo=datetime.timezone.utc)
+        last_date = last_claim.astimezone(PACIFIC_TZ).date()
+    next_midnight = datetime.datetime.combine(
+        today_pacific + datetime.timedelta(days=1),
+        datetime.time.min,
+        tzinfo=PACIFIC_TZ,
+    ).astimezone(datetime.timezone.utc)
+    return last_date != today_pacific, next_midnight
+
+
+def _daily_claim_payload(last_claim):
+    available, next_claim_at = _daily_claim_status(last_claim)
+    return {
+        'daily_available': available,
+        'next_claim_at': next_claim_at.isoformat(),
+    }
 
 
 TRADING_CARD_PACK_COST = 100
@@ -328,6 +359,7 @@ def _set_session_purchased_games(games):
 
 def _anonymous_discs_dict():
     last = _get_session_last_daily()
+    daily_available, next_claim_at = _daily_claim_status(last)
     return {
         'id':               None,
         'username':         None,
@@ -338,7 +370,8 @@ def _anonymous_discs_dict():
         'disc_balance':     _get_session_discs(),
         'media_unlocked': _is_session_media_unlocked(),
         'purchased_themes': _get_session_purchased_themes(),
-        'daily_available':  last is None or (datetime.datetime.utcnow() - last).days >= 1,
+        'daily_available': daily_available,
+        'next_claim_at': next_claim_at.isoformat(),
     }
 
 
@@ -741,7 +774,7 @@ def sell_trading_card():
 
 @app.route('/api/discs/claim', methods=['POST'])
 def claim_daily_discs():
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(datetime.timezone.utc)
 
     if 'user_id' in session:
         db = DBSession()
@@ -750,26 +783,40 @@ def claim_daily_discs():
             db.close()
             return jsonify({'error': 'User not found'}), 404
 
-        if user.last_daily_login and (now - user.last_daily_login).days < 1:
+        available, next_midnight = _daily_claim_status(user.last_daily_login)
+        if not available:
             db.close()
-            return jsonify({'error': 'Daily bonus already claimed'}), 429
+            return jsonify({
+                'error': 'Daily bonus already claimed',
+                'next_claim_at': next_midnight.isoformat(),
+            }), 429
 
         user.disc_balance = (user.disc_balance or 0) + 100
-        user.last_daily_login = now
+        user.last_daily_login = now.replace(tzinfo=None)
         db.commit()
         db.refresh(user)
         db.close()
-        return jsonify({'success': True, 'disc_balance': user.disc_balance, 'claimed': 100})
+        return jsonify({
+            'success': True, 'disc_balance': user.disc_balance, 'claimed': 100,
+            **_daily_claim_payload(user.last_daily_login),
+        })
 
     # Anonymous users use session-based balance
     last = _get_session_last_daily()
-    if last and (now - last).days < 1:
-        return jsonify({'error': 'Daily bonus already claimed'}), 429
+    available, next_midnight = _daily_claim_status(last)
+    if not available:
+        return jsonify({
+            'error': 'Daily bonus already claimed',
+            'next_claim_at': next_midnight.isoformat(),
+        }), 429
 
     new_balance = _get_session_discs() + 100
     _set_session_discs(new_balance)
-    _set_session_last_daily(now)
-    return jsonify({'success': True, 'disc_balance': new_balance, 'claimed': 100})
+    _set_session_last_daily(now.replace(tzinfo=None))
+    return jsonify({
+        'success': True, 'disc_balance': new_balance, 'claimed': 100,
+        **_daily_claim_payload(now),
+    })
 
 
 @app.route('/api/discs/spend', methods=['POST'])
