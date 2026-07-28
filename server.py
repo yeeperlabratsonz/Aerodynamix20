@@ -256,28 +256,35 @@ RARITY_STYLES = {
     'Mythic': {'accent': '#d94b62', 'glow': 3},
     'GODLY': {'accent': '#ff4bd8', 'glow': 4},
 }
+CARD_SELL_VALUES = {
+    'Common': 10,
+    'Uncommon': 15,
+    'Rare': 20,
+    'Epic': 25,
+    'Legendary': 50,
+    'Mythic': 100,
+    'GODLY': 500,
+}
 
 # Cards are built from the same game art shown in the Games shop.
-# This is intentionally a Godly-only preview set while the card system is
-# being branded and tuned for Aerodynamix.
+# Cards in the Aerodynamix set use the rarity odds shown in the shop.
 AERODYNAMIX_CARD_POOL = [
-    {'name': 'Run 3', 'image': 'images/run-3.jpg', 'number': '001'},
-    {'name': 'Drive Mad', 'image': 'images/drive-mad.jpg', 'number': '002'},
-    {'name': 'Retro Bowl', 'image': 'images/retro-bowl.jpg', 'number': '003'},
-    {'name': 'Slope', 'image': 'images/slope.jpg', 'number': '004'},
-    {'name': 'Minecraft', 'image': 'images/mc.png', 'number': '005'},
-    {'name': 'Super Smash Flash', 'image': 'images/supersmashflash.jpg', 'number': '006'},
-    {'name': "Papa's Pizzeria", 'image': 'images/papaspizzeria.png', 'number': '007'},
-    {'name': 'Friday Night Funkin’', 'image': 'images/fridaynightfunkin.png', 'number': '008'},
-    {'name': 'Run 2', 'image': 'images/run-2.png', 'number': '009'},
-    {'name': 'Pico’s School', 'image': 'images/picoschool.png', 'number': '010'},
-    {'name': 'World’s Hardest Game', 'image': 'images/worldshardestgame.png', 'number': '011'},
-    {'name': 'Alien Hominid', 'image': 'images/alien-hominid.png', 'number': '012'},
-    {'name': 'Geometry Dash Lite', 'image': 'images/geometry-dash-lite.jpg', 'number': '013'},
-    {'name': 'DOOM', 'image': 'images/doom.png', 'number': '014'},
+    {'name': 'Run 3', 'image': 'images/run-3.jpg', 'rarity': 'Common', 'number': '001'},
+    {'name': 'Drive Mad', 'image': 'images/drive-mad.jpg', 'rarity': 'Common', 'number': '002'},
+    {'name': 'Retro Bowl', 'image': 'images/retro-bowl.jpg', 'rarity': 'Common', 'number': '003'},
+    {'name': 'Slope', 'image': 'images/slope.jpg', 'rarity': 'Uncommon', 'number': '004'},
+    {'name': 'Minecraft', 'image': 'images/mc.png', 'rarity': 'Uncommon', 'number': '005'},
+    {'name': 'Super Smash Flash', 'image': 'images/supersmashflash.jpg', 'rarity': 'Rare', 'number': '006'},
+    {'name': "Papa's Pizzeria", 'image': 'images/papaspizzeria.png', 'rarity': 'Rare', 'number': '007'},
+    {'name': 'Friday Night Funkin’', 'image': 'images/fridaynightfunkin.png', 'rarity': 'Epic', 'number': '008'},
+    {'name': 'Run 2', 'image': 'images/run-2.png', 'rarity': 'Epic', 'number': '009'},
+    {'name': 'Pico’s School', 'image': 'images/picoschool.png', 'rarity': 'Legendary', 'number': '010'},
+    {'name': 'World’s Hardest Game', 'image': 'images/worldshardestgame.png', 'rarity': 'Legendary', 'number': '011'},
+    {'name': 'Alien Hominid', 'image': 'images/alien-hominid.png', 'rarity': 'Mythic', 'number': '012'},
+    {'name': 'Geometry Dash Lite', 'image': 'images/geometry-dash-lite.jpg', 'rarity': 'Mythic', 'number': '013'},
+    {'name': 'DOOM', 'image': 'images/doom.png', 'rarity': 'GODLY', 'number': '014'},
 ]
 for _card in AERODYNAMIX_CARD_POOL:
-    _card['rarity'] = 'GODLY'
     _card.update(RARITY_STYLES[_card['rarity']])
 
 
@@ -287,18 +294,6 @@ def _get_session_trading_cards():
 
 def _set_session_trading_cards(cards):
     session['trading_cards'] = cards
-
-
-def _normalize_aerodynamix_cards(cards):
-    """Keep previously collected placeholder cards consistent with the demo set."""
-    normalized = []
-    for card in cards:
-        updated = dict(card)
-        updated['rarity'] = 'GODLY'
-        updated['game'] = 'Aerodynamix'
-        updated.update(RARITY_STYLES['GODLY'])
-        normalized.append(updated)
-    return normalized
 
 
 def _get_session_purchased_themes():
@@ -643,8 +638,8 @@ def get_trading_cards():
         if not user:
             return jsonify({'error': 'User not found'}), 404
         cards = json.loads(user.trading_cards or '[]') if user.trading_cards else []
-        return jsonify({'cards': _normalize_aerodynamix_cards(cards)})
-    return jsonify({'cards': _normalize_aerodynamix_cards(_get_session_trading_cards())})
+        return jsonify({'cards': cards})
+    return jsonify({'cards': _get_session_trading_cards()})
 
 
 @app.route('/api/trading-cards/purchase-pack', methods=['POST'])
@@ -657,7 +652,8 @@ def purchase_trading_card_pack():
     pack_cost = 0 if full_version else TRADING_CARD_PACK_COST
     cards = random.choices(
         AERODYNAMIX_CARD_POOL,
-        k=3
+        weights=[28, 20, 14, 10, 7, 4, 1, 1, 1, 1, 1, 1, 1, 0.35],
+        k=3,
     )
     awarded = [
         {**card, 'id': str(uuid.uuid4()), 'game': 'Aerodynamix',
@@ -696,6 +692,51 @@ def purchase_trading_card_pack():
     _set_session_discs(balance - pack_cost)
     return jsonify({'success': True, 'cards': awarded,
                     'disc_balance': _get_session_discs()})
+
+
+@app.route('/api/trading-cards/sell', methods=['POST'])
+def sell_trading_card():
+    data = request.get_json(silent=True) or {}
+    card_id = str(data.get('card_id') or '').strip()
+    if not card_id:
+        return jsonify({'error': 'Card ID is required'}), 400
+
+    def remove_card(cards):
+        for index, card in enumerate(cards):
+            if str(card.get('id', '')) == card_id:
+                return cards[:index] + cards[index + 1:], card
+        return None, None
+
+    if 'user_id' in session:
+        db = DBSession()
+        user = db.query(User).filter_by(id=session['user_id']).first()
+        if not user:
+            db.close()
+            return jsonify({'error': 'User not found'}), 404
+        owned = json.loads(user.trading_cards or '[]') if user.trading_cards else []
+        remaining, card = remove_card(owned)
+        if not card:
+            db.close()
+            return jsonify({'error': 'Card not found'}), 404
+        rarity = str(card.get('rarity') or 'Common').upper()
+        value = CARD_SELL_VALUES.get(rarity, CARD_SELL_VALUES['Common'])
+        user.trading_cards = json.dumps(remaining)
+        user.disc_balance = (user.disc_balance or 0) + value
+        db.commit()
+        balance = user.disc_balance
+        db.close()
+        return jsonify({'success': True, 'sold': card, 'tokens': value, 'disc_balance': balance})
+
+    owned = _get_session_trading_cards()
+    remaining, card = remove_card(owned)
+    if not card:
+        return jsonify({'error': 'Card not found'}), 404
+    rarity = str(card.get('rarity') or 'Common').upper()
+    value = CARD_SELL_VALUES.get(rarity, CARD_SELL_VALUES['Common'])
+    _set_session_trading_cards(remaining)
+    balance = _get_session_discs() + value
+    _set_session_discs(balance)
+    return jsonify({'success': True, 'sold': card, 'tokens': value, 'disc_balance': balance})
 
 
 @app.route('/api/discs/claim', methods=['POST'])

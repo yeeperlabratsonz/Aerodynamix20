@@ -36,6 +36,8 @@
         .shop-buy:hover { filter:brightness(1.12); transform:translateY(-1px); }
         .shop-buy:disabled { background:rgba(255,255,255,.09); border-color:rgba(255,255,255,.12); color:#9ebcff; cursor:default; transform:none; }
         .shop-card.owned { border-color:rgba(74,222,128,.25); }
+        .pack-odds { margin-top:.8rem; color:rgba(255,255,255,.52); font-size:.68rem; line-height:1.65; }
+        .pack-odds b { color:#c9dcff; letter-spacing:.05em; text-transform:uppercase; }
         .shop-card.owned .shop-card-body::before { content:'Unlocked'; color:#65e69a; font-size:.63rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; }
          .card-pack-section { margin-top:1rem; }
          .card-pack { position:relative; overflow:hidden; border:1px solid rgba(135,184,255,.3); border-radius:20px; background:linear-gradient(135deg,#142d5e,#101426 58%,#271347); box-shadow:0 18px 45px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.1); }
@@ -123,6 +125,7 @@
         <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:0.4vw;">
             <a href="index.html" style="color:#fff; text-decoration:none; padding:0.55vw 1.3vw; border-radius:0.5vw; font-weight:600; font-size:0.95vw;">Games</a>
             <a href="shop.html" style="color:#000; text-decoration:none; padding:0.55vw 1.3vw; background:#fff; border-radius:0.5vw; font-weight:600; font-size:0.95vw;">Shop</a>
+            <a href="card-collection.html" style="color:#fff; text-decoration:none; padding:0.55vw 1.3vw; border-radius:0.5vw; font-weight:600; font-size:0.95vw;">Card Collection</a>
             <a href="media-player.html" style="color:#fff; text-decoration:none; padding:0.55vw 1.3vw; border-radius:0.5vw; font-weight:600; font-size:0.95vw;">Media Player</a>
             <a href="dynamix-connect.html" style="color:#fff; text-decoration:none; padding:0.55vw 1.3vw; border-radius:0.5vw; font-weight:600; font-size:0.95vw;">Connect</a>
         </div>
@@ -206,7 +209,7 @@
                           <div class="pack-edge pack-edge-top"></div>
                           <div class="pack-edge pack-edge-bottom"></div>
                       </div>
-                      <div class="pack-copy"><h2>Aerodynamix Starter Pack</h2><p>Rip open a digital pack and discover 3 Godly Aerodynamix cards featuring games from the arcade.</p><div class="pack-price"><img src="images/disc.png" alt="" class="disc-icon sm"> 100 Dynamix Discs</div></div>
+                      <div class="pack-copy"><h2>Aerodynamix Starter Pack</h2><p>Rip open a digital pack and discover 3 random cards from the Aerodynamix arcade set.</p><div class="pack-price"><img src="images/disc.png" alt="" class="disc-icon sm"> 100 Dynamix Discs</div><div class="pack-odds"><b>Pack odds</b><br>Common 68.62% · Uncommon 18.81% · Rare 5.53% · Epic 2.21%<br>Legendary 2.21% · Mythic 2.21% · Godly 0.39%</div></div>
                      <button class="shop-buy pack-buy" id="buy-card-pack">Open pack<small>3 cards guaranteed</small></button>
                  </div>
              </article>
