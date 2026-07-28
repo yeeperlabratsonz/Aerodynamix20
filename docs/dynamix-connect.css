@@ -817,14 +817,29 @@ nav a.active:hover {
 }
 
 .dc-call-control {
-  width: 44px;
-  height: 44px;
+  min-width: 82px;
+  min-height: 54px;
+  padding: .45rem .7rem;
   border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 50%;
+  border-radius: 14px;
   color: #fff;
   background: rgba(255,255,255,0.1);
   cursor: pointer;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .22rem;
   transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.dc-call-control i {
+  font-size: 1rem;
+}
+
+.dc-call-control span {
+  font: 700 .62rem Montserrat, sans-serif;
+  letter-spacing: .02em;
 }
 
 .dc-call-control:hover {
@@ -840,6 +855,7 @@ nav a.active:hover {
 .dc-call-control.dc-end-call {
   background: #dc3545;
   border-color: #ff6977;
+  min-width: 100px;
 }
 
 .dc-video-error {
@@ -866,6 +882,17 @@ nav a.active:hover {
     right: 0.6rem;
     bottom: 0.6rem;
     width: 32%;
+  }
+  .dc-call-controls {
+    gap: .5rem;
+    padding-bottom: .35rem;
+  }
+  .dc-call-control {
+    min-width: 76px;
+    min-height: 52px;
+  }
+  .dc-call-control.dc-end-call {
+    min-width: 92px;
   }
 }
 

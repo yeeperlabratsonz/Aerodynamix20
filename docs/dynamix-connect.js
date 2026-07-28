@@ -69,6 +69,9 @@
   let signalCursor = 0;
   let incomingCall = null;
   let callPollTimer = null;
+  let pendingCandidates = [];
+  let remoteDescriptionReady = false;
+  let iceServers = [{ urls: ['stun:stun.l.google.com:19302'] }];
 
   // ── API helper ──────────────────────────────────────────────────────────────
   async function api(path, options = {}) {
@@ -592,17 +595,25 @@
     try {
       localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       localVideo.srcObject = localStream;
+      localVideo.play().catch(() => {});
       return localStream;
     } catch (e) {
       throw new Error('Camera and microphone access is required to make a video call.');
     }
   }
 
+  async function loadIceConfig() {
+    try {
+      const data = await callApi('/api/calls/config');
+      if (Array.isArray(data.iceServers) && data.iceServers.length) iceServers = data.iceServers;
+    } catch (e) {
+      // Keep the public STUN fallback if configuration is unavailable.
+    }
+  }
+
   function createPeer() {
     if (peerConnection) return peerConnection;
-    peerConnection = new RTCPeerConnection({
-      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-    });
+    peerConnection = new RTCPeerConnection({ iceServers });
     peerConnection.onicecandidate = event => {
       if (event.candidate && activeCall) {
         sendSignal('candidate', event.candidate.toJSON()).catch(console.error);
@@ -612,6 +623,9 @@
       remoteVideo.srcObject = event.streams[0];
       remotePlaceholder.classList.add('hidden');
       videoStatus.textContent = 'Connected';
+      remoteVideo.play().catch(() => {
+        videoStatus.textContent = 'Tap the video to start playback';
+      });
     };
     peerConnection.onconnectionstatechange = () => {
       if (peerConnection.connectionState === 'connected') videoStatus.textContent = 'Connected';
@@ -621,6 +635,14 @@
     };
     if (localStream) localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
     return peerConnection;
+  }
+
+  async function addPendingCandidates() {
+    if (!peerConnection || !remoteDescriptionReady) return;
+    const candidates = pendingCandidates.splice(0);
+    for (const candidate of candidates) {
+      try { await peerConnection.addIceCandidate(candidate); } catch (e) { console.warn('ICE candidate rejected', e); }
+    }
   }
 
   async function sendSignal(type, payload) {
@@ -634,6 +656,7 @@
 
   async function startCallerCall(username) {
     try {
+      await loadIceConfig();
       const data = await callApi('/api/calls', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -659,6 +682,7 @@
     incomingCall = null;
     incomingModal.classList.add('hidden');
     try {
+      await loadIceConfig();
       await callApi(`/api/calls/${call.id}/accept`, { method: 'POST' });
       await getMedia();
       showVideoCall(call, 'Joining…');
@@ -693,14 +717,19 @@
         const pc = createPeer();
         if (signal.type === 'offer') {
           await pc.setRemoteDescription(signal.payload);
+          remoteDescriptionReady = true;
+          await addPendingCandidates();
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           await sendSignal('answer', pc.localDescription.toJSON());
           videoStatus.textContent = 'Connecting…';
         } else if (signal.type === 'answer') {
           await pc.setRemoteDescription(signal.payload);
+          remoteDescriptionReady = true;
+          await addPendingCandidates();
         } else if (signal.type === 'candidate') {
-          await pc.addIceCandidate(signal.payload);
+          if (remoteDescriptionReady) await pc.addIceCandidate(signal.payload);
+          else pendingCandidates.push(signal.payload);
         }
       }
       if (data.status === 'ended') cleanupCall(false);
@@ -714,6 +743,8 @@
     const call = activeCall;
     activeCall = null;
     signalCursor = 0;
+    pendingCandidates = [];
+    remoteDescriptionReady = false;
     if (notify && call) {
       try { await callApi(`/api/calls/${call.id}/end`, { method: 'POST' }); } catch (e) {}
     }
@@ -759,6 +790,7 @@
     toggleCameraBtn.classList.toggle('is-off', !track.enabled);
     toggleCameraBtn.innerHTML = `<i class="fas fa-video${track.enabled ? '' : '-slash'}"></i>`;
   });
+  if (remoteVideo) remoteVideo.addEventListener('click', () => remoteVideo.play().catch(() => {}));
 
   // ── Init ─────────────────────────────────────────────────────────────────────
   checkMe().then(() => {

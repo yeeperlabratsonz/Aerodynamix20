@@ -800,6 +800,32 @@ def incoming_calls():
         db.close()
 
 
+@app.route('/api/calls/config', methods=['GET'])
+def call_config():
+    """Return browser-safe ICE configuration.
+
+    STUN works for many networks. Optional TURN values can be supplied through
+    TURN_SERVER, TURN_USERNAME, and TURN_CREDENTIAL for reliable NAT traversal.
+    """
+    db = DBSession()
+    user, error = _require_call_user(db)
+    db.close()
+    if error:
+        return error
+
+    ice_servers = [{'urls': ['stun:stun.l.google.com:19302']}]
+    turn_server = os.environ.get('TURN_SERVER', '').strip()
+    turn_username = os.environ.get('TURN_USERNAME', '').strip()
+    turn_credential = os.environ.get('TURN_CREDENTIAL', '').strip()
+    if turn_server and turn_username and turn_credential:
+        ice_servers.append({
+            'urls': turn_server,
+            'username': turn_username,
+            'credential': turn_credential,
+        })
+    return jsonify({'iceServers': ice_servers})
+
+
 @app.route('/api/calls/<call_id>', methods=['GET'])
 def get_call(call_id):
     db = DBSession()
