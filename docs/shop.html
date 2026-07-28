@@ -41,24 +41,24 @@
          .card-pack { position:relative; overflow:hidden; border:1px solid rgba(135,184,255,.3); border-radius:20px; background:linear-gradient(135deg,#142d5e,#101426 58%,#271347); box-shadow:0 18px 45px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.1); }
          .card-pack::before { content:''; position:absolute; inset:-40%; background:conic-gradient(from 180deg,transparent,#64c9ff22,transparent,#d39cff22,transparent); animation:packShimmer 8s linear infinite; }
          .card-pack-inner { position:relative; display:flex; align-items:center; justify-content:space-between; gap:2rem; padding:2.2rem 2.5rem; }
-         .pack-art { width:168px; height:226px; flex:none; position:relative; transform-style:preserve-3d; animation:boosterSpin 10s cubic-bezier(.45,.05,.55,.95) infinite; filter:drop-shadow(24px 30px 18px #000c) drop-shadow(0 0 20px #5edcff44); }
+         .pack-art { width:168px; height:226px; flex:none; position:relative; transform-style:preserve-3d; animation:boosterSpin 10s cubic-bezier(.45,.05,.55,.95) infinite; filter:drop-shadow(20px 26px 16px #000b) drop-shadow(0 0 18px #5edcff3d); }
          .pack-art:hover { animation-play-state:paused; }
          .pack-face, .pack-edge { position:absolute; display:block; backface-visibility:hidden; }
          .pack-face { inset:0; overflow:hidden; border:2px solid #8be4ff; border-radius:11px 13px 14px 12px; color:#fff; text-align:center; }
-         .pack-front { overflow:hidden; transform:translateZ(26px) rotateX(1deg); background:linear-gradient(108deg,#a8f2ff 0%,#1684ba 9%,#3c4cba 39%,#63318f 72%,#17223f 100%); box-shadow:inset 0 0 22px #07112f99,inset 14px 0 18px #ffffff1b,inset -12px 0 22px #07112f55,0 0 0 4px #14295b,0 19px 32px #000d,0 0 24px #62dcff44; }
+         .pack-front { overflow:hidden; transform:translateZ(11px) rotateX(1deg); background:linear-gradient(108deg,#a8f2ff 0%,#1684ba 9%,#3c4cba 39%,#63318f 72%,#17223f 100%); box-shadow:inset 0 0 22px #07112f99,inset 14px 0 18px #ffffff1b,inset -12px 0 22px #07112f55,0 0 0 4px #14295b,0 15px 25px #000b,0 0 20px #62dcff3d; }
          .pack-front::before { content:''; position:absolute; inset:18px 7px 15px; border:1px solid #b8f3ff88; border-radius:5px; background:radial-gradient(ellipse at 50% 56%,#94eaff42 0 25%,transparent 26%),repeating-linear-gradient(135deg,transparent 0 15px,#8ceaff1c 16px 18px),linear-gradient(155deg,#1e76b7,#49258c 60%,#111b43); box-shadow:inset 12px 0 20px #ffffff14,inset -15px 0 25px #07112f55; }
          .pack-front::after { content:''; position:absolute; inset:0; pointer-events:none; background:linear-gradient(73deg,transparent 12%,#fff7 22%,transparent 30%,transparent 62%,#fff5 72%,transparent 82%),radial-gradient(ellipse at 50% 45%,transparent 48%,#00123855 100%); mix-blend-mode:screen; opacity:.58; }
-         .pack-back { transform:rotateY(180deg) translateZ(26px); background:linear-gradient(110deg,#101d48,#374da4 45%,#111a3d); box-shadow:inset 15px 0 20px #ffffff15,inset -15px 0 22px #0008,0 18px 30px #000c; }
+         .pack-back { transform:rotateY(180deg) translateZ(11px); background:linear-gradient(110deg,#101d48,#374da4 45%,#111a3d); box-shadow:inset 15px 0 20px #ffffff15,inset -15px 0 22px #0008,0 15px 25px #000b; }
          .pack-back::after { content:'RUN 3\\A RUNNER SERIES\\A 3 CARDS'; white-space:pre; position:absolute; inset:35% 0 auto; color:#c8f5ff; font-size:.48rem; line-height:1.7; letter-spacing:.1em; }
          .pack-edge { background:linear-gradient(180deg,#5fcfff,#223878 45%,#c166e4 80%,#16234e); border:1px solid #92e8ff; }
          .pack-edge { background:linear-gradient(90deg,#071329,#55b9d6 26%,#d2f8ff 43%,#0b3159 72%,#020917); border:1px solid #92e8ff; box-shadow:inset 4px 0 7px #fff4,inset -6px 0 10px #0008; }
-         .pack-edge-left, .pack-edge-right { width:46px; height:226px; top:0; border-radius:10px; }
-         .pack-edge-left { left:calc(50% - 23px); transform:rotateY(90deg) translateZ(84px); }
-         .pack-edge-right { left:calc(50% - 23px); transform:rotateY(-90deg) translateZ(84px); }
-         .pack-edge-top, .pack-edge-bottom { width:168px; height:28px; left:0; border-radius:6px; }
-         .pack-edge-top { top:calc(50% - 14px); transform:rotateX(90deg) translateZ(113px); }
-         .pack-edge-bottom { top:calc(50% - 14px); transform:rotateX(-90deg) translateZ(113px); }
-         .pack-fold-left, .pack-fold-right { position:absolute; z-index:4; top:39px; width:17px; height:172px; background:linear-gradient(90deg,#061430,#b9f6ff99 35%,#164d80 62%,#07142d); opacity:.78; box-shadow:0 0 5px #001b; }
+         .pack-edge-left, .pack-edge-right { width:22px; height:226px; top:0; border-radius:5px; }
+         .pack-edge-left { left:calc(50% - 11px); transform:rotateY(90deg) translateZ(84px); }
+         .pack-edge-right { left:calc(50% - 11px); transform:rotateY(-90deg) translateZ(84px); }
+         .pack-edge-top, .pack-edge-bottom { width:168px; height:14px; left:0; border-radius:4px; }
+         .pack-edge-top { top:calc(50% - 7px); transform:rotateX(90deg) translateZ(113px); }
+         .pack-edge-bottom { top:calc(50% - 7px); transform:rotateX(-90deg) translateZ(113px); }
+         .pack-fold-left, .pack-fold-right { position:absolute; z-index:4; top:39px; width:10px; height:172px; background:linear-gradient(90deg,#061430,#b9f6ff99 35%,#164d80 62%,#07142d); opacity:.78; box-shadow:0 0 5px #001b; }
          .pack-fold-left { left:5px; transform:skewY(-3deg); border-radius:4px 0 0 7px; }
          .pack-fold-right { right:5px; transform:skewY(3deg); border-radius:0 4px 7px 0; }
          .pack-header, .pack-footer { position:absolute; left:-1px; right:-1px; z-index:2; display:grid; place-items:center; color:#dfffff; background:repeating-linear-gradient(135deg,#0e8ca7 0 5px,#19b9bc 5px 9px,#087a9a 9px 13px); border:1px solid #9fffff; box-shadow:inset 0 2px 4px #ffffff55, inset 0 -3px 5px #003d5d88,0 1px 2px #001b; text-transform:uppercase; letter-spacing:.08em; text-shadow:0 1px 3px #00334a; }
