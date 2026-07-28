@@ -44,6 +44,7 @@ class User(Base):
     pfp_offset_y   = Column(Float, default=50.0)
     disc_balance   = Column(Integer, default=0)
     last_daily_login = Column(DateTime, nullable=True)
+    last_daily_card_pack = Column(DateTime, nullable=True)
     purchased_themes = Column(Text, nullable=True, default='[]')
     purchased_games  = Column(Text, nullable=True, default='[]')
     trading_cards    = Column(Text, nullable=True, default='[]')
@@ -135,6 +136,7 @@ _new_user_cols = [
     ('pfp_offset_y',   'DOUBLE PRECISION DEFAULT 50.0'    if _is_pg else 'FLOAT DEFAULT 50.0'),
     ('disc_balance',   'INTEGER DEFAULT 0'),
     ('last_daily_login', 'TIMESTAMP'                       if _is_pg else 'DATETIME'),
+    ('last_daily_card_pack', 'TIMESTAMP'                  if _is_pg else 'DATETIME'),
     ('purchased_themes', 'TEXT DEFAULT \'[]\''),
     ('purchased_games',  'TEXT DEFAULT \'[]\''),
     ('trading_cards',    'TEXT DEFAULT \'[]\''),
@@ -160,6 +162,7 @@ def allowed_file(filename):
 
 def user_to_dict(user):
     daily_available, next_claim_at = _daily_claim_status(user.last_daily_login)
+    card_pack_available, next_card_pack_at = _daily_claim_status(user.last_daily_card_pack)
     return {
         'id':               user.id,
         'username':         user.username,
@@ -174,6 +177,8 @@ def user_to_dict(user):
         'purchased_games':  json.loads(user.purchased_games  or '[]') if user.purchased_games  else [],
         'daily_available': daily_available,
         'next_claim_at': next_claim_at.isoformat(),
+        'card_pack_available': card_pack_available,
+        'next_card_pack_at': next_card_pack_at.isoformat(),
     }
 
 
@@ -247,6 +252,20 @@ def _get_session_last_daily():
 
 def _set_session_last_daily(dt):
     session['last_daily_login'] = dt.isoformat()
+
+
+def _get_session_last_card_pack():
+    last = session.get('last_daily_card_pack')
+    if last:
+        try:
+            return datetime.datetime.fromisoformat(last)
+        except ValueError:
+            return None
+    return None
+
+
+def _set_session_last_card_pack(dt):
+    session['last_daily_card_pack'] = dt.isoformat()
 
 
 PACIFIC_TZ = ZoneInfo('America/Los_Angeles')
@@ -361,6 +380,7 @@ def _set_session_purchased_games(games):
 def _anonymous_discs_dict():
     last = _get_session_last_daily()
     daily_available, next_claim_at = _daily_claim_status(last)
+    card_pack_available, next_card_pack_at = _daily_claim_status(_get_session_last_card_pack())
     return {
         'id':               None,
         'username':         None,
@@ -373,6 +393,8 @@ def _anonymous_discs_dict():
         'purchased_themes': _get_session_purchased_themes(),
         'daily_available': daily_available,
         'next_claim_at': next_claim_at.isoformat(),
+        'card_pack_available': card_pack_available,
+        'next_card_pack_at': next_card_pack_at.isoformat(),
     }
 
 
@@ -684,6 +706,7 @@ def purchase_trading_card_pack():
     # requests continue to use the normal 100-disc price.
     full_version = bool(data.get('full_version'))
     pack_cost = 0 if full_version else TRADING_CARD_PACK_COST
+    now = datetime.datetime.now(datetime.timezone.utc)
     cards = random.choices(
         AERODYNAMIX_CARD_POOL,
         weights=[28, 20, 14, 10, 7, 4, 1, 1, 1, 1, 1, 1, 1, 0.35],
@@ -701,6 +724,14 @@ def purchase_trading_card_pack():
         if not user:
             db.close()
             return jsonify({'error': 'User not found'}), 404
+        if full_version:
+            available, next_midnight = _daily_claim_status(user.last_daily_card_pack)
+            if not available:
+                db.close()
+                return jsonify({
+                    'error': 'Daily card pack already claimed',
+                    'next_card_pack_at': next_midnight.isoformat(),
+                }), 429
         if (user.disc_balance or 0) < pack_cost:
             db.close()
             return jsonify({'error': 'Not enough Dynamix Discs',
@@ -709,14 +740,27 @@ def purchase_trading_card_pack():
         owned.extend(awarded)
         user.disc_balance = (user.disc_balance or 0) - pack_cost
         user.trading_cards = json.dumps(owned)
+        if full_version:
+            user.last_daily_card_pack = now.replace(tzinfo=None)
         db.commit()
         db.refresh(user)
         result = {'success': True, 'cards': awarded,
                   'disc_balance': user.disc_balance}
+        if full_version:
+            result.update(_daily_claim_payload(user.last_daily_card_pack))
+            result['next_card_pack_at'] = result.pop('next_claim_at')
+            result['card_pack_available'] = False
         db.close()
         return jsonify(result)
 
     balance = _get_session_discs()
+    if full_version:
+        available, next_midnight = _daily_claim_status(_get_session_last_card_pack())
+        if not available:
+            return jsonify({
+                'error': 'Daily card pack already claimed',
+                'next_card_pack_at': next_midnight.isoformat(),
+            }), 429
     if balance < pack_cost:
         return jsonify({'error': 'Not enough Dynamix Discs',
                         'disc_balance': balance}), 402
@@ -724,8 +768,16 @@ def purchase_trading_card_pack():
     owned.extend(awarded)
     _set_session_trading_cards(owned)
     _set_session_discs(balance - pack_cost)
-    return jsonify({'success': True, 'cards': awarded,
-                    'disc_balance': _get_session_discs()})
+    result = {'success': True, 'cards': awarded,
+              'disc_balance': _get_session_discs()}
+    if full_version:
+        _set_session_last_card_pack(now.replace(tzinfo=None))
+        available, next_midnight = _daily_claim_status(now)
+        result.update({
+            'card_pack_available': available,
+            'next_card_pack_at': next_midnight.isoformat(),
+        })
+    return jsonify(result)
 
 
 @app.route('/api/trading-cards/sell', methods=['POST'])

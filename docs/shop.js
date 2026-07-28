@@ -158,22 +158,76 @@
             if (subtitle) subtitle.textContent = 'Add these cards to your collection.';
             if (doneButton) doneButton.hidden = false;
             await loadTradingCards();
-            button.firstChild.textContent = 'Open another pack';
+            button.firstChild.textContent = fullVersion ? 'Daily pack claimed' : 'Open another pack';
+            if (fullVersion) {
+                setDailyPackState(data.next_card_pack_at, false);
+            }
         } catch (e) {
             alert(e.message);
-            button.firstChild.textContent = 'Open pack';
+            if (!fullVersion || !dailyPackLocked) button.firstChild.textContent = 'Open pack';
         } finally {
-            button.disabled = false;
+            if (!fullVersion || !dailyPackLocked) button.disabled = false;
         }
+    }
+
+    let dailyPackLocked = false;
+    let dailyPackTimer = null;
+
+    function setDailyPackState(nextClaimAt, available) {
+        const button = document.getElementById('buy-card-pack');
+        const price = document.getElementById('pack-price');
+        const description = document.getElementById('pack-description');
+        if (!button) return;
+        dailyPackLocked = !available;
+        if (price && window.AeroDiscs && window.AeroDiscs.isPaid()) {
+            price.textContent = available ? 'Daily pack included with full access' : 'Daily pack claimed';
+        }
+        if (description && window.AeroDiscs && window.AeroDiscs.isPaid()) {
+            description.textContent = 'Full-version members receive 3 free Aerodynamix cards once each day.';
+        }
+        if (available) {
+            button.disabled = false;
+            button.classList.remove('daily-pack-locked');
+            button.firstChild.textContent = 'Open daily pack';
+            button.querySelector('small').textContent = 'Available until midnight PST';
+            if (dailyPackTimer) clearInterval(dailyPackTimer);
+            return;
+        }
+        function updateTimer() {
+            const remaining = new Date(nextClaimAt) - new Date();
+            if (remaining <= 0) {
+                setDailyPackState(nextClaimAt, true);
+                return;
+            }
+            const total = Math.floor(remaining / 1000);
+            const hours = Math.floor(total / 3600);
+            const minutes = Math.floor((total % 3600) / 60);
+            const seconds = total % 60;
+            button.disabled = true;
+            button.classList.add('daily-pack-locked');
+            button.firstChild.textContent = `Next pack in ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            button.querySelector('small').textContent = 'Resets at 12:00 AM Pacific Time';
+        }
+        updateTimer();
+        if (dailyPackTimer) clearInterval(dailyPackTimer);
+        dailyPackTimer = setInterval(updateTimer, 1000);
     }
 
     async function init() {
         const owned = await loadOwned();
         const packButton = document.getElementById('buy-card-pack');
         if (packButton && isPaid()) {
-            packButton.firstChild.textContent = 'Open pack free';
+            packButton.firstChild.textContent = 'Open daily pack';
             const packPrice = document.querySelector('.pack-price');
-            if (packPrice) packPrice.innerHTML = 'Free with full version';
+            if (packPrice) packPrice.innerHTML = 'Daily pack included with full access';
+            const packDescription = document.getElementById('pack-description');
+            if (packDescription) packDescription.textContent = 'Full-version members receive 3 free Aerodynamix cards once each day.';
+            try {
+                const info = await window.AeroDiscs.getBalance();
+                setDailyPackState(info.next_card_pack_at, info.card_pack_available);
+            } catch (e) {
+                setDailyPackState(null, true);
+            }
         }
         document.querySelectorAll('.shop-card').forEach(card => {
             if (card.classList.contains('theme-shop-card')) return;

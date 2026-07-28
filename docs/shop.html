@@ -36,6 +36,7 @@
         .shop-buy { width:100%; border:1px solid rgba(125,184,255,.25); border-radius:9px; padding:.68rem .55rem; color:#fff; background:linear-gradient(135deg,#2c7ffc,#1a5fd0); font:700 .72rem Montserrat,sans-serif; letter-spacing:.02em; cursor:pointer; transition:filter .2s ease,transform .2s ease; }
         .shop-buy:hover { filter:brightness(1.12); transform:translateY(-1px); }
         .shop-buy:disabled { background:rgba(255,255,255,.09); border-color:rgba(255,255,255,.12); color:#9ebcff; cursor:default; transform:none; }
+        .shop-buy.daily-pack-locked { background:#555d69; border-color:#687383; color:#d4d9e1; box-shadow:none; cursor:default; }
         .shop-card.owned { border-color:rgba(74,222,128,.25); }
         .pack-odds { margin-top:.8rem; color:rgba(255,255,255,.52); font-size:.68rem; line-height:1.65; }
         .pack-odds b { color:#c9dcff; letter-spacing:.05em; text-transform:uppercase; }
@@ -212,8 +213,8 @@
                           <div class="pack-edge pack-edge-top"></div>
                           <div class="pack-edge pack-edge-bottom"></div>
                       </div>
-                      <div class="pack-copy"><h2>Aerodynamix Starter Pack</h2><p>Rip open a digital pack and discover 3 random cards from the Aerodynamix arcade set.</p><div class="pack-price"><img src="images/disc.png" alt="" class="disc-icon sm"> 100 Dynamix Discs</div><div class="pack-odds"><b>Pack odds</b><br>Common 68.62% · Uncommon 18.81% · Rare 5.53% · Epic 2.21%<br>Legendary 2.21% · Mythic 2.21% · Godly 0.39%</div></div>
-                     <button class="shop-buy pack-buy" id="buy-card-pack">Open pack<small>3 cards guaranteed</small></button>
+                      <div class="pack-copy"><h2>Aerodynamix Starter Pack</h2><p id="pack-description">Rip open a digital pack and discover 3 random cards from the Aerodynamix arcade set.</p><div class="pack-price" id="pack-price"><img src="images/disc.png" alt="" class="disc-icon sm"> 100 Dynamix Discs</div><div class="pack-odds"><b>Pack odds</b><br>Common 68.62% · Uncommon 18.81% · Rare 5.53% · Epic 2.21%<br>Legendary 2.21% · Mythic 2.21% · Godly 0.39%</div></div>
+                      <button class="shop-buy pack-buy" id="buy-card-pack">Open pack<small>3 cards guaranteed</small></button>
                  </div>
              </article>
          </section>
