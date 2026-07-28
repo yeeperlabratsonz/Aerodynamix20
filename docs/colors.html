@@ -124,14 +124,14 @@
     <div class="content">
         <div class="settings-container">
             <h2>Choose Theme</h2>
-            <p style="text-align:center; font-size:0.85rem; color:#aaa; margin:-1vw 0 1vw;">Themes cost 200 <img src="images/disc.png" alt="Disc" class="disc-icon sm"> each. Black is free.</p>
+            <p id="theme-info" style="text-align:center; font-size:0.85rem; color:#aaa; margin:-1vw 0 1vw;">Themes cost 200 <img src="images/disc.png" alt="Disc" class="disc-icon sm"> each. Black is free.</p>
             <p id="no-themes-msg" style="display:none; text-align:center; color:#fff; font-size:1.1rem; padding:1rem 0;">No themes. Visit the Shop to unlock one.</p>
             <div class="theme-options" id="theme-options">
                 <button class="theme-button black" data-theme="black" onclick="setTheme('black')">Black</button>
-                <button class="theme-button frutiger-aero" data-theme="frutiger-aero" onclick="setTheme('frutiger-aero')">Frutiger Aero · 200 <img src="images/disc.png" alt="Disc" class="disc-icon sm"></button>
-                <button class="theme-button purple" data-theme="purple" onclick="setTheme('purple')">Midnight Purple · 200 <img src="images/disc.png" alt="Disc" class="disc-icon sm"></button>
-                <button class="theme-button blue" data-theme="blue" onclick="setTheme('blue')">Genesis Blue · 200 <img src="images/disc.png" alt="Disc" class="disc-icon sm"></button>
-                <button class="theme-button christmas" data-theme="christmas" onclick="setTheme('christmas')">Christmas · 200 <img src="images/disc.png" alt="Disc" class="disc-icon sm"></button>
+                <button class="theme-button frutiger-aero" data-theme="frutiger-aero" onclick="setTheme('frutiger-aero')">Frutiger Aero <span class="theme-price">· 200 <img src="images/disc.png" alt="Disc" class="disc-icon sm"></span></button>
+                <button class="theme-button purple" data-theme="purple" onclick="setTheme('purple')">Midnight Purple <span class="theme-price">· 200 <img src="images/disc.png" alt="Disc" class="disc-icon sm"></span></button>
+                <button class="theme-button blue" data-theme="blue" onclick="setTheme('blue')">Genesis Blue <span class="theme-price">· 200 <img src="images/disc.png" alt="Disc" class="disc-icon sm"></span></button>
+                <button class="theme-button christmas" data-theme="christmas" onclick="setTheme('christmas')">Christmas <span class="theme-price">· 200 <img src="images/disc.png" alt="Disc" class="disc-icon sm"></span></button>
             </div>
             <h2 style="margin-top: 2.5vw;">Performance</h2>
             <button id="lite-mode-btn" class="theme-button lite" onclick="toggleLiteMode()">Lite Mode</button>
@@ -160,21 +160,27 @@
 
         function updateThemeButtons() {
             const trial = AeroDiscs.isFreeTrial() && !AeroDiscs.isPaid();
+            const paid = AeroDiscs.isPaid();
             const empty = document.getElementById('no-themes-msg');
             const options = document.getElementById('theme-options');
+            const info = document.getElementById('theme-info');
+            if (info) {
+                info.innerHTML = paid
+                    ? 'All themes are included with full access.'
+                    : 'Themes cost 200 <img src="images/disc.png" alt="Disc" class="disc-icon sm"> each. Black is free.';
+            }
+            document.querySelectorAll('.theme-price').forEach(price => {
+                price.hidden = paid;
+            });
             document.querySelectorAll('.theme-button[data-theme]').forEach(btn => {
                 const theme = btn.dataset.theme;
-                const owned = purchasedThemes.includes(theme) || AeroDiscs.isPaid();
-                // Black is the free default, but the trial page should show
-                // the requested empty state until a visual theme is owned.
-                btn.hidden = trial && (
-                    purchasedThemes.length === 0 ||
-                    (theme !== 'black' && !owned)
-                );
+                const owned = purchasedThemes.includes(theme) || paid;
+                // Black is always available in the free trial. Other themes
+                // appear only after the trial user unlocks them.
+                btn.hidden = trial && theme !== 'black' && !owned;
             });
-            const visible = purchasedThemes.length;
-            if (empty) empty.style.display = trial && !visible ? 'block' : 'none';
-            if (options) options.style.display = trial && !visible ? 'none' : '';
+            if (empty) empty.style.display = 'none';
+            if (options) options.style.display = '';
         }
 
         async function setTheme(theme) {
