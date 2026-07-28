@@ -71,6 +71,8 @@
          .revealed-card h3 { margin:.55rem 0 .15rem; font-size:.85rem; } .revealed-card .rarity { color:var(--card-accent); font-size:.65rem; font-weight:800; text-transform:uppercase; letter-spacing:.1em; }
          .pack-close { position:absolute; top:1rem; right:1rem; border:0; background:#ffffff14; color:#fff; border-radius:50%; width:34px; height:34px; cursor:pointer; }
          .pack-close:hover { background:#ffffff2b; }
+          .pack-done { margin-top:.6rem; border:1px solid rgba(157,207,255,.45); border-radius:9px; padding:.72rem 1.2rem; color:#fff; background:linear-gradient(135deg,#2c7ffc,#1a5fd0); font:700 .78rem Montserrat,sans-serif; cursor:pointer; box-shadow:0 8px 24px rgba(44,127,252,.25); }
+          .pack-done:hover { filter:brightness(1.12); transform:translateY(-1px); }
          @keyframes packShimmer { to { transform:rotate(360deg); } } @keyframes packPulse { to { transform:rotate(4deg) scale(1.04); } } @keyframes packBurst { 55% { transform:rotate(-4deg) scaleX(1); } 100% { transform:rotate(-4deg) scaleX(0); opacity:0; } } @keyframes cardReveal { from { opacity:0; transform:translateY(70px) rotateY(90deg) scale(.7); } to { opacity:1; transform:translateY(0) rotateY(0) scale(1); } }
          @media (max-width:650px) { .card-pack-inner { align-items:flex-start; padding:1.4rem; gap:1rem; } .pack-art { width:85px; } .pack-art span { font-size:.85rem; } .pack-buy { min-width:120px; } .revealed-cards { gap:.35rem; } .revealed-card { width:31%; min-height:220px; } .revealed-card-art { height:135px; } .pack-stage { padding:1.2rem .7rem; } }
         @media (max-width:1200px) { .shop-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }
@@ -167,6 +169,7 @@
              <h2 id="pack-stage-title">Opening your pack…</h2><p id="pack-stage-subtitle">Your Run 3 cards are being revealed.</p>
              <div class="pack-opening" id="pack-opening"><div class="opening-pack">Run<br>3</div></div>
              <div class="revealed-cards" id="revealed-cards" hidden></div>
+              <button class="pack-done" id="pack-done" type="button" hidden>Back to Shop</button>
          </div>
      </div>
     <script src="shop.js"></script>

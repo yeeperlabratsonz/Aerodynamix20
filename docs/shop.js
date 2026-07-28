@@ -109,6 +109,8 @@
         if (!modal) return;
         modal.classList.remove('open');
         modal.setAttribute('aria-hidden', 'true');
+        const doneButton = document.getElementById('pack-done');
+        if (doneButton) doneButton.hidden = true;
     }
 
     async function purchaseCardPack() {
@@ -132,8 +134,10 @@
             const revealed = document.getElementById('revealed-cards');
             const title = document.getElementById('pack-stage-title');
             const subtitle = document.getElementById('pack-stage-subtitle');
+            const doneButton = document.getElementById('pack-done');
             if (opening) opening.hidden = false;
             if (revealed) { revealed.hidden = true; revealed.innerHTML = ''; }
+            if (doneButton) doneButton.hidden = true;
             if (title) title.textContent = 'Opening your pack…';
             if (subtitle) subtitle.textContent = 'Your Run 3 cards are being revealed.';
             await new Promise(resolve => setTimeout(resolve, 1900));
@@ -144,6 +148,7 @@
             }
             if (title) title.textContent = 'Pack opened!';
             if (subtitle) subtitle.textContent = 'Add these cards to your collection.';
+            if (doneButton) doneButton.hidden = false;
             await loadTradingCards();
             button.firstChild.textContent = 'Open another pack';
         } catch (e) {
@@ -190,6 +195,8 @@
         if (packButton) packButton.addEventListener('click', purchaseCardPack);
         const closeButton = document.getElementById('pack-close');
         if (closeButton) closeButton.addEventListener('click', closePackModal);
+        const doneButton = document.getElementById('pack-done');
+        if (doneButton) doneButton.addEventListener('click', closePackModal);
         const modal = document.getElementById('pack-modal');
         if (modal) modal.addEventListener('click', event => {
             if (event.target === modal) closePackModal();
