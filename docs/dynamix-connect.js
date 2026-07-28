@@ -615,7 +615,16 @@
       localVideo.play().catch(() => {});
       return localStream;
     } catch (e) {
-      throw new Error('Camera and microphone access is required to make a video call.');
+      const messages = {
+        NotAllowedError: 'Camera and microphone access was blocked. In Android site settings, allow Camera and Microphone, then try again.',
+        PermissionDeniedError: 'Camera and microphone access was denied. Allow both permissions for this site, then try again.',
+        NotFoundError: 'No camera or microphone was found. Check that both are connected and not being used by another app.',
+        NotReadableError: 'The camera or microphone is already being used by another app. Close other camera or call apps and try again.',
+        OverconstrainedError: 'This device could not provide the requested camera and microphone. Check the device settings and try again.',
+        SecurityError: 'Camera calling requires a secure HTTPS page. Reopen Dynamix Connect using its HTTPS address.'
+      };
+      const detail = messages[e.name] || 'The camera and microphone could not be started. Check browser permissions and try again.';
+      throw new Error(detail);
     }
   }
 
@@ -706,8 +715,11 @@
       createPeer();
       pollSignals();
     } catch (e) {
-      setVideoError(e.message);
+      try { await callApi(`/api/calls/${call.id}/end`, { method: 'POST' }); } catch (endError) {}
+      cleanupCall(false);
       showVideoCall(call, 'Unable to join');
+      setVideoError(e.message);
+      activeCall = null;
     }
   }
 
