@@ -41,28 +41,36 @@
          .card-pack { position:relative; overflow:hidden; border:1px solid rgba(135,184,255,.3); border-radius:20px; background:linear-gradient(135deg,#142d5e,#101426 58%,#271347); box-shadow:0 18px 45px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.1); }
          .card-pack::before { content:''; position:absolute; inset:-40%; background:conic-gradient(from 180deg,transparent,#64c9ff22,transparent,#d39cff22,transparent); animation:packShimmer 8s linear infinite; }
          .card-pack-inner { position:relative; display:flex; align-items:center; justify-content:space-between; gap:2rem; padding:2.2rem 2.5rem; }
-         .pack-art { width:116px; height:190px; flex:none; position:relative; transform-style:preserve-3d; animation:boosterSpin 7s linear infinite; }
+         .pack-art { width:132px; height:202px; flex:none; position:relative; transform-style:preserve-3d; animation:boosterSpin 7s linear infinite; filter:drop-shadow(14px 20px 15px #0009); }
          .pack-art:hover { animation-play-state:paused; }
          .pack-face, .pack-edge { position:absolute; display:block; backface-visibility:hidden; }
          .pack-face { inset:0; overflow:hidden; border:2px solid #8be4ff; border-radius:4px 6px 7px 5px; color:#fff; text-align:center; }
-         .pack-front { transform:translateZ(5px); background:linear-gradient(112deg,#b8f7ff 0%,#174f96 9%,#572c9d 57%,#172442 100%); box-shadow:inset 0 0 18px #07112f99,0 0 0 3px #1b2b61,0 8px 16px #0008; }
+         .pack-front { overflow:visible; transform:translateZ(10px); background:linear-gradient(112deg,#b8f7ff 0%,#174f96 9%,#572c9d 57%,#172442 100%); box-shadow:inset 0 0 18px #07112f99,0 0 0 4px #1b2b61,0 10px 18px #0009; }
          .pack-front::before { content:''; position:absolute; inset:5px 5px 8px; border:1px solid #b8f3ff99; border-radius:3px; background:radial-gradient(ellipse at 50% 58%,#80d8ff55 0 27%,transparent 28%),repeating-linear-gradient(135deg,transparent 0 13px,#8ceaff28 14px 16px),linear-gradient(155deg,#1e76b7,#49258c 60%,#111b43); }
          .pack-front::after { content:''; position:absolute; inset:0; pointer-events:none; background:linear-gradient(72deg,transparent 18%,#fff8 25%,transparent 32%,transparent 67%,#fff5 74%,transparent 81%); mix-blend-mode:screen; opacity:.5; }
-         .pack-back { transform:rotateY(180deg) translateZ(5px); background:linear-gradient(145deg,#10295f,#4f278b 58%,#111a3d); }
+         .pack-back { transform:rotateY(180deg) translateZ(10px); background:linear-gradient(145deg,#10295f,#4f278b 58%,#111a3d); }
          .pack-back::after { content:'RUN 3\\A RUNNER SERIES\\A 3 CARDS'; white-space:pre; position:absolute; inset:35% 0 auto; color:#c8f5ff; font-size:.48rem; line-height:1.7; letter-spacing:.1em; }
          .pack-edge { background:linear-gradient(180deg,#5fcfff,#223878 45%,#c166e4 80%,#16234e); border:1px solid #92e8ff; }
-         .pack-edge-left, .pack-edge-right { width:10px; height:190px; top:0; }
-         .pack-edge-left { left:calc(50% - 5px); transform:rotateY(90deg) translateZ(58px); }
-         .pack-edge-right { left:calc(50% - 5px); transform:rotateY(-90deg) translateZ(58px); }
-         .pack-edge-top, .pack-edge-bottom { width:116px; height:10px; left:0; }
-         .pack-edge-top { top:calc(50% - 5px); transform:rotateX(90deg) translateZ(95px); }
-         .pack-edge-bottom { top:calc(50% - 5px); transform:rotateX(-90deg) translateZ(95px); }
+         .pack-edge-left, .pack-edge-right { width:20px; height:202px; top:0; }
+         .pack-edge-left { left:calc(50% - 10px); transform:rotateY(90deg) translateZ(66px); }
+         .pack-edge-right { left:calc(50% - 10px); transform:rotateY(-90deg) translateZ(66px); }
+         .pack-edge-top, .pack-edge-bottom { width:132px; height:20px; left:0; }
+         .pack-edge-top { top:calc(50% - 10px); transform:rotateX(90deg) translateZ(101px); }
+         .pack-edge-bottom { top:calc(50% - 10px); transform:rotateX(-90deg) translateZ(101px); }
+         .pack-card-stack { position:absolute; z-index:4; top:-30px; left:20px; width:92px; height:72px; overflow:hidden; transform:translateZ(13px) rotateZ(-2deg); filter:drop-shadow(0 8px 5px #0008); }
+         .pack-card { position:absolute; top:20px; left:12px; width:66px; height:92px; border:2px solid #a4efff; border-radius:4px; background:linear-gradient(145deg,#48b9e8 0%,#362d91 48%,#e487d1 100%); box-shadow:inset 0 0 0 3px #132c75,inset 0 0 14px #b5f6ff66; }
+         .pack-card::before { content:'RUN\\A 3'; white-space:pre; position:absolute; inset:20px 0 auto; color:#e9ffff; font-size:.7rem; line-height:.85; font-weight:900; text-align:center; text-shadow:0 2px 3px #001b; }
+         .pack-card::after { content:''; position:absolute; inset:6px; border:1px solid #d9fbff88; border-radius:2px; background:repeating-linear-gradient(135deg,transparent 0 8px,#baf7ff25 9px 11px); }
+         .pack-card:nth-child(1) { transform:rotate(-11deg) translate(-9px,2px); }
+         .pack-card:nth-child(2) { transform:rotate(-2deg) translate(0,-4px); }
+         .pack-card:nth-child(3) { transform:rotate(8deg) translate(10px,1px); }
+         .pack-mouth { position:absolute; z-index:5; top:25px; left:14px; width:104px; height:13px; transform:translateZ(16px) rotateZ(-1deg); border:2px solid #9cf1ff; border-radius:3px; background:linear-gradient(#08295e,#55dfff 48%,#102a6a); box-shadow:0 3px 7px #0009; }
          .pack-header, .pack-footer { position:absolute; left:-1px; right:-1px; z-index:2; display:grid; place-items:center; color:#dfffff; background:repeating-linear-gradient(135deg,#0e8ca7 0 5px,#19b9bc 5px 9px,#087a9a 9px 13px); border:1px solid #9fffff; box-shadow:inset 0 2px 4px #ffffff55, inset 0 -3px 5px #003d5d88,0 1px 2px #001b; text-transform:uppercase; letter-spacing:.08em; text-shadow:0 1px 3px #00334a; }
          .pack-header { top:0; height:29px; border-radius:3px 5px 0 0; font-size:.42rem; }
          .pack-header::after { content:'AERODYNAMIX'; display:block; font-size:.62rem; letter-spacing:.1em; color:#fff; }
          .pack-footer { bottom:0; height:14px; border-radius:0 0 4px 5px; font-size:.33rem; }
          .pack-seam { position:absolute; top:29px; left:0; right:0; z-index:3; height:4px; background:linear-gradient(#dfffff,#49d9ff 45%,#0f81be 55%,#dfffff); box-shadow:0 1px 3px #001b; }
-         .pack-art span { position:absolute; inset:75px 0 auto; z-index:1; font-size:1.15rem; line-height:.9; font-weight:900; letter-spacing:.08em; text-shadow:0 2px 8px #000,0 0 12px #65dfff; }
+         .pack-art span { position:absolute; inset:80px 0 auto; z-index:1; font-size:1.15rem; line-height:.9; font-weight:900; letter-spacing:.08em; text-shadow:0 2px 8px #000,0 0 12px #65dfff; }
          .pack-art span::after { content:'RUNNER SERIES  •  3 CARDS'; display:block; margin-top:10px; padding-top:5px; border-top:1px solid #b9f4ff99; color:#e2fbff; font-size:.31rem; letter-spacing:.08em; }
          .pack-art + .pack-copy { margin-left:.5rem; }
          .pack-copy { flex:1; }
@@ -180,6 +188,12 @@
                            <div class="pack-face pack-front">
                                <div class="pack-header">BOOSTER PACK</div>
                                <div class="pack-seam"></div>
+                               <div class="pack-card-stack" aria-hidden="true">
+                                   <div class="pack-card"></div>
+                                   <div class="pack-card"></div>
+                                   <div class="pack-card"></div>
+                               </div>
+                               <div class="pack-mouth" aria-hidden="true"></div>
                                <span>Run<br>3</span>
                                <div class="pack-footer">3 DIGITAL CARDS</div>
                            </div>
