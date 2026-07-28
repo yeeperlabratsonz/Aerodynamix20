@@ -611,6 +611,12 @@ def get_trading_cards():
 
 @app.route('/api/trading-cards/purchase-pack', methods=['POST'])
 def purchase_trading_card_pack():
+    data = request.get_json(silent=True) or {}
+    # The full-version entitlement is currently a client-side access-key gate.
+    # Keep the temporary testing override scoped to this pack endpoint; trial
+    # requests continue to use the normal 100-disc price.
+    full_version = bool(data.get('full_version'))
+    pack_cost = 0 if full_version else TRADING_CARD_PACK_COST
     cards = random.choices(
         RUN3_CARD_POOL,
         weights=[46, 29, 16, 7, 2],
@@ -628,13 +634,13 @@ def purchase_trading_card_pack():
         if not user:
             db.close()
             return jsonify({'error': 'User not found'}), 404
-        if (user.disc_balance or 0) < TRADING_CARD_PACK_COST:
+        if (user.disc_balance or 0) < pack_cost:
             db.close()
             return jsonify({'error': 'Not enough Dynamix Discs',
                             'disc_balance': user.disc_balance or 0}), 402
         owned = json.loads(user.trading_cards or '[]') if user.trading_cards else []
         owned.extend(awarded)
-        user.disc_balance = (user.disc_balance or 0) - TRADING_CARD_PACK_COST
+        user.disc_balance = (user.disc_balance or 0) - pack_cost
         user.trading_cards = json.dumps(owned)
         db.commit()
         db.refresh(user)
@@ -644,13 +650,13 @@ def purchase_trading_card_pack():
         return jsonify(result)
 
     balance = _get_session_discs()
-    if balance < TRADING_CARD_PACK_COST:
+    if balance < pack_cost:
         return jsonify({'error': 'Not enough Dynamix Discs',
                         'disc_balance': balance}), 402
     owned = _get_session_trading_cards()
     owned.extend(awarded)
     _set_session_trading_cards(owned)
-    _set_session_discs(balance - TRADING_CARD_PACK_COST)
+    _set_session_discs(balance - pack_cost)
     return jsonify({'success': True, 'cards': awarded,
                     'disc_balance': _get_session_discs()})
 

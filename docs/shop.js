@@ -114,17 +114,15 @@
     async function purchaseCardPack() {
         const button = document.getElementById('buy-card-pack');
         if (!button || button.disabled) return;
-        if (window.AeroDiscs && window.AeroDiscs.isPaid()) {
-            alert('Card packs are available with Dynamix Discs during a free trial.');
-            return;
-        }
+        const fullVersion = Boolean(window.AeroDiscs && window.AeroDiscs.isPaid());
         button.disabled = true;
         button.firstChild.textContent = 'Purchasing…';
         try {
             const response = await fetch('/api/trading-cards/purchase-pack', {
                 method: 'POST',
                 credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ full_version: fullVersion })
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || 'Could not purchase the pack.');
@@ -158,6 +156,12 @@
 
     async function init() {
         const owned = await loadOwned();
+        const packButton = document.getElementById('buy-card-pack');
+        if (packButton && isPaid()) {
+            packButton.firstChild.textContent = 'Open pack free';
+            const packPrice = document.querySelector('.pack-price');
+            if (packPrice) packPrice.innerHTML = 'Free with full version';
+        }
         document.querySelectorAll('.shop-card').forEach(card => {
             if (card.classList.contains('theme-shop-card')) return;
             const button = card.querySelector('.shop-buy');
@@ -183,7 +187,6 @@
                 button.addEventListener('click', () => purchaseTheme(card));
             }
         });
-        const packButton = document.getElementById('buy-card-pack');
         if (packButton) packButton.addEventListener('click', purchaseCardPack);
         const closeButton = document.getElementById('pack-close');
         if (closeButton) closeButton.addEventListener('click', closePackModal);
