@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Theme Settings - Aerodynamix</title>
     <script src="theme.js"></script>
+    <script src="tab-cloak.js"></script>
     <script src="discs.js" defer></script>
     <script src="auth-overlay.js" defer></script>
     <link rel="icon" type="image/png" href="favicon.png">
@@ -261,16 +262,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             applyLiteMode(localStorage.getItem('aerodynamixLite') === 'true');
         });
-
-        function enableTabCloak() {
-            document.title = 'Google';
-            let link = document.querySelector("link[rel*='icon']") || document.createElement('link');
-            link.rel = 'icon';
-            link.type = 'image/x-icon';
-            link.href = 'https://www.google.com/favicon.ico';
-            document.head.appendChild(link);
-            window.history.pushState(null, 'Google', 'about:blank');
-        }
 
         // Refresh purchased theme state once discs module is ready
         document.addEventListener('DOMContentLoaded', () => {
