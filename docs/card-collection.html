@@ -26,24 +26,31 @@
     .collection-card h3 { margin:0 0 .35rem; font-size:.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .collection-rarity { color:var(--accent); font-size:.65rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
     .collection-card small { display:block; margin-top:.35rem; color:#8793a8; }
-    .sell-card { width:100%; margin-top:.75rem; padding:.55rem; border:1px solid color-mix(in srgb,var(--accent) 35%,transparent); border-radius:8px; color:#fff; background:rgba(255,255,255,.07); cursor:pointer; font-weight:700; }
+    .sell-card { display:flex; align-items:center; justify-content:center; gap:.35rem; width:100%; margin-top:.75rem; padding:.55rem; border:1px solid color-mix(in srgb,var(--accent) 35%,transparent); border-radius:8px; color:#fff; background:rgba(255,255,255,.07); cursor:pointer; font-weight:700; }
     .sell-card:hover { background:rgba(255,255,255,.14); }
+    .sell-card .disc-icon { width:1rem; height:1rem; object-fit:contain; }
     .empty-collection { padding:3rem; border:1px dashed #56708f; border-radius:16px; color:#9eabc0; text-align:center; }
+    .collection-nav-links { flex:1; display:flex; align-items:center; justify-content:center; gap:.4rem; }
+    .collection-nav-links a, .collection-nav-settings { color:#fff; text-decoration:none; padding:.55rem 1.1rem; border:1px solid transparent; border-radius:.55rem; font-size:.82rem; font-weight:700; transition:background .2s ease, border-color .2s ease, color .2s ease, transform .2s ease; }
+    .collection-nav-links a:hover, .collection-nav-settings:hover { color:#fff; border-color:rgba(130,183,255,.35); background:rgba(44,127,252,.2); transform:translateY(-1px); }
+    .collection-nav-links a.active { color:#07111f; border-color:#fff; background:#fff; box-shadow:0 4px 16px rgba(255,255,255,.12); }
+    .collection-nav-settings { margin-right:1.5vw; border-color:rgba(130,183,255,.25); background:linear-gradient(135deg,#2c7ffc,#1a5fd0); box-shadow:0 6px 18px rgba(44,127,252,.2); }
     @media (max-width:700px) { .collection-page { padding:22vw 1rem 100px; } .collection-heading { padding:1.5rem; } }
+    @media (max-width:900px) { .collection-nav-links a, .collection-nav-settings { padding:.45rem .55rem; font-size:.68rem; } nav h1 { font-size:2.3vw; } }
   </style>
 </head>
 <body>
   <nav>
     <img src="images/logo.gif" alt="logo" onclick="window.location='index.html'">
     <h1><span class="logo-a" id="logo-a">A</span>ERODYNAMIX</h1>
-    <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:.4vw;">
+    <div class="collection-nav-links">
       <a href="index.html">Games</a>
       <a href="shop.html">Shop</a>
-      <a href="card-collection.html" style="background:#fff;color:#000;">Card Collection</a>
+      <a class="active" href="card-collection.html">Card Collection</a>
       <a href="media-player.html">Media Player</a>
       <a href="dynamix-connect.html">Connect</a>
     </div>
-    <a href="colors.html">Settings</a>
+    <a class="collection-nav-settings" href="colors.html">Settings</a>
   </nav>
   <main class="collection-page">
     <header class="collection-heading">

@@ -19,7 +19,7 @@
         <div class="collection-card-art"><img src="${safeImage(card.image)}" alt="${esc(card.name)}"></div>
         <div class="collection-card-body"><h3>${esc(card.name || 'Mystery Card')}</h3>
         <div class="collection-rarity">${esc(rarity)}</div><small>#${esc(card.number || index + 1)} · Sell for ${value} tokens</small>
-        <button class="sell-card" data-card-id="${esc(card.id)}">Sell for ${value}</button></div>
+        <button class="sell-card" data-card-id="${esc(card.id)}">Sell for ${value}<img class="disc-icon" src="images/disc.png" alt="tokens"></button></div>
       </article>`;
     }).join('');
     grid.querySelectorAll('.sell-card').forEach(button => button.addEventListener('click', () => sell(button)));
