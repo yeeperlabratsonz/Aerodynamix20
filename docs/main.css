@@ -236,18 +236,21 @@ nav img {
 /* ── Dynamix Discs nav widget ─────────────────────────────────────────────── */
 .disc-nav-widget {
     position: absolute;
+    /* Sit below the nav instead of competing with the Settings button. */
     right: 1.5vw;
-    top: 50%;
-    transform: translateY(-50%);
+    top: calc(100% + 0.75rem);
+    transform: none;
+    z-index: 6;
     display: flex;
     align-items: center;
     gap: 0.6vw;
-    background: rgba(10, 14, 24, 0.7);
-    border: 1px solid rgba(44, 127, 252, 0.25);
-    border-radius: 0.6vw;
-    padding: 0.4vw 0.8vw;
+    background: rgba(10, 14, 24, 0.88);
+    border: 1px solid rgba(44, 127, 252, 0.32);
+    border-radius: 0.75rem;
+    padding: 0.45rem 0.75rem;
     backdrop-filter: blur(10px);
     font-family: 'Montserrat', sans-serif;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
 }
 
 .disc-balance {
@@ -324,7 +327,8 @@ nav img {
 @media (max-width: 768px) {
     .disc-nav-widget {
         right: 2vw;
-        padding: 1vw 2vw;
+        top: calc(100% + 0.5rem);
+        padding: 0.45rem 0.7rem;
         gap: 1.5vw;
     }
     .disc-balance {
