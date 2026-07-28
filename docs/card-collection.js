@@ -5,6 +5,11 @@
   const grid = document.getElementById('collection-grid');
   const count = document.getElementById('card-count');
   const tokens = document.getElementById('token-count');
+  const confirmBackdrop = document.getElementById('sell-confirm-backdrop');
+  const confirmMessage = document.getElementById('sell-confirm-message');
+  const cancelSell = document.getElementById('cancel-sell');
+  const confirmSell = document.getElementById('confirm-sell');
+  let pendingSell = null;
 
   function render(cards) {
     count.textContent = `${cards.length} card${cards.length === 1 ? '' : 's'}`;
@@ -19,10 +24,24 @@
         <div class="collection-card-art"><img src="${safeImage(card.image)}" alt="${esc(card.name)}"></div>
         <div class="collection-card-body"><h3>${esc(card.name || 'Mystery Card')}</h3>
         <div class="collection-rarity">${esc(rarity)}</div><small>#${esc(card.number || index + 1)} · Sell for ${value} tokens</small>
-        <button class="sell-card" data-card-id="${esc(card.id)}">Sell for ${value}<img class="disc-icon" src="images/disc.png" alt="tokens"></button></div>
+        <button class="sell-card" data-card-id="${esc(card.id)}" data-card-name="${esc(card.name || 'this card')}" data-card-value="${value}">Sell for ${value}<img class="disc-icon" src="images/disc.png" alt="tokens"></button></div>
       </article>`;
     }).join('');
-    grid.querySelectorAll('.sell-card').forEach(button => button.addEventListener('click', () => sell(button)));
+    grid.querySelectorAll('.sell-card').forEach(button => button.addEventListener('click', () => askToSell(button)));
+  }
+
+  function askToSell(button) {
+    pendingSell = button;
+    confirmMessage.textContent = `Are you sure you want to sell ${button.dataset.cardName} for ${button.dataset.cardValue} tokens? This cannot be undone.`;
+    confirmBackdrop.classList.add('open');
+    confirmBackdrop.setAttribute('aria-hidden', 'false');
+    confirmSell.focus();
+  }
+
+  function closeConfirmation() {
+    pendingSell = null;
+    confirmBackdrop.classList.remove('open');
+    confirmBackdrop.setAttribute('aria-hidden', 'true');
   }
 
   async function load() {
@@ -53,5 +72,17 @@
       button.disabled = false;
     }
   }
+  cancelSell.addEventListener('click', closeConfirmation);
+  confirmSell.addEventListener('click', () => {
+    const button = pendingSell;
+    closeConfirmation();
+    if (button) sell(button);
+  });
+  confirmBackdrop.addEventListener('click', event => {
+    if (event.target === confirmBackdrop) closeConfirmation();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && confirmBackdrop.classList.contains('open')) closeConfirmation();
+  });
   load().catch(() => { grid.innerHTML = '<div class="empty-collection">Could not load your collection.</div>'; });
 })();
