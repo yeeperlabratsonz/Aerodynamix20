@@ -88,9 +88,11 @@
     function cardMarkup(card, index) {
         const safeName = String(card.name || 'Mystery Card').replace(/[<>&"]/g, '');
         const safeRarity = String(card.rarity || 'Common').replace(/[<>&"]/g, '');
+        const rarityClass = safeRarity.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const safeImage = String(card.image || '').replace(/[^a-zA-Z0-9_./'-]/g, '');
         return `
-            <article class="revealed-card" style="--card-accent:${card.accent || '#65c7ff'}">
-                <div class="revealed-card-art">RUN<br>3</div>
+            <article class="revealed-card rarity-${rarityClass}" style="--card-accent:${card.accent || '#ffffff'}">
+                <div class="revealed-card-art"><img src="${safeImage}" alt="${safeName} game icon"></div>
                 <div class="rarity">${safeRarity}</div>
                 <h3>${safeName}</h3>
                 <small>#${String(card.number || index + 1).padStart(3, '0')}</small>
@@ -145,6 +147,12 @@
             if (revealed) {
                 revealed.innerHTML = data.cards.map(cardMarkup).join('');
                 revealed.hidden = false;
+            }
+            const godlyReveal = document.getElementById('godly-card-reveal');
+            if (godlyReveal && data.cards.some(card => String(card.rarity).toUpperCase() === 'GODLY')) {
+                godlyReveal.classList.remove('active');
+                void godlyReveal.offsetWidth;
+                godlyReveal.classList.add('active');
             }
             if (title) title.textContent = 'Pack opened!';
             if (subtitle) subtitle.textContent = 'Add these cards to your collection.';
