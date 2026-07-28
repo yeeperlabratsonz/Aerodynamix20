@@ -67,6 +67,7 @@ class Post(Base):
     image_mimetype = Column(String(50))
     created_at     = Column(DateTime, default=datetime.datetime.utcnow)
     user           = relationship('User', back_populates='posts')
+    comments       = relationship('Comment', back_populates='post', cascade='all, delete-orphan')
 
 
 class CallSession(Base):
@@ -87,6 +88,36 @@ class CallSignal(Base):
     signal_type = Column(String(20), nullable=False)
     payload     = Column(Text, nullable=False)
     created_at  = Column(DateTime, default=datetime.datetime.utcnow)
+
+
+class Comment(Base):
+    __tablename__ = 'comments'
+    id         = Column(Integer, primary_key=True, autoincrement=True)
+    post_id    = Column(Integer, ForeignKey('posts.id'), nullable=False)
+    user_id    = Column(Integer, ForeignKey('users.id'), nullable=False)
+    text       = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    post       = relationship('Post', back_populates='comments')
+    user       = relationship('User')
+
+
+class Friendship(Base):
+    __tablename__ = 'friendships'
+    id           = Column(Integer, primary_key=True, autoincrement=True)
+    requester_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    addressee_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    status       = Column(String(20), nullable=False, default='pending')
+    created_at   = Column(DateTime, default=datetime.datetime.utcnow)
+
+
+class DirectMessage(Base):
+    __tablename__ = 'direct_messages'
+    id           = Column(Integer, primary_key=True, autoincrement=True)
+    sender_id    = Column(Integer, ForeignKey('users.id'), nullable=False)
+    recipient_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    text         = Column(Text, nullable=False)
+    created_at   = Column(DateTime, default=datetime.datetime.utcnow)
+    is_read      = Column(Boolean, default=False)
 
 
 Base.metadata.create_all(engine)
@@ -505,14 +536,33 @@ def get_user_profile(username):
         }
         for p in posts
     ]
+
+    viewer_id = session.get('user_id')
+    friend_status = 'none'
+    friendship_id = None
+    if viewer_id and viewer_id != user.id:
+        f = db.query(Friendship).filter(
+            ((Friendship.requester_id == viewer_id) & (Friendship.addressee_id == user.id)) |
+            ((Friendship.requester_id == user.id) & (Friendship.addressee_id == viewer_id))
+        ).first()
+        if f:
+            friendship_id = f.id
+            if f.status == 'accepted':
+                friend_status = 'friends'
+            elif f.requester_id == viewer_id:
+                friend_status = 'pending_sent'
+            else:
+                friend_status = 'pending_received'
     db.close()
 
     return jsonify({
-        'user':  {
+        'user':          {
             **user_to_dict(user),
             'created_at': user.created_at.strftime('%b %Y') if user.created_at else None,
         },
-        'posts': posts_data,
+        'posts':         posts_data,
+        'friend_status': friend_status,
+        'friendship_id': friendship_id,
     })
 
 
@@ -931,21 +981,25 @@ def end_call(call_id):
 def get_posts():
     db    = DBSession()
     rows  = db.query(Post, User).join(User, Post.user_id == User.id).order_by(Post.created_at.desc()).all()
+    comment_counts = dict(
+        db.query(Comment.post_id, func.count(Comment.id)).group_by(Comment.post_id).all()
+    )
     db.close()
 
     return jsonify({
         'posts': [
             {
-                'id':           post.id,
-                'text':         post.text,
-                'image_url':    f'/uploads/{post.image_filename}' if post.image_filename else None,
-                'created_at':   post.created_at.strftime('%Y-%m-%d %H:%M:%S') if post.created_at else None,
-                'username':     user.username,
-                'is_verified':  bool(user.is_verified),
-                'user_id':      user.id,
-                'pfp_url':      f'/api/pfp/{user.id}' if user.pfp_data else None,
-                'pfp_offset_x': user.pfp_offset_x if user.pfp_offset_x is not None else 50.0,
-                'pfp_offset_y': user.pfp_offset_y if user.pfp_offset_y is not None else 50.0,
+                'id':            post.id,
+                'text':          post.text,
+                'image_url':     f'/uploads/{post.image_filename}' if post.image_filename else None,
+                'created_at':    post.created_at.strftime('%Y-%m-%d %H:%M:%S') if post.created_at else None,
+                'username':      user.username,
+                'is_verified':   bool(user.is_verified),
+                'user_id':       user.id,
+                'pfp_url':       f'/api/pfp/{user.id}' if user.pfp_data else None,
+                'pfp_offset_x':  user.pfp_offset_x if user.pfp_offset_x is not None else 50.0,
+                'pfp_offset_y':  user.pfp_offset_y if user.pfp_offset_y is not None else 50.0,
+                'comment_count': comment_counts.get(post.id, 0),
             }
             for post, user in rows
         ]
@@ -1029,6 +1083,358 @@ def uploaded_file(filename):
             mimetype=post.image_mimetype or mimetypes.guess_type(filename)[0] or 'application/octet-stream'
         )
     abort(404)
+
+
+# ── Comments ──────────────────────────────────────────────────────────────────
+
+@app.route('/api/posts/<int:post_id>/comments', methods=['GET'])
+def get_comments(post_id):
+    db = DBSession()
+    try:
+        post = db.query(Post).filter_by(id=post_id).first()
+        if not post:
+            return jsonify({'error': 'Post not found'}), 404
+        rows = db.query(Comment, User).join(User, Comment.user_id == User.id).filter(
+            Comment.post_id == post_id
+        ).order_by(Comment.created_at.asc()).all()
+        return jsonify({'comments': [
+            {
+                'id':           c.id,
+                'text':         c.text,
+                'created_at':   c.created_at.strftime('%Y-%m-%d %H:%M:%S') if c.created_at else None,
+                'username':     u.username,
+                'is_verified':  bool(u.is_verified),
+                'user_id':      u.id,
+                'pfp_url':      f'/api/pfp/{u.id}' if u.pfp_data else None,
+                'pfp_offset_x': u.pfp_offset_x if u.pfp_offset_x is not None else 50.0,
+                'pfp_offset_y': u.pfp_offset_y if u.pfp_offset_y is not None else 50.0,
+            }
+            for c, u in rows
+        ]})
+    finally:
+        db.close()
+
+
+@app.route('/api/posts/<int:post_id>/comments', methods=['POST'])
+def create_comment(post_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'You must be logged in to comment'}), 401
+    data = request.get_json() or {}
+    text = (data.get('text') or '').strip()
+    if not text:
+        return jsonify({'error': 'Comment text is required'}), 400
+    if len(text) > 300:
+        return jsonify({'error': 'Comment must be 300 characters or less'}), 400
+    if contains_bad_words(text):
+        return jsonify({'error': 'Your comment contains words that are not allowed.'}), 400
+    db = DBSession()
+    try:
+        post = db.query(Post).filter_by(id=post_id).first()
+        if not post:
+            return jsonify({'error': 'Post not found'}), 404
+        comment = Comment(post_id=post_id, user_id=session['user_id'], text=text)
+        db.add(comment)
+        db.commit()
+        db.refresh(comment)
+        user = db.query(User).filter_by(id=session['user_id']).first()
+        return jsonify({'success': True, 'comment': {
+            'id':           comment.id,
+            'text':         comment.text,
+            'created_at':   comment.created_at.strftime('%Y-%m-%d %H:%M:%S') if comment.created_at else None,
+            'username':     user.username,
+            'is_verified':  bool(user.is_verified),
+            'user_id':      user.id,
+            'pfp_url':      f'/api/pfp/{user.id}' if user.pfp_data else None,
+            'pfp_offset_x': user.pfp_offset_x if user.pfp_offset_x is not None else 50.0,
+            'pfp_offset_y': user.pfp_offset_y if user.pfp_offset_y is not None else 50.0,
+        }})
+    except Exception:
+        db.rollback()
+        return jsonify({'error': 'Could not post comment'}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/comments/<int:comment_id>', methods=['DELETE'])
+def delete_comment(comment_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'You must be logged in'}), 401
+    db = DBSession()
+    try:
+        comment = db.query(Comment).filter_by(id=comment_id).first()
+        if not comment:
+            return jsonify({'error': 'Comment not found'}), 404
+        if comment.user_id != session['user_id']:
+            return jsonify({'error': 'You can only delete your own comments'}), 403
+        db.delete(comment)
+        db.commit()
+        return jsonify({'success': True})
+    except Exception:
+        db.rollback()
+        return jsonify({'error': 'Could not delete comment'}), 500
+    finally:
+        db.close()
+
+
+# ── Friends ───────────────────────────────────────────────────────────────────
+
+def _friendship_between(db, uid, other_id):
+    return db.query(Friendship).filter(
+        ((Friendship.requester_id == uid) & (Friendship.addressee_id == other_id)) |
+        ((Friendship.requester_id == other_id) & (Friendship.addressee_id == uid))
+    ).first()
+
+
+def _user_mini(u):
+    return {
+        'id':           u.id,
+        'username':     u.username,
+        'is_verified':  bool(u.is_verified),
+        'pfp_url':      f'/api/pfp/{u.id}' if u.pfp_data else None,
+        'pfp_offset_x': u.pfp_offset_x if u.pfp_offset_x is not None else 50.0,
+        'pfp_offset_y': u.pfp_offset_y if u.pfp_offset_y is not None else 50.0,
+        'bio':          u.bio or '',
+    }
+
+
+@app.route('/api/friends/request', methods=['POST'])
+def send_friend_request():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    data = request.get_json() or {}
+    username = (data.get('username') or '').strip()
+    db = DBSession()
+    try:
+        uid = session['user_id']
+        other = db.query(User).filter_by(username=username).first()
+        if not other:
+            return jsonify({'error': 'User not found'}), 404
+        if other.id == uid:
+            return jsonify({'error': 'You cannot add yourself'}), 400
+        existing = _friendship_between(db, uid, other.id)
+        if existing:
+            return jsonify({'error': 'Friend relationship already exists'}), 409
+        f = Friendship(requester_id=uid, addressee_id=other.id)
+        db.add(f)
+        db.commit()
+        db.refresh(f)
+        return jsonify({'success': True, 'status': 'pending_sent', 'friendship_id': f.id})
+    except Exception:
+        db.rollback()
+        return jsonify({'error': 'Could not send friend request'}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/friends/<int:friendship_id>/accept', methods=['POST'])
+def accept_friend_request(friendship_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    db = DBSession()
+    try:
+        f = db.query(Friendship).filter_by(id=friendship_id, addressee_id=session['user_id'], status='pending').first()
+        if not f:
+            return jsonify({'error': 'Friend request not found'}), 404
+        f.status = 'accepted'
+        db.commit()
+        return jsonify({'success': True})
+    except Exception:
+        db.rollback()
+        return jsonify({'error': 'Could not accept request'}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/friends/<int:friendship_id>/decline', methods=['POST'])
+def decline_friend_request(friendship_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    db = DBSession()
+    try:
+        f = db.query(Friendship).filter_by(id=friendship_id, addressee_id=session['user_id'], status='pending').first()
+        if not f:
+            return jsonify({'error': 'Friend request not found'}), 404
+        db.delete(f)
+        db.commit()
+        return jsonify({'success': True})
+    except Exception:
+        db.rollback()
+        return jsonify({'error': 'Could not decline request'}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/friends/<int:friendship_id>', methods=['DELETE'])
+def remove_friend(friendship_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    db = DBSession()
+    try:
+        uid = session['user_id']
+        f = db.query(Friendship).filter(
+            Friendship.id == friendship_id,
+            (Friendship.requester_id == uid) | (Friendship.addressee_id == uid)
+        ).first()
+        if not f:
+            return jsonify({'error': 'Friendship not found'}), 404
+        db.delete(f)
+        db.commit()
+        return jsonify({'success': True})
+    except Exception:
+        db.rollback()
+        return jsonify({'error': 'Could not remove friend'}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/friends', methods=['GET'])
+def get_friends():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    db = DBSession()
+    try:
+        uid = session['user_id']
+        accepted = db.query(Friendship).filter(
+            Friendship.status == 'accepted',
+            (Friendship.requester_id == uid) | (Friendship.addressee_id == uid)
+        ).all()
+        friends = []
+        for f in accepted:
+            other_id = f.addressee_id if f.requester_id == uid else f.requester_id
+            other = db.query(User).filter_by(id=other_id).first()
+            if other:
+                friends.append({'friendship_id': f.id, 'user': _user_mini(other)})
+
+        received = db.query(Friendship).filter_by(addressee_id=uid, status='pending').all()
+        requests_in = []
+        for f in received:
+            other = db.query(User).filter_by(id=f.requester_id).first()
+            if other:
+                requests_in.append({'friendship_id': f.id, 'user': _user_mini(other)})
+
+        return jsonify({'friends': friends, 'requests': requests_in})
+    finally:
+        db.close()
+
+
+# ── Direct Messages ───────────────────────────────────────────────────────────
+
+@app.route('/api/dms', methods=['GET'])
+def list_dm_conversations():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    db = DBSession()
+    try:
+        uid = session['user_id']
+        messages = db.query(DirectMessage).filter(
+            (DirectMessage.sender_id == uid) | (DirectMessage.recipient_id == uid)
+        ).order_by(DirectMessage.created_at.desc()).all()
+        seen = {}
+        for m in messages:
+            other_id = m.recipient_id if m.sender_id == uid else m.sender_id
+            if other_id not in seen:
+                seen[other_id] = m
+        convos = []
+        for other_id, last_msg in seen.items():
+            other = db.query(User).filter_by(id=other_id).first()
+            if not other:
+                continue
+            unread = db.query(DirectMessage).filter_by(
+                sender_id=other_id, recipient_id=uid, is_read=False
+            ).count()
+            convos.append({
+                'user':         _user_mini(other),
+                'last_message': {
+                    'text':       last_msg.text,
+                    'sender_id':  last_msg.sender_id,
+                    'created_at': last_msg.created_at.strftime('%Y-%m-%d %H:%M:%S') if last_msg.created_at else None,
+                },
+                'unread': unread,
+            })
+        return jsonify({'conversations': convos})
+    finally:
+        db.close()
+
+
+@app.route('/api/dms/unread', methods=['GET'])
+def unread_dm_count():
+    if 'user_id' not in session:
+        return jsonify({'count': 0})
+    db = DBSession()
+    try:
+        count = db.query(DirectMessage).filter_by(recipient_id=session['user_id'], is_read=False).count()
+        return jsonify({'count': count})
+    finally:
+        db.close()
+
+
+@app.route('/api/dms/<username>', methods=['GET'])
+def get_dm_thread(username):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    db = DBSession()
+    try:
+        uid = session['user_id']
+        other = db.query(User).filter_by(username=username).first()
+        if not other:
+            return jsonify({'error': 'User not found'}), 404
+        db.query(DirectMessage).filter_by(
+            sender_id=other.id, recipient_id=uid, is_read=False
+        ).update({'is_read': True})
+        db.commit()
+        msgs = db.query(DirectMessage).filter(
+            ((DirectMessage.sender_id == uid) & (DirectMessage.recipient_id == other.id)) |
+            ((DirectMessage.sender_id == other.id) & (DirectMessage.recipient_id == uid))
+        ).order_by(DirectMessage.created_at.asc()).all()
+        return jsonify({
+            'other_user': _user_mini(other),
+            'messages': [
+                {
+                    'id':         m.id,
+                    'text':       m.text,
+                    'sender_id':  m.sender_id,
+                    'created_at': m.created_at.strftime('%Y-%m-%d %H:%M:%S') if m.created_at else None,
+                }
+                for m in msgs
+            ]
+        })
+    finally:
+        db.close()
+
+
+@app.route('/api/dms/<username>', methods=['POST'])
+def send_dm(username):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    data = request.get_json() or {}
+    text = (data.get('text') or '').strip()
+    if not text:
+        return jsonify({'error': 'Message text is required'}), 400
+    if len(text) > 1000:
+        return jsonify({'error': 'Message must be 1000 characters or less'}), 400
+    db = DBSession()
+    try:
+        uid = session['user_id']
+        other = db.query(User).filter_by(username=username).first()
+        if not other:
+            return jsonify({'error': 'User not found'}), 404
+        if other.id == uid:
+            return jsonify({'error': 'You cannot message yourself'}), 400
+        msg = DirectMessage(sender_id=uid, recipient_id=other.id, text=text)
+        db.add(msg)
+        db.commit()
+        db.refresh(msg)
+        return jsonify({'success': True, 'message': {
+            'id':         msg.id,
+            'text':       msg.text,
+            'sender_id':  msg.sender_id,
+            'created_at': msg.created_at.strftime('%Y-%m-%d %H:%M:%S') if msg.created_at else None,
+        }})
+    except Exception:
+        db.rollback()
+        return jsonify({'error': 'Could not send message'}), 500
+    finally:
+        db.close()
 
 
 if __name__ == '__main__':

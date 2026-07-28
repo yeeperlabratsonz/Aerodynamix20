@@ -285,11 +285,12 @@
         return;
       }
       feed.innerHTML = data.posts.map(post => {
-        const canDelete = currentUser && currentUser.id === post.user_id;
+        const canDelete    = currentUser && currentUser.id === post.user_id;
         const avatarInline = post.pfp_url
           ? `style="background-image:url('${escapeHtml(post.pfp_url)}');background-position:${post.pfp_offset_x || 50}% ${post.pfp_offset_y || 50}%;background-size:cover;"`
           : '';
-        const initials = post.pfp_url ? '' : post.username.slice(0, 2).toUpperCase();
+        const initials     = post.pfp_url ? '' : post.username.slice(0, 2).toUpperCase();
+        const commentCount = post.comment_count || 0;
         return `
           <div class="dc-post" data-post-id="${post.id}">
             <div class="dc-post-header">
@@ -304,6 +305,23 @@
             </div>
             <div class="dc-post-text">${escapeHtml(post.text)}</div>
             ${post.image_url ? `<img class="dc-post-image" src="${escapeHtml(post.image_url)}" alt="Post image">` : ''}
+            <div class="dc-post-footer">
+              <button class="dc-comment-toggle" data-post-id="${post.id}">
+                <i class="fas fa-comment"></i>
+                <span class="dc-comment-count">${commentCount}</span>
+                ${commentCount === 1 ? 'comment' : 'comments'}
+              </button>
+            </div>
+            <div class="dc-comments-section hidden" id="comments-section-${post.id}">
+              <div class="dc-comments-list" id="comments-list-${post.id}"></div>
+              ${currentUser ? `
+                <form class="dc-comment-form" data-post-id="${post.id}">
+                  <input class="dc-comment-input" type="text" placeholder="Write a comment…" maxlength="300" autocomplete="off">
+                  <button type="submit" class="dc-btn-sm"><i class="fas fa-paper-plane"></i></button>
+                </form>
+                <p class="dc-error dc-comment-error" style="display:none;"></p>
+              ` : ''}
+            </div>
           </div>
         `;
       }).join('');
@@ -313,6 +331,39 @@
       });
       document.querySelectorAll('.dc-username-link').forEach(el => {
         el.addEventListener('click', () => openUserProfile(el.dataset.username));
+      });
+      document.querySelectorAll('.dc-comment-toggle').forEach(btn => {
+        btn.addEventListener('click', () => toggleComments(parseInt(btn.dataset.postId, 10)));
+      });
+      document.querySelectorAll('.dc-comment-form').forEach(form => {
+        form.addEventListener('submit', async e => {
+          e.preventDefault();
+          const postId = parseInt(form.dataset.postId, 10);
+          const input  = form.querySelector('.dc-comment-input');
+          const errEl  = form.nextElementSibling;
+          const text   = input.value.trim();
+          if (!text) return;
+          const submitBtn = form.querySelector('button[type="submit"]');
+          submitBtn.disabled = true;
+          try {
+            await api(`/api/posts/${postId}/comments`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text })
+            });
+            input.value = '';
+            if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
+            await loadComments(postId);
+            const toggle = document.querySelector(`.dc-comment-toggle[data-post-id="${postId}"]`);
+            if (toggle) {
+              const countSpan = toggle.querySelector('.dc-comment-count');
+              if (countSpan) countSpan.textContent = parseInt(countSpan.textContent, 10) + 1;
+            }
+          } catch (err) {
+            if (errEl) { errEl.textContent = err.message; errEl.style.display = 'block'; }
+          }
+          submitBtn.disabled = false;
+        });
       });
     } catch (e) {
       feed.innerHTML = `<div class="dc-empty">Could not load posts: ${escapeHtml(e.message)}</div>`;
@@ -542,16 +593,52 @@
     profileViewAvatar.textContent   = '';
 
     try {
-      const data = await api(`/api/users/${encodeURIComponent(username)}`);
-      const u = data.user;
+      const data    = await api(`/api/users/${encodeURIComponent(username)}`);
+      const u       = data.user;
+      const isSelf  = currentUser && currentUser.username === u.username;
+      const loggedIn = !!currentUser;
 
-       setUsernameWithBadge(profileViewUsername, u.username, u.is_verified);
-      profileViewBio.textContent      = u.bio || '';
-      profileViewJoined.textContent   = u.created_at ? `Joined ${u.created_at}` : '';
+      setUsernameWithBadge(profileViewUsername, u.username, u.is_verified);
+      profileViewBio.textContent    = u.bio || '';
+      profileViewJoined.textContent = u.created_at ? `Joined ${u.created_at}` : '';
       applyAvatarStyle(profileViewAvatar, u.pfp_url, u.pfp_offset_x, u.pfp_offset_y, u.username);
+
       if (profileCallBtn) {
         profileCallBtn.dataset.username = u.username;
-        profileCallBtn.style.display = currentUser && currentUser.username !== u.username ? 'inline-flex' : 'none';
+        profileCallBtn.style.display = loggedIn && !isSelf ? 'inline-flex' : 'none';
+      }
+
+      const friendBtn = document.getElementById('profile-friend-btn');
+      if (friendBtn) {
+        if (loggedIn && !isSelf) {
+          friendBtn.style.display  = 'inline-flex';
+          const status = data.friend_status || 'none';
+          const fid    = data.friendship_id;
+          friendBtn.dataset.username = u.username;
+          friendBtn.dataset.fid      = fid != null ? fid : '';
+          friendBtn.dataset.status   = status;
+          if (status === 'none') {
+            friendBtn.innerHTML = '<i class="fas fa-user-plus"></i> Add Friend';
+            friendBtn.className = 'dc-btn-secondary dc-friend-profile-btn';
+          } else if (status === 'pending_sent') {
+            friendBtn.innerHTML = '<i class="fas fa-user-clock"></i> Pending';
+            friendBtn.className = 'dc-btn-secondary dc-friend-profile-btn dc-friend-pending';
+          } else if (status === 'pending_received') {
+            friendBtn.innerHTML = '<i class="fas fa-user-check"></i> Accept Request';
+            friendBtn.className = 'dc-btn dc-friend-profile-btn';
+          } else {
+            friendBtn.innerHTML = '<i class="fas fa-user-minus"></i> Unfriend';
+            friendBtn.className = 'dc-btn-secondary dc-friend-profile-btn dc-friend-remove';
+          }
+        } else {
+          friendBtn.style.display = 'none';
+        }
+      }
+
+      const dmBtn = document.getElementById('profile-dm-btn');
+      if (dmBtn) {
+        dmBtn.style.display    = loggedIn && !isSelf ? 'inline-flex' : 'none';
+        dmBtn.dataset.username = u.username;
       }
 
       if (!data.posts || data.posts.length === 0) {
@@ -821,8 +908,431 @@
   });
   if (remoteVideo) remoteVideo.addEventListener('click', () => remoteVideo.play().catch(() => {}));
 
+  // ── Page tabs ─────────────────────────────────────────────────────────────────
+  let currentPage = 'feed';
+
+  function switchPage(page) {
+    currentPage = page;
+    document.querySelectorAll('.dc-page-tab').forEach(t =>
+      t.classList.toggle('active', t.dataset.page === page)
+    );
+    document.getElementById('page-feed').classList.toggle('hidden', page !== 'feed');
+    document.getElementById('page-friends').classList.toggle('hidden', page !== 'friends');
+    document.getElementById('page-messages').classList.toggle('hidden', page !== 'messages');
+    if (page === 'friends') loadFriendsPage();
+    if (page === 'messages') loadMessagesPage();
+  }
+
+  document.querySelectorAll('.dc-page-tab').forEach(tab => {
+    tab.addEventListener('click', () => switchPage(tab.dataset.page));
+  });
+
+  // ── Friend button on profile modal ────────────────────────────────────────────
+  const profileFriendBtn = document.getElementById('profile-friend-btn');
+  if (profileFriendBtn) {
+    profileFriendBtn.addEventListener('click', async function () {
+      const btn    = this;
+      const status = btn.dataset.status;
+      const uname  = btn.dataset.username;
+      const fid    = btn.dataset.fid ? parseInt(btn.dataset.fid, 10) : null;
+      if (status === 'pending_sent' && !confirm('Cancel friend request?')) return;
+      if (status === 'friends'      && !confirm('Remove this friend?'))    return;
+      btn.disabled = true;
+      try {
+        if (status === 'none') {
+          const d = await api('/api/friends/request', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: uname })
+          });
+          btn.dataset.status = 'pending_sent';
+          btn.dataset.fid    = d.friendship_id;
+          btn.innerHTML = '<i class="fas fa-user-clock"></i> Pending';
+          btn.className = 'dc-btn-secondary dc-friend-profile-btn dc-friend-pending';
+        } else if (status === 'pending_received' && fid) {
+          await api(`/api/friends/${fid}/accept`, { method: 'POST' });
+          btn.dataset.status = 'friends';
+          btn.innerHTML = '<i class="fas fa-user-minus"></i> Unfriend';
+          btn.className = 'dc-btn-secondary dc-friend-profile-btn dc-friend-remove';
+          updateFriendBadge();
+        } else if (fid) {
+          const endpoint = status === 'pending_sent'
+            ? `/api/friends/${fid}`
+            : `/api/friends/${fid}`;
+          await api(endpoint, { method: 'DELETE' });
+          btn.dataset.status = 'none';
+          btn.dataset.fid    = '';
+          btn.innerHTML = '<i class="fas fa-user-plus"></i> Add Friend';
+          btn.className = 'dc-btn-secondary dc-friend-profile-btn';
+        }
+      } catch (err) { alert(err.message); }
+      btn.disabled = false;
+    });
+  }
+
+  // ── DM button on profile modal ────────────────────────────────────────────────
+  const profileDmBtn = document.getElementById('profile-dm-btn');
+  if (profileDmBtn) {
+    profileDmBtn.addEventListener('click', function () {
+      const uname = this.dataset.username;
+      profileModal.classList.add('hidden');
+      switchPage('messages');
+      openDmThread(uname);
+    });
+  }
+
+  // ── Comments ──────────────────────────────────────────────────────────────────
+  function toggleComments(postId) {
+    const section = document.getElementById(`comments-section-${postId}`);
+    if (!section) return;
+    const willOpen = section.classList.contains('hidden');
+    section.classList.toggle('hidden');
+    if (willOpen) loadComments(postId);
+  }
+
+  async function loadComments(postId) {
+    const listEl = document.getElementById(`comments-list-${postId}`);
+    if (!listEl) return;
+    listEl.innerHTML = '<div class="dc-loading" style="font-size:0.8rem;padding:0.3rem 0;">Loading…</div>';
+    try {
+      const data = await api(`/api/posts/${postId}/comments`);
+      if (!data.comments || data.comments.length === 0) {
+        listEl.innerHTML = '<div class="dc-comments-empty">No comments yet.</div>';
+      } else {
+        listEl.innerHTML = data.comments.map(renderComment).join('');
+        listEl.querySelectorAll('[data-delete-comment]').forEach(btn => {
+          btn.addEventListener('click', () => deleteComment(parseInt(btn.dataset.deleteComment, 10), postId));
+        });
+        listEl.querySelectorAll('.dc-comment-username').forEach(el => {
+          el.addEventListener('click', () => openUserProfile(el.dataset.username));
+        });
+      }
+    } catch (err) {
+      listEl.innerHTML = '<div class="dc-comments-empty">Could not load comments.</div>';
+    }
+  }
+
+  function renderComment(c) {
+    const avatarInline = c.pfp_url
+      ? `style="background-image:url('${escapeHtml(c.pfp_url)}');background-position:${c.pfp_offset_x || 50}% ${c.pfp_offset_y || 50}%;background-size:cover;"`
+      : '';
+    const initials = c.pfp_url ? '' : (c.username || '??').slice(0, 2).toUpperCase();
+    const canDel   = currentUser && currentUser.id === c.user_id;
+    return `
+      <div class="dc-comment" data-comment-id="${c.id}">
+        <div class="dc-avatar dc-avatar-xs" ${avatarInline}>${initials}</div>
+        <div class="dc-comment-body">
+          <div class="dc-comment-header">
+            <span class="dc-comment-username dc-username-link" data-username="${escapeHtml(c.username)}">${escapeHtml(c.username)}${verifiedBadge(c.is_verified)}</span>
+            <span class="dc-comment-time">${formatTime(c.created_at)}</span>
+            ${canDel ? `<button class="dc-comment-delete" data-delete-comment="${c.id}" title="Delete"><i class="fas fa-trash"></i></button>` : ''}
+          </div>
+          <div class="dc-comment-text">${escapeHtml(c.text)}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  async function deleteComment(commentId, postId) {
+    if (!confirm('Delete this comment?')) return;
+    try {
+      await api(`/api/comments/${commentId}`, { method: 'DELETE' });
+      const el = document.querySelector(`[data-comment-id="${commentId}"]`);
+      if (el) {
+        el.remove();
+        const toggle = document.querySelector(`.dc-comment-toggle[data-post-id="${postId}"]`);
+        if (toggle) {
+          const span = toggle.querySelector('.dc-comment-count');
+          if (span) span.textContent = Math.max(0, parseInt(span.textContent, 10) - 1);
+        }
+      }
+    } catch (err) { alert(err.message); }
+  }
+
+  // ── Friends page ──────────────────────────────────────────────────────────────
+  async function loadFriendsPage() {
+    const reqCard  = document.getElementById('friend-requests-card');
+    const lstCard  = document.getElementById('friends-list-card');
+    const loginMsg = document.getElementById('friends-login-prompt');
+    if (!currentUser) {
+      if (loginMsg) loginMsg.classList.remove('hidden');
+      if (reqCard)  reqCard.classList.add('hidden');
+      if (lstCard)  lstCard.classList.add('hidden');
+      return;
+    }
+    if (loginMsg) loginMsg.classList.add('hidden');
+    if (reqCard)  reqCard.classList.remove('hidden');
+    if (lstCard)  lstCard.classList.remove('hidden');
+
+    try {
+      const data = await api('/api/friends');
+
+      const reqList = document.getElementById('friend-requests-list');
+      if (reqList) {
+        if (!data.requests || data.requests.length === 0) {
+          reqList.innerHTML = '<div class="dc-empty" style="font-size:0.85rem;">No pending requests.</div>';
+        } else {
+          reqList.innerHTML = data.requests.map(r => {
+            const u = r.user;
+            const av = u.pfp_url
+              ? `style="background-image:url('${escapeHtml(u.pfp_url)}');background-position:${u.pfp_offset_x}% ${u.pfp_offset_y}%;background-size:cover;"`
+              : '';
+            return `
+              <div class="dc-person-row">
+                <div class="dc-avatar dc-avatar-sm" ${av}>${u.pfp_url ? '' : escapeHtml(u.username).slice(0,2).toUpperCase()}</div>
+                <div class="dc-person-info">
+                  <div class="dc-person-name dc-username-link" data-username="${escapeHtml(u.username)}">${escapeHtml(u.username)}${verifiedBadge(u.is_verified)}</div>
+                </div>
+                <div class="dc-person-actions">
+                  <button class="dc-btn-sm dc-friend-accept" data-accept="${r.friendship_id}">Accept</button>
+                  <button class="dc-btn-sm dc-friend-decline" data-decline="${r.friendship_id}">Decline</button>
+                </div>
+              </div>`;
+          }).join('');
+          reqList.querySelectorAll('[data-accept]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              btn.disabled = true;
+              try { await api(`/api/friends/${btn.dataset.accept}/accept`, { method: 'POST' }); loadFriendsPage(); updateFriendBadge(); }
+              catch (err) { alert(err.message); btn.disabled = false; }
+            });
+          });
+          reqList.querySelectorAll('[data-decline]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              btn.disabled = true;
+              try { await api(`/api/friends/${btn.dataset.decline}/decline`, { method: 'POST' }); loadFriendsPage(); updateFriendBadge(); }
+              catch (err) { alert(err.message); btn.disabled = false; }
+            });
+          });
+          reqList.querySelectorAll('.dc-username-link').forEach(el =>
+            el.addEventListener('click', () => openUserProfile(el.dataset.username))
+          );
+        }
+      }
+
+      const friendsList = document.getElementById('friends-list');
+      if (friendsList) {
+        if (!data.friends || data.friends.length === 0) {
+          friendsList.innerHTML = '<div class="dc-empty" style="font-size:0.85rem;">No friends yet — add someone from the feed!</div>';
+        } else {
+          friendsList.innerHTML = data.friends.map(f => {
+            const u = f.user;
+            const av = u.pfp_url
+              ? `style="background-image:url('${escapeHtml(u.pfp_url)}');background-position:${u.pfp_offset_x}% ${u.pfp_offset_y}%;background-size:cover;"`
+              : '';
+            return `
+              <div class="dc-person-row">
+                <div class="dc-avatar dc-avatar-sm" ${av}>${u.pfp_url ? '' : escapeHtml(u.username).slice(0,2).toUpperCase()}</div>
+                <div class="dc-person-info">
+                  <div class="dc-person-name dc-username-link" data-username="${escapeHtml(u.username)}">${escapeHtml(u.username)}${verifiedBadge(u.is_verified)}</div>
+                  ${u.bio ? `<div class="dc-person-bio">${escapeHtml(u.bio)}</div>` : ''}
+                </div>
+                <div class="dc-person-actions">
+                  <button class="dc-btn-sm" data-dm-user="${escapeHtml(u.username)}" title="Message"><i class="fas fa-envelope"></i></button>
+                  <button class="dc-btn-sm dc-friend-decline" data-unfriend="${f.friendship_id}" title="Unfriend"><i class="fas fa-user-minus"></i></button>
+                </div>
+              </div>`;
+          }).join('');
+          friendsList.querySelectorAll('.dc-username-link').forEach(el =>
+            el.addEventListener('click', () => openUserProfile(el.dataset.username))
+          );
+          friendsList.querySelectorAll('[data-dm-user]').forEach(btn =>
+            btn.addEventListener('click', () => { switchPage('messages'); openDmThread(btn.dataset.dmUser); })
+          );
+          friendsList.querySelectorAll('[data-unfriend]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              if (!confirm('Remove this friend?')) return;
+              btn.disabled = true;
+              try { await api(`/api/friends/${btn.dataset.unfriend}`, { method: 'DELETE' }); loadFriendsPage(); }
+              catch (err) { alert(err.message); btn.disabled = false; }
+            });
+          });
+        }
+      }
+    } catch (err) {
+      const r = document.getElementById('friend-requests-list');
+      const f = document.getElementById('friends-list');
+      if (r) r.innerHTML = '<div class="dc-empty">Could not load.</div>';
+      if (f) f.innerHTML = '<div class="dc-empty">Could not load.</div>';
+    }
+  }
+
+  async function updateFriendBadge() {
+    const badge = document.getElementById('friend-req-badge');
+    if (!badge || !currentUser) { if (badge) badge.style.display = 'none'; return; }
+    try {
+      const data = await api('/api/friends');
+      const count = (data.requests || []).length;
+      badge.textContent  = count > 0 ? count : '';
+      badge.style.display = count > 0 ? 'flex' : 'none';
+    } catch (e) {}
+  }
+
+  // ── Messages page ─────────────────────────────────────────────────────────────
+  let activeDmPeer = null;
+  let dmPollTimer  = null;
+
+  async function loadMessagesPage() {
+    const card     = document.getElementById('messages-card');
+    const loginMsg = document.getElementById('messages-login-prompt');
+    if (!currentUser) {
+      if (loginMsg) loginMsg.classList.remove('hidden');
+      if (card)     card.classList.add('hidden');
+      return;
+    }
+    if (loginMsg) loginMsg.classList.add('hidden');
+    if (card)     card.classList.remove('hidden');
+    await loadConversations();
+  }
+
+  async function loadConversations() {
+    const listEl = document.getElementById('conversations-list');
+    if (!listEl) return;
+    try {
+      const data   = await api('/api/dms');
+      const convos = data.conversations || [];
+      if (convos.length === 0) {
+        listEl.innerHTML = '<div style="padding:1rem;color:rgba(255,255,255,0.38);font-size:0.85rem;text-align:center;">No conversations yet.</div>';
+      } else {
+        listEl.innerHTML = convos.map(c => {
+          const u = c.user;
+          const av = u.pfp_url
+            ? `style="background-image:url('${escapeHtml(u.pfp_url)}');background-position:${u.pfp_offset_x}% ${u.pfp_offset_y}%;background-size:cover;"`
+            : '';
+          const initials = u.pfp_url ? '' : u.username.slice(0, 2).toUpperCase();
+          const preview  = c.last_message
+            ? (c.last_message.sender_id === currentUser.id ? 'You: ' : '') + escapeHtml(c.last_message.text).slice(0, 40)
+            : '';
+          const isActive = activeDmPeer === u.username;
+          return `
+            <div class="dc-convo-row${isActive ? ' active' : ''}" data-dm-open="${escapeHtml(u.username)}">
+              <div class="dc-avatar dc-avatar-sm" ${av}>${initials}</div>
+              <div class="dc-convo-info">
+                <div class="dc-convo-name">${escapeHtml(u.username)}${verifiedBadge(u.is_verified)}</div>
+                ${preview ? `<div class="dc-convo-preview">${preview}</div>` : ''}
+              </div>
+              ${c.unread > 0 ? `<span class="dc-convo-unread">${c.unread}</span>` : ''}
+            </div>`;
+        }).join('');
+        listEl.querySelectorAll('[data-dm-open]').forEach(row =>
+          row.addEventListener('click', () => openDmThread(row.dataset.dmOpen))
+        );
+      }
+    } catch (err) {
+      listEl.innerHTML = '<div style="padding:1rem;color:#e57373;font-size:0.85rem;">Could not load.</div>';
+    }
+  }
+
+  async function openDmThread(username) {
+    activeDmPeer = username;
+    const chatPanel  = document.getElementById('chat-panel');
+    const convPanel  = document.getElementById('conversations-panel');
+    const dmMsgs     = document.getElementById('dm-messages');
+    const peerName   = document.getElementById('dm-peer-name');
+    const peerAvatar = document.getElementById('dm-peer-avatar');
+    if (!chatPanel) return;
+
+    if (dmPollTimer) { clearInterval(dmPollTimer); dmPollTimer = null; }
+    chatPanel.classList.remove('hidden');
+    if (dmMsgs) dmMsgs.innerHTML = '<div class="dc-loading" style="font-size:0.85rem;">Loading…</div>';
+    if (peerName) peerName.textContent = username;
+    if (window.innerWidth <= 600 && convPanel) convPanel.style.display = 'none';
+
+    try {
+      const data = await api(`/api/dms/${encodeURIComponent(username)}`);
+      const u    = data.other_user;
+      if (peerName)   setUsernameWithBadge(peerName, u.username, u.is_verified);
+      if (peerAvatar) applyAvatarStyle(peerAvatar, u.pfp_url, u.pfp_offset_x, u.pfp_offset_y, u.username);
+      renderDmMessages(data.messages);
+      await loadConversations();
+      await updateUnreadBadge();
+    } catch (err) {
+      if (dmMsgs) dmMsgs.innerHTML = '<div style="color:#e57373;font-size:0.85rem;padding:1rem;">Could not load messages.</div>';
+    }
+
+    dmPollTimer = setInterval(async () => {
+      if (activeDmPeer !== username) return;
+      try {
+        const d = await api(`/api/dms/${encodeURIComponent(username)}`);
+        renderDmMessages(d.messages);
+        await updateUnreadBadge();
+      } catch (e) {}
+    }, 3000);
+  }
+
+  function renderDmMessages(messages) {
+    const dmMsgs = document.getElementById('dm-messages');
+    if (!dmMsgs) return;
+    const atBottom = dmMsgs.scrollHeight - dmMsgs.scrollTop - dmMsgs.clientHeight < 80;
+    if (!messages || messages.length === 0) {
+      dmMsgs.innerHTML = '<div class="dc-messages-empty"><i class="fas fa-comment-dots"></i><span>No messages yet. Say hello!</span></div>';
+      return;
+    }
+    dmMsgs.innerHTML = messages.map(m => {
+      const mine = currentUser && m.sender_id === currentUser.id;
+      return `<div class="dc-dm-bubble ${mine ? 'mine' : 'theirs'}">${escapeHtml(m.text)}<div class="dc-dm-time">${formatTime(m.created_at)}</div></div>`;
+    }).join('');
+    if (atBottom) dmMsgs.scrollTop = dmMsgs.scrollHeight;
+  }
+
+  const dmForm = document.getElementById('dm-form');
+  if (dmForm) {
+    dmForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      if (!activeDmPeer) return;
+      const input = document.getElementById('dm-input');
+      const text  = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      try {
+        const data   = await api(`/api/dms/${encodeURIComponent(activeDmPeer)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+        const dmMsgs = document.getElementById('dm-messages');
+        if (dmMsgs) {
+          if (dmMsgs.querySelector('.dc-messages-empty')) dmMsgs.innerHTML = '';
+          const bubble = document.createElement('div');
+          bubble.className = 'dc-dm-bubble mine';
+          bubble.innerHTML = `${escapeHtml(data.message.text)}<div class="dc-dm-time">${formatTime(data.message.created_at)}</div>`;
+          dmMsgs.appendChild(bubble);
+          dmMsgs.scrollTop = dmMsgs.scrollHeight;
+        }
+        loadConversations();
+      } catch (err) { input.value = text; alert(err.message); }
+    });
+  }
+
+  const dmBackBtn = document.getElementById('dm-back-btn');
+  if (dmBackBtn) {
+    dmBackBtn.addEventListener('click', () => {
+      if (dmPollTimer) { clearInterval(dmPollTimer); dmPollTimer = null; }
+      activeDmPeer = null;
+      const chatPanel = document.getElementById('chat-panel');
+      const convPanel = document.getElementById('conversations-panel');
+      if (chatPanel) chatPanel.classList.add('hidden');
+      if (convPanel) convPanel.style.display = '';
+    });
+  }
+
+  async function updateUnreadBadge() {
+    const badge = document.getElementById('unread-dm-badge');
+    if (!badge || !currentUser) { if (badge) badge.style.display = 'none'; return; }
+    try {
+      const data  = await api('/api/dms/unread');
+      const count = data.count || 0;
+      badge.textContent   = count > 0 ? count : '';
+      badge.style.display = count > 0 ? 'flex' : 'none';
+    } catch (e) {}
+  }
+
   // ── Init ─────────────────────────────────────────────────────────────────────
   checkMe().then(() => {
     callPollTimer = setInterval(pollIncomingCalls, 3000);
+    if (currentUser) {
+      updateFriendBadge();
+      updateUnreadBadge();
+      setInterval(updateFriendBadge, 30000);
+      setInterval(updateUnreadBadge, 10000);
+    }
   });
 })();
