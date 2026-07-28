@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop - Aerodynamix</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="theme.js"></script>
+    <script src="discs.js" defer></script>
+    <script src="auth-overlay.js" defer></script>
+    <style>
+        .shop-page { padding: 9vw 6vw 140px; }
+        .shop-heading { text-align:center; color:#fff; margin-bottom:2.5rem; }
+        .shop-heading h1 { margin:0 0 .5rem; font-size:clamp(2rem,4vw,3.2rem); }
+        .shop-heading p { color:rgba(255,255,255,.65); margin:0; }
+        .shop-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:1.25rem; max-width:1250px; margin:0 auto; }
+        .shop-card { overflow:hidden; border:1px solid rgba(255,255,255,.12); border-radius:14px; background:rgba(14,20,34,.82); box-shadow:0 12px 30px rgba(0,0,0,.25); color:#fff; }
+        .shop-card img { display:block; width:100%; aspect-ratio:1.5; object-fit:cover; }
+        .shop-card-body { padding:1rem; }
+        .shop-card h2 { font-size:1rem; margin:0 0 .8rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .shop-buy { width:100%; border:0; border-radius:8px; padding:.7rem; color:#fff; background:linear-gradient(135deg,#2c7ffc,#1a5fd0); font:600 .9rem Montserrat,sans-serif; cursor:pointer; }
+        .shop-buy:hover { filter:brightness(1.12); transform:translateY(-1px); }
+        .shop-buy:disabled { background:rgba(255,255,255,.12); color:#9ebcff; cursor:default; transform:none; }
+        @media (max-width:768px) { .shop-page { padding:24vw 4vw 120px; } .shop-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:.75rem; } .shop-card-body { padding:.75rem; } }
+    </style>
+</head>
+<body>
+    <nav>
+        <img src="images/logo.gif" alt="logo" onclick="window.location='index.html'">
+        <h1><span class="logo-a">A</span>ERODYNAMIX</h1>
+        <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:0.4vw;">
+            <a href="index.html" style="color:#fff; text-decoration:none; padding:0.55vw 1.3vw; border-radius:0.5vw; font-weight:600; font-size:0.95vw;">Games</a>
+            <a href="shop.html" style="color:#000; text-decoration:none; padding:0.55vw 1.3vw; background:#fff; border-radius:0.5vw; font-weight:600; font-size:0.95vw;">Shop</a>
+            <a href="media-player.html" style="color:#fff; text-decoration:none; padding:0.55vw 1.3vw; border-radius:0.5vw; font-weight:600; font-size:0.95vw;">Media Player</a>
+            <a href="dynamix-connect.html" style="color:#fff; text-decoration:none; padding:0.55vw 1.3vw; border-radius:0.5vw; font-weight:600; font-size:0.95vw;">Connect</a>
+        </div>
+        <a href="colors.html" style="margin-right:1.5vw; color:#fff; text-decoration:none; padding:0.55vw 1.3vw; background:#2c7ffc; border-radius:0.5vw; font-weight:600; font-size:0.95vw;">Settings</a>
+    </nav>
+    <main class="shop-page">
+        <header class="shop-heading">
+            <h1>Game Shop</h1>
+            <p>Spend 100 Dynamix Discs to unlock a game permanently.</p>
+        </header>
+        <section class="shop-grid">
+            <article class="shop-card" data-game="games/run-3/"><img src="images/run-3.jpg" alt="Run 3"><div class="shop-card-body"><h2>Run 3</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="games/drive-mad/"><img src="images/drive-mad.jpg" alt="Drive Mad"><div class="shop-card-body"><h2>Drive Mad</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="games/retro-bowl/"><img src="images/retro-bowl.jpg" alt="Retro Bowl"><div class="shop-card-body"><h2>Retro Bowl</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="games/slope/"><img src="images/slope.jpg" alt="Slope"><div class="shop-card-body"><h2>Slope</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="games/minecraft/"><img src="images/mc.png" alt="Minecraft"><div class="shop-card-body"><h2>Minecraft</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="games/supersmashflash/"><img src="images/supersmashflash.jpg" alt="Super Smash Flash"><div class="shop-card-body"><h2>Super Smash Flash</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="games/papaspizzeria/"><img src="images/papaspizzeria.png" alt="Papa's Pizzeria"><div class="shop-card-body"><h2>Papa's Pizzeria</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="games/papasfreezeria/"><img src="images/papasfreezeria.png" alt="Papa's Freezeria"><div class="shop-card-body"><h2>Papa's Freezeria</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="games/adventure-capitalist/"><img src="images/adventure-capitalist.png" alt="Adventure Capitalist"><div class="shop-card-body"><h2>Adventure Capitalist</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="games/fridaynightfunkin/"><img src="images/fridaynightfunkin.png" alt="Friday Night Funkin'"><div class="shop-card-body"><h2>Friday Night Funkin'</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="games/run-2/"><img src="images/run-2.png" alt="Run 2"><div class="shop-card-body"><h2>Run 2</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="games/picoschool/"><img src="images/picoschool.png" alt="Pico's School"><div class="shop-card-body"><h2>Pico's School</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="games/worldshardestgame/"><img src="images/worldshardestgame.png" alt="World's Hardest Game"><div class="shop-card-body"><h2>World's Hardest Game</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="games/sandboxels/"><img src="images/sandboxels.png" alt="Sandboxels"><div class="shop-card-body"><h2>Sandboxels</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="attached_assets/Alien_Hominid_1784867581921.html"><img src="images/alien-hominid.png" alt="Alien Hominid"><div class="shop-card-body"><h2>Alien Hominid</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="attached_assets/clsubwaysurferssanfrancisco_(1)_1784785408303.html"><img src="images/subway-surfers-sf.jpg" alt="Subway Surfers"><div class="shop-card-body"><h2>Subway Surfers SF</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="attached_assets/Hobo_1_1784866297260.html"><img src="images/hobo-1.png" alt="Hobo 1"><div class="shop-card-body"><h2>Hobo 1</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="attached_assets/Hobo_2_1784866273340.html"><img src="images/hobo-2.png" alt="Hobo 2"><div class="shop-card-body"><h2>Hobo 2</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="attached_assets/Hobo_3_1784866253185.html"><img src="images/hobo-3.png" alt="Hobo 3"><div class="shop-card-body"><h2>Hobo 3</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="attached_assets/Hobo_4_1784866216457.html"><img src="images/hobo-4.png" alt="Hobo 4"><div class="shop-card-body"><h2>Hobo 4</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="attached_assets/Hobo_5_1784866218574.html"><img src="images/hobo-5.png" alt="Hobo 5"><div class="shop-card-body"><h2>Hobo 5</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="attached_assets/Hobo_6_1784866220679.html"><img src="images/hobo-6.png" alt="Hobo 6"><div class="shop-card-body"><h2>Hobo 6</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="attached_assets/Hobo_7_1784866222995.html"><img src="images/hobo-7.png" alt="Hobo 7"><div class="shop-card-body"><h2>Hobo 7</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="attached_assets/Gladihoppers_1784866393639.html"><img src="images/gladihoppers.jpg" alt="Gladihoppers"><div class="shop-card-body"><h2>Gladihoppers</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="attached_assets/Fruit_Ninja_1784866426153.html"><img src="images/fruit-ninja.png" alt="Fruit Ninja"><div class="shop-card-body"><h2>Fruit Ninja</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="attached_assets/Binding_of_Issac__Wrath_of_the_Lamb_1784866537332.html"><img src="images/binding-of-isaac.png" alt="Binding of Isaac"><div class="shop-card-body"><h2>Binding of Isaac</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="attached_assets/Crossy_Road_1785017138507.html"><img src="images/crossy-road.png" alt="Crossy Road"><div class="shop-card-body"><h2>Crossy Road</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="attached_assets/Cookie_Clicker_1785028048876.html"><img src="images/cookie-clicker.png" alt="Cookie Clicker"><div class="shop-card-body"><h2>Cookie Clicker</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="attached_assets/Duck_Life_1785028116865.html"><img src="images/duck-life.png" alt="Duck Life"><div class="shop-card-body"><h2>Duck Life</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="attached_assets/clgdlite_1785028362055.html"><img src="images/geometry-dash-lite.jpg" alt="Geometry Dash Lite"><div class="shop-card-body"><h2>Geometry Dash Lite</h2><button class="shop-buy">Buy for 100</button></div></article>
+            <article class="shop-card" data-game="attached_assets/DOOM_1785028500807.html"><img src="images/doom.png" alt="DOOM"><div class="shop-card-body"><h2>DOOM</h2><button class="shop-buy">Buy for 100</button></div></article>
+        </section>
+    </main>
+    <script src="shop.js"></script>
+    <script src="music-player.js"></script>
+    <script src="bubble-overlay.js"></script>
+    <script src="snow-overlay.js"></script>
+</body>
+</html>
