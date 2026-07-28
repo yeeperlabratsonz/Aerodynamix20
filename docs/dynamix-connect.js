@@ -140,7 +140,7 @@
 
   function verifiedBadge(isVerified) {
     return isVerified
-      ? '<span class="dc-verified-badge" title="Verified user" aria-label="Verified user"><i class="fas fa-check"></i></span>'
+      ? '<img class="dc-verified-badge" src="attached_assets/verified-badge.png" title="Verified" alt="Verified">'
       : '';
   }
 
