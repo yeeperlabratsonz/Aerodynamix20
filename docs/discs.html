@@ -19,8 +19,11 @@
     .discs-nav-settings { margin-right:1.5vw; border-color:rgba(130,183,255,.25); background:linear-gradient(135deg,#2c7ffc,#1a5fd0); box-shadow:0 6px 18px rgba(44,127,252,.2); }
     .discs-panel h1 { margin:0 0 .6rem; font-size:clamp(2.3rem,5vw,4rem); letter-spacing:-.05em; }
     .discs-panel p { margin:0 auto; max-width:480px; color:#aebbd0; line-height:1.6; }
-    .daily-disc { display:block; width:min(52vw,250px); height:min(52vw,250px); margin:2rem auto 1.6rem; object-fit:contain; filter:drop-shadow(0 0 25px rgba(44,127,252,.5)); }
-    .disc-balance-large { color:#c9dcff; font-size:1rem; font-weight:800; }
+    .daily-disc { display:block; width:min(52vw,250px); height:min(52vw,250px); margin:2rem auto 1.6rem; object-fit:contain; filter:drop-shadow(0 0 16px rgba(44,127,252,.72)) drop-shadow(0 0 38px rgba(44,127,252,.38)); animation:disc-spin 18s linear infinite; }
+    .daily-reward-label { color:#c9dcff; font-size:1rem; font-weight:800; }
+    .disc-balance-large { margin-top:.45rem; color:#829bc2; font-size:.76rem; font-weight:600; }
+    @keyframes disc-spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+    @media (prefers-reduced-motion:reduce) { .daily-disc { animation:none; } }
     .daily-claim-button { display:inline-flex; align-items:center; justify-content:center; min-width:230px; margin-top:1.5rem; padding:.95rem 1.5rem; border:1px solid #68a8ff; border-radius:12px; color:#fff; background:linear-gradient(135deg,#2c7ffc,#1454c5); box-shadow:0 10px 25px rgba(44,127,252,.28); font:800 .9rem Montserrat,sans-serif; cursor:pointer; transition:.2s ease; }
     .daily-claim-button:hover:not(:disabled) { transform:translateY(-2px); filter:brightness(1.1); }
     .daily-claim-button:disabled { border-color:#606b7a; color:#c0c7d1; background:#555d69; box-shadow:none; cursor:default; }
@@ -42,7 +45,8 @@
       <h1>Daily Discs</h1>
       <p>Claim your daily login reward once each day. Your next claim becomes available at 12:00 AM Pacific Time.</p>
       <img class="daily-disc" src="images/disc.png" alt="Dynamix Disc">
-      <div class="disc-balance-large" id="disc-balance-large">Loading balance…</div>
+      <div class="daily-reward-label">Daily reward: +100 Discs</div>
+      <div class="disc-balance-large" id="disc-balance-large">Balance: loading…</div>
       <button class="daily-claim-button" id="daily-claim-button">Claim daily reward · +100 Discs</button>
       <p class="daily-note" id="daily-note">Your reward resets at midnight PST.</p>
     </section>
@@ -65,7 +69,7 @@
       }
       function apply(data) {
         const discs = data.discs || data;
-        balance.textContent = `${Number(discs.disc_balance || 0).toLocaleString()} Dynamix Discs`;
+        balance.textContent = `Balance: ${Number(discs.disc_balance || 0).toLocaleString()} Dynamix Discs`;
         nextClaimAt = discs.next_claim_at;
         if (discs.daily_available) { button.disabled = false; button.textContent = 'Claim daily reward · +100 Discs'; note.textContent = 'Your daily reward is ready.'; }
         else { countdown(); clearInterval(timer); timer = setInterval(countdown, 1000); }
