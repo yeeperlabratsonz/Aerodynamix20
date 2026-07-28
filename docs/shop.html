@@ -41,7 +41,7 @@
          .card-pack { position:relative; overflow:hidden; border:1px solid rgba(135,184,255,.3); border-radius:20px; background:linear-gradient(135deg,#142d5e,#101426 58%,#271347); box-shadow:0 18px 45px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.1); }
          .card-pack::before { content:''; position:absolute; inset:-40%; background:conic-gradient(from 180deg,transparent,#64c9ff22,transparent,#d39cff22,transparent); animation:packShimmer 8s linear infinite; }
          .card-pack-inner { position:relative; display:flex; align-items:center; justify-content:space-between; gap:2rem; padding:2.2rem 2.5rem; }
-         .pack-art { width:104px; height:184px; flex:none; position:relative; transform-style:preserve-3d; animation:boosterSpin 7s linear infinite; }
+         .pack-art { width:116px; height:190px; flex:none; position:relative; transform-style:preserve-3d; animation:boosterSpin 7s linear infinite; }
          .pack-art:hover { animation-play-state:paused; }
          .pack-face, .pack-edge { position:absolute; display:block; backface-visibility:hidden; }
          .pack-face { inset:0; overflow:hidden; border:2px solid #8be4ff; border-radius:4px 6px 7px 5px; color:#fff; text-align:center; }
@@ -51,13 +51,18 @@
          .pack-back { transform:rotateY(180deg) translateZ(5px); background:linear-gradient(145deg,#10295f,#4f278b 58%,#111a3d); }
          .pack-back::after { content:'RUN 3\\A RUNNER SERIES\\A 3 CARDS'; white-space:pre; position:absolute; inset:35% 0 auto; color:#c8f5ff; font-size:.48rem; line-height:1.7; letter-spacing:.1em; }
          .pack-edge { background:linear-gradient(180deg,#5fcfff,#223878 45%,#c166e4 80%,#16234e); border:1px solid #92e8ff; }
-         .pack-edge-left, .pack-edge-right { width:10px; height:184px; top:0; }
-         .pack-edge-left { left:calc(50% - 5px); transform:rotateY(90deg) translateZ(52px); }
-         .pack-edge-right { left:calc(50% - 5px); transform:rotateY(-90deg) translateZ(52px); }
-         .pack-edge-top, .pack-edge-bottom { width:104px; height:10px; left:0; }
-         .pack-edge-top { top:calc(50% - 5px); transform:rotateX(90deg) translateZ(92px); }
-         .pack-edge-bottom { top:calc(50% - 5px); transform:rotateX(-90deg) translateZ(92px); }
-         .pack-art span { position:absolute; inset:62px 0 auto; z-index:1; font-size:1.15rem; line-height:.9; font-weight:900; letter-spacing:.08em; text-shadow:0 2px 8px #000,0 0 12px #65dfff; }
+         .pack-edge-left, .pack-edge-right { width:10px; height:190px; top:0; }
+         .pack-edge-left { left:calc(50% - 5px); transform:rotateY(90deg) translateZ(58px); }
+         .pack-edge-right { left:calc(50% - 5px); transform:rotateY(-90deg) translateZ(58px); }
+         .pack-edge-top, .pack-edge-bottom { width:116px; height:10px; left:0; }
+         .pack-edge-top { top:calc(50% - 5px); transform:rotateX(90deg) translateZ(95px); }
+         .pack-edge-bottom { top:calc(50% - 5px); transform:rotateX(-90deg) translateZ(95px); }
+         .pack-header, .pack-footer { position:absolute; left:-1px; right:-1px; z-index:2; display:grid; place-items:center; color:#dfffff; background:repeating-linear-gradient(135deg,#0e8ca7 0 5px,#19b9bc 5px 9px,#087a9a 9px 13px); border:1px solid #9fffff; box-shadow:inset 0 2px 4px #ffffff55, inset 0 -3px 5px #003d5d88,0 1px 2px #001b; text-transform:uppercase; letter-spacing:.08em; text-shadow:0 1px 3px #00334a; }
+         .pack-header { top:0; height:29px; border-radius:3px 5px 0 0; font-size:.42rem; }
+         .pack-header::after { content:'AERODYNAMIX'; display:block; font-size:.62rem; letter-spacing:.1em; color:#fff; }
+         .pack-footer { bottom:0; height:14px; border-radius:0 0 4px 5px; font-size:.33rem; }
+         .pack-seam { position:absolute; top:29px; left:0; right:0; z-index:3; height:4px; background:linear-gradient(#dfffff,#49d9ff 45%,#0f81be 55%,#dfffff); box-shadow:0 1px 3px #001b; }
+         .pack-art span { position:absolute; inset:75px 0 auto; z-index:1; font-size:1.15rem; line-height:.9; font-weight:900; letter-spacing:.08em; text-shadow:0 2px 8px #000,0 0 12px #65dfff; }
          .pack-art span::after { content:'RUNNER SERIES  •  3 CARDS'; display:block; margin-top:10px; padding-top:5px; border-top:1px solid #b9f4ff99; color:#e2fbff; font-size:.31rem; letter-spacing:.08em; }
          .pack-art + .pack-copy { margin-left:.5rem; }
          .pack-copy { flex:1; }
@@ -172,7 +177,12 @@
              <article class="card-pack">
                  <div class="card-pack-inner">
                       <div class="pack-art" aria-label="Spinning Run 3 booster pack">
-                          <div class="pack-face pack-front"><span>Run<br>3</span></div>
+                           <div class="pack-face pack-front">
+                               <div class="pack-header">BOOSTER PACK</div>
+                               <div class="pack-seam"></div>
+                               <span>Run<br>3</span>
+                               <div class="pack-footer">3 DIGITAL CARDS</div>
+                           </div>
                           <div class="pack-face pack-back"></div>
                           <div class="pack-edge pack-edge-left"></div>
                           <div class="pack-edge pack-edge-right"></div>
