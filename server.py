@@ -2,6 +2,7 @@ import os
 import datetime
 import re
 import uuid
+import random
 import mimetypes
 from io import BytesIO
 from flask import Flask, request, jsonify, session, send_from_directory, abort, Response, g
@@ -44,6 +45,7 @@ class User(Base):
     last_daily_login = Column(DateTime, nullable=True)
     purchased_themes = Column(Text, nullable=True, default='[]')
     purchased_games  = Column(Text, nullable=True, default='[]')
+    trading_cards    = Column(Text, nullable=True, default='[]')
     media_unlocked = Column(Boolean, default=False)
     first_login_bonus_claimed = Column(Boolean, default=False)
     is_verified    = Column(Boolean, default=False, nullable=False)
@@ -134,6 +136,7 @@ _new_user_cols = [
     ('last_daily_login', 'TIMESTAMP'                       if _is_pg else 'DATETIME'),
     ('purchased_themes', 'TEXT DEFAULT \'[]\''),
     ('purchased_games',  'TEXT DEFAULT \'[]\''),
+    ('trading_cards',    'TEXT DEFAULT \'[]\''),
     ('media_unlocked', 'BOOLEAN DEFAULT FALSE'             if _is_pg else 'INTEGER DEFAULT 0'),
     ('first_login_bonus_claimed', 'BOOLEAN DEFAULT FALSE' if _is_pg else 'INTEGER DEFAULT 0'),
     ('is_verified', 'BOOLEAN DEFAULT FALSE' if _is_pg else 'INTEGER DEFAULT 0'),
@@ -241,6 +244,24 @@ def _get_session_last_daily():
 
 def _set_session_last_daily(dt):
     session['last_daily_login'] = dt.isoformat()
+
+
+TRADING_CARD_PACK_COST = 100
+RUN3_CARD_POOL = [
+    {'name': 'The Runner', 'rarity': 'Common', 'accent': '#65c7ff', 'number': '001'},
+    {'name': 'Tunnel Vision', 'rarity': 'Common', 'accent': '#65c7ff', 'number': '002'},
+    {'name': 'Jetpack Escape', 'rarity': 'Uncommon', 'accent': '#7ee7b1', 'number': '003'},
+    {'name': 'Infinite Leap', 'rarity': 'Rare', 'accent': '#c59cff', 'number': '004'},
+    {'name': 'Galaxy Runner', 'rarity': 'Epic', 'accent': '#ffca6b', 'number': '005'},
+]
+
+
+def _get_session_trading_cards():
+    return session.get('trading_cards', [])
+
+
+def _set_session_trading_cards(cards):
+    session['trading_cards'] = cards
 
 
 def _get_session_purchased_themes():
@@ -576,6 +597,62 @@ def get_discs():
             return jsonify({'error': 'User not found'}), 404
         return jsonify({'discs': user_to_dict(user)})
     return jsonify({'discs': _anonymous_discs_dict()})
+
+
+@app.route('/api/trading-cards', methods=['GET'])
+def get_trading_cards():
+    if 'user_id' in session:
+        user = _user_disc_row(session['user_id'])
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        return jsonify({'cards': json.loads(user.trading_cards or '[]') if user.trading_cards else []})
+    return jsonify({'cards': _get_session_trading_cards()})
+
+
+@app.route('/api/trading-cards/purchase-pack', methods=['POST'])
+def purchase_trading_card_pack():
+    cards = random.choices(
+        RUN3_CARD_POOL,
+        weights=[46, 29, 16, 7, 2],
+        k=3
+    )
+    awarded = [
+        {**card, 'id': str(uuid.uuid4()), 'game': 'Run 3',
+         'obtained_at': datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}
+        for card in cards
+    ]
+
+    if 'user_id' in session:
+        db = DBSession()
+        user = db.query(User).filter_by(id=session['user_id']).first()
+        if not user:
+            db.close()
+            return jsonify({'error': 'User not found'}), 404
+        if (user.disc_balance or 0) < TRADING_CARD_PACK_COST:
+            db.close()
+            return jsonify({'error': 'Not enough Dynamix Discs',
+                            'disc_balance': user.disc_balance or 0}), 402
+        owned = json.loads(user.trading_cards or '[]') if user.trading_cards else []
+        owned.extend(awarded)
+        user.disc_balance = (user.disc_balance or 0) - TRADING_CARD_PACK_COST
+        user.trading_cards = json.dumps(owned)
+        db.commit()
+        db.refresh(user)
+        result = {'success': True, 'cards': awarded,
+                  'disc_balance': user.disc_balance}
+        db.close()
+        return jsonify(result)
+
+    balance = _get_session_discs()
+    if balance < TRADING_CARD_PACK_COST:
+        return jsonify({'error': 'Not enough Dynamix Discs',
+                        'disc_balance': balance}), 402
+    owned = _get_session_trading_cards()
+    owned.extend(awarded)
+    _set_session_trading_cards(owned)
+    _set_session_discs(balance - TRADING_CARD_PACK_COST)
+    return jsonify({'success': True, 'cards': awarded,
+                    'disc_balance': _get_session_discs()})
 
 
 @app.route('/api/discs/claim', methods=['POST'])
