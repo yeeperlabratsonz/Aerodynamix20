@@ -246,7 +246,7 @@
             max-width: 420px;
         }
         .game-unlock-card img.disc-hero {
-            width: 96px; height: 96px;
+            width: 128px; height: 128px;
             border-radius: 50%;
             margin-bottom: 1rem;
             box-shadow: 0 0 30px rgba(255, 255, 255, 0.25);
@@ -318,7 +318,7 @@
             <h2>Unlock Game</h2>
             <p>Free trial users can play this game for 100 Dynamix Discs. Once unlocked, it stays unlocked.</p>
             <button id="game-unlock-btn" class="gu-btn">
-                Play for 100 <img src="images/disc.png" alt="Disc" style="width:24px; height:24px; border-radius:50%; vertical-align:middle; margin-left:6px;">
+                Play for 100 <img src="images/disc.png" alt="Disc" style="width:34px; height:34px; border-radius:50%; vertical-align:middle; margin-left:6px;">
             </button>
             <p class="gu-hint">Claim your daily bonus from the nav bar to earn more Discs.</p>
             <p class="gu-error" id="game-unlock-error"></p>
@@ -457,7 +457,7 @@
                     unlockError.textContent = e.message;
                     unlockError.style.display = 'block';
                     unlockBtn.disabled = false;
-                    unlockBtn.innerHTML = 'Play for 100 <img src="images/disc.png" alt="Disc" style="width:24px; height:24px; border-radius:50%; vertical-align:middle; margin-left:6px;">';
+                    unlockBtn.innerHTML = 'Play for 100 <img src="images/disc.png" alt="Disc" style="width:34px; height:34px; border-radius:50%; vertical-align:middle; margin-left:6px;">';
                 }
             });
         }
