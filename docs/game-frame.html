@@ -292,7 +292,13 @@
         function isFreeTrial() { return sessionStorage.getItem('free_trial') === 'true'; }
 
         function loadGame() {
-            if (gamePath) gameFrame.src = gamePath;
+            if (gamePath) {
+                // Flask serves static files but does not automatically resolve
+                // directory URLs to their index.html file. Most bundled games
+                // are linked as games/<name>/, so make that explicit for the
+                // iframe instead of producing a 404.
+                gameFrame.src = gamePath.endsWith('/') ? `${gamePath}index.html` : gamePath;
+            }
         }
 
         function isGamePurchased() {
