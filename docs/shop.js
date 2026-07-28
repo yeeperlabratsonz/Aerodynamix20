@@ -141,7 +141,7 @@
             if (revealed) { revealed.hidden = true; revealed.innerHTML = ''; }
             if (doneButton) doneButton.hidden = true;
             if (title) title.textContent = 'Opening your pack…';
-            if (subtitle) subtitle.textContent = 'Your Run 3 cards are being revealed.';
+            if (subtitle) subtitle.textContent = 'Your Aerodynamix cards are being revealed.';
             await new Promise(resolve => setTimeout(resolve, 1900));
             if (opening) opening.hidden = true;
             if (revealed) {
