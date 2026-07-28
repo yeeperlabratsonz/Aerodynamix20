@@ -309,9 +309,17 @@ nav img {
 .disc-icon {
     width: 32px;
     height: 32px;
+    aspect-ratio: 1 / 1;
     border-radius: 50%;
     object-fit: cover;
     vertical-align: middle;
+}
+
+/* Keep every Dynamix Disc asset round, including inline-sized page artwork. */
+img[src$="disc.png"] {
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    object-fit: cover;
 }
 
 .disc-icon.sm {

@@ -19,7 +19,7 @@
     .discs-nav-settings { margin-right:1.5vw; border-color:rgba(130,183,255,.25); background:linear-gradient(135deg,#2c7ffc,#1a5fd0); box-shadow:0 6px 18px rgba(44,127,252,.2); }
     .discs-panel h1 { margin:0 0 .6rem; font-size:clamp(2.3rem,5vw,4rem); letter-spacing:-.05em; }
     .discs-panel p { margin:0 auto; max-width:480px; color:#aebbd0; line-height:1.6; }
-    .daily-disc { display:block; width:min(52vw,250px); height:min(52vw,250px); margin:2rem auto 1.6rem; object-fit:contain; filter:drop-shadow(0 0 16px rgba(44,127,252,.72)) drop-shadow(0 0 38px rgba(44,127,252,.38)); animation:disc-spin 18s linear infinite; }
+    .daily-disc { display:block; width:min(52vw,250px); height:min(52vw,250px); aspect-ratio:1 / 1; margin:2rem auto 1.6rem; object-fit:cover; border-radius:50%; filter:drop-shadow(0 0 16px rgba(44,127,252,.72)) drop-shadow(0 0 38px rgba(44,127,252,.38)); animation:disc-spin 18s linear infinite; }
     .daily-reward-label { color:#c9dcff; font-size:1rem; font-weight:800; }
     .disc-balance-large { margin-top:.45rem; color:#829bc2; font-size:.76rem; font-weight:600; }
     @keyframes disc-spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
