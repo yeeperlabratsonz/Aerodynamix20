@@ -688,3 +688,184 @@ nav a.active:hover {
   padding: 0.9rem;
 }
 
+/* ── One-to-one video calls ─────────────────────────────────────────────── */
+.dc-call-profile-btn {
+  display: inline-flex;
+  width: auto;
+  padding: 0.55rem 0.85rem;
+  margin-top: 0.7rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  box-shadow: 0 8px 22px rgba(44,127,252,0.25);
+}
+
+.dc-incoming-call-content {
+  max-width: 360px;
+  text-align: center;
+}
+
+.dc-incoming-icon {
+  width: 68px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 1.5rem;
+  background: linear-gradient(135deg, #2c7ffc, #a855f7);
+  box-shadow: 0 0 0 10px rgba(44,127,252,0.1), 0 14px 35px rgba(44,127,252,0.3);
+  animation: dc-call-pulse 1.8s ease-in-out infinite;
+}
+
+.dc-call-hint {
+  margin: -0.35rem 0 0.4rem;
+  color: rgba(255,255,255,0.55);
+  font-size: 0.85rem;
+}
+
+.dc-video-call-content {
+  width: min(920px, 94vw);
+  background: #080c16;
+  border: 1px solid rgba(44,127,252,0.35);
+  border-radius: 22px;
+  padding: 0.9rem;
+  box-shadow: 0 35px 100px rgba(0,0,0,0.8), 0 0 80px rgba(44,127,252,0.15);
+}
+
+.dc-video-call-header {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.55rem 0.55rem;
+  color: #fff;
+}
+
+.dc-video-call-header strong {
+  margin-right: 0.45rem;
+}
+
+.dc-video-call-header #video-call-status {
+  color: rgba(255,255,255,0.5);
+  font-size: 0.78rem;
+}
+
+.dc-call-status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 0.35rem;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 12px #4ade80;
+}
+
+.dc-video-stage {
+  position: relative;
+  min-height: min(62vh, 600px);
+  overflow: hidden;
+  border-radius: 15px;
+  background: radial-gradient(circle at 50% 25%, #182747, #050811 70%);
+}
+
+.dc-video-stage video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: min(62vh, 600px);
+  object-fit: cover;
+}
+
+#local-video {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  width: min(25%, 190px);
+  height: auto;
+  min-height: 0;
+  aspect-ratio: 16 / 10;
+  border: 2px solid rgba(255,255,255,0.8);
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.45);
+  background: #111827;
+}
+
+.dc-video-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: rgba(255,255,255,0.55);
+  font-size: 0.9rem;
+}
+
+.dc-video-placeholder i {
+  font-size: 3rem;
+  color: rgba(125,184,255,0.7);
+}
+
+.dc-call-controls {
+  display: flex;
+  justify-content: center;
+  gap: 0.8rem;
+  padding: 0.85rem 0 0.1rem;
+}
+
+.dc-call-control {
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(255,255,255,0.1);
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.dc-call-control:hover {
+  transform: translateY(-2px);
+  background: rgba(255,255,255,0.2);
+}
+
+.dc-call-control.is-off {
+  color: #ffb4bb;
+  background: rgba(255,91,106,0.2);
+}
+
+.dc-call-control.dc-end-call {
+  background: #dc3545;
+  border-color: #ff6977;
+}
+
+.dc-video-error {
+  padding: 0.35rem 0.4rem 0;
+  text-align: center;
+}
+
+@keyframes dc-call-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+@media (max-width: 600px) {
+  .dc-video-call-content {
+    width: 100%;
+    padding: 0.55rem;
+    border-radius: 15px;
+  }
+  .dc-video-stage,
+  .dc-video-stage video {
+    min-height: 58vh;
+  }
+  #local-video {
+    right: 0.6rem;
+    bottom: 0.6rem;
+    width: 32%;
+  }
+}
+

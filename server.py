@@ -68,6 +68,26 @@ class Post(Base):
     user           = relationship('User', back_populates='posts')
 
 
+class CallSession(Base):
+    __tablename__ = 'call_sessions'
+    id          = Column(String(36), primary_key=True)
+    caller_id   = Column(Integer, ForeignKey('users.id'), nullable=False)
+    recipient_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    status      = Column(String(20), nullable=False, default='ringing')
+    created_at  = Column(DateTime, default=datetime.datetime.utcnow)
+    ended_at    = Column(DateTime, nullable=True)
+
+
+class CallSignal(Base):
+    __tablename__ = 'call_signals'
+    id          = Column(Integer, primary_key=True, autoincrement=True)
+    call_id     = Column(String(36), ForeignKey('call_sessions.id'), nullable=False)
+    sender_id   = Column(Integer, ForeignKey('users.id'), nullable=False)
+    signal_type = Column(String(20), nullable=False)
+    payload     = Column(Text, nullable=False)
+    created_at  = Column(DateTime, default=datetime.datetime.utcnow)
+
+
 Base.metadata.create_all(engine)
 
 # Migrate existing DB to add new User columns if they don't exist yet
@@ -707,6 +727,171 @@ def purchase_game():
     _set_session_purchased_games(purchased)
     _set_session_discs(balance - cost)
     return jsonify({'success': True, 'purchased': True, 'disc_balance': _get_session_discs()})
+
+
+# ── One-to-one WebRTC call signaling ──────────────────────────────────────────
+
+def _require_call_user(db):
+    user_id = session.get('user_id')
+    if not user_id:
+        return None, (jsonify({'error': 'Log in to use video calling'}), 401)
+    user = db.query(User).filter_by(id=user_id).first()
+    if not user:
+        return None, (jsonify({'error': 'User not found'}), 404)
+    return user, None
+
+
+def _call_to_dict(call, db):
+    caller = db.query(User).filter_by(id=call.caller_id).first()
+    recipient = db.query(User).filter_by(id=call.recipient_id).first()
+    return {
+        'id': call.id,
+        'caller_id': call.caller_id,
+        'caller_username': caller.username if caller else 'Unknown',
+        'recipient_id': call.recipient_id,
+        'recipient_username': recipient.username if recipient else 'Unknown',
+        'status': call.status,
+        'created_at': call.created_at.strftime('%Y-%m-%d %H:%M:%S') if call.created_at else None,
+    }
+
+
+@app.route('/api/calls', methods=['POST'])
+def create_call():
+    db = DBSession()
+    try:
+        user, error = _require_call_user(db)
+        if error:
+            return error
+        data = request.get_json() or {}
+        recipient_username = (data.get('username') or '').strip()
+        recipient = db.query(User).filter_by(username=recipient_username).first()
+        if not recipient:
+            return jsonify({'error': 'User not found'}), 404
+        if recipient.id == user.id:
+            return jsonify({'error': 'You cannot call yourself'}), 400
+
+        active = db.query(CallSession).filter(
+            CallSession.status.in_(['ringing', 'active']),
+            ((CallSession.caller_id == user.id) | (CallSession.recipient_id == user.id))
+        ).first()
+        if active:
+            return jsonify({'error': 'You already have an active call'}), 409
+
+        call = CallSession(id=str(uuid.uuid4()), caller_id=user.id, recipient_id=recipient.id)
+        db.add(call)
+        db.commit()
+        return jsonify({'success': True, 'call': _call_to_dict(call, db)})
+    finally:
+        db.close()
+
+
+@app.route('/api/calls/incoming', methods=['GET'])
+def incoming_calls():
+    db = DBSession()
+    try:
+        user, error = _require_call_user(db)
+        if error:
+            return error
+        calls = db.query(CallSession).filter_by(
+            recipient_id=user.id, status='ringing'
+        ).order_by(CallSession.created_at.desc()).all()
+        return jsonify({'calls': [_call_to_dict(call, db) for call in calls]})
+    finally:
+        db.close()
+
+
+@app.route('/api/calls/<call_id>', methods=['GET'])
+def get_call(call_id):
+    db = DBSession()
+    try:
+        user, error = _require_call_user(db)
+        if error:
+            return error
+        call = db.query(CallSession).filter_by(id=call_id).first()
+        if not call or user.id not in (call.caller_id, call.recipient_id):
+            return jsonify({'error': 'Call not found'}), 404
+        return jsonify({'call': _call_to_dict(call, db)})
+    finally:
+        db.close()
+
+
+@app.route('/api/calls/<call_id>/accept', methods=['POST'])
+def accept_call(call_id):
+    db = DBSession()
+    try:
+        user, error = _require_call_user(db)
+        if error:
+            return error
+        call = db.query(CallSession).filter_by(id=call_id).first()
+        if not call or call.recipient_id != user.id:
+            return jsonify({'error': 'Call not found'}), 404
+        if call.status != 'ringing':
+            return jsonify({'error': 'Call is no longer ringing'}), 409
+        call.status = 'active'
+        db.commit()
+        return jsonify({'success': True, 'call': _call_to_dict(call, db)})
+    finally:
+        db.close()
+
+
+@app.route('/api/calls/<call_id>/signals', methods=['GET', 'POST'])
+def call_signals(call_id):
+    db = DBSession()
+    try:
+        user, error = _require_call_user(db)
+        if error:
+            return error
+        call = db.query(CallSession).filter_by(id=call_id).first()
+        if not call or user.id not in (call.caller_id, call.recipient_id):
+            return jsonify({'error': 'Call not found'}), 404
+
+        if request.method == 'POST':
+            if call.status not in ('ringing', 'active'):
+                return jsonify({'error': 'Call is no longer active'}), 409
+            data = request.get_json() or {}
+            signal_type = (data.get('type') or '').strip()
+            payload = data.get('payload')
+            if signal_type not in ('offer', 'answer', 'candidate') or payload is None:
+                return jsonify({'error': 'Invalid call signal'}), 400
+            signal = CallSignal(
+                call_id=call.id, sender_id=user.id, signal_type=signal_type,
+                payload=json.dumps(payload)
+            )
+            db.add(signal)
+            db.commit()
+            return jsonify({'success': True})
+
+        after_id = request.args.get('after', 0, type=int)
+        signals = db.query(CallSignal).filter(
+            CallSignal.call_id == call.id,
+            CallSignal.sender_id != user.id,
+            CallSignal.id > after_id
+        ).order_by(CallSignal.id.asc()).limit(100).all()
+        return jsonify({'signals': [
+            {'id': signal.id, 'type': signal.signal_type, 'payload': json.loads(signal.payload)}
+            for signal in signals
+        ], 'status': call.status})
+    finally:
+        db.close()
+
+
+@app.route('/api/calls/<call_id>/end', methods=['POST'])
+def end_call(call_id):
+    db = DBSession()
+    try:
+        user, error = _require_call_user(db)
+        if error:
+            return error
+        call = db.query(CallSession).filter_by(id=call_id).first()
+        if not call or user.id not in (call.caller_id, call.recipient_id):
+            return jsonify({'error': 'Call not found'}), 404
+        call.status = 'ended'
+        call.ended_at = datetime.datetime.utcnow()
+        db.query(CallSignal).filter_by(call_id=call.id).delete()
+        db.commit()
+        return jsonify({'success': True})
+    finally:
+        db.close()
 
 
 # ── Posts ─────────────────────────────────────────────────────────────────────

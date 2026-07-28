@@ -136,10 +136,47 @@
           <h2 id="profile-view-username"></h2>
           <p id="profile-view-bio" class="dc-profile-bio"></p>
           <p id="profile-view-joined" class="dc-profile-joined"></p>
+         <button id="profile-call-btn" class="dc-btn dc-call-profile-btn" type="button">
+           <i class="fas fa-video"></i> Start Video Call
+         </button>
         </div>
       </div>
       <div class="dc-profile-posts-label">Posts</div>
       <div id="profile-view-posts" class="dc-profile-posts"></div>
+    </div>
+  </div>
+
+  <!-- Incoming call prompt -->
+  <div id="incoming-call-modal" class="dc-modal-overlay hidden">
+    <div class="dc-modal-content dc-incoming-call-content">
+      <div class="dc-incoming-icon"><i class="fas fa-video"></i></div>
+      <h3 class="dc-modal-title"><span id="incoming-caller-name">Someone</span> is calling</h3>
+      <p class="dc-call-hint">Answer with your camera and microphone.</p>
+      <div class="dc-modal-actions">
+        <button id="answer-call-btn" class="dc-btn" type="button"><i class="fas fa-phone"></i> Answer</button>
+        <button id="decline-call-btn" class="dc-btn-secondary" type="button"><i class="fas fa-phone-slash"></i> Decline</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- One-to-one WebRTC call -->
+  <div id="video-call-modal" class="dc-modal-overlay hidden">
+    <div class="dc-video-call-content">
+      <div class="dc-video-call-header">
+        <div><span class="dc-call-status-dot"></span><strong id="video-call-peer">Video call</strong> <span id="video-call-status">Connecting…</span></div>
+        <button id="close-video-call-btn" class="dc-modal-close-btn" type="button" aria-label="End call"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="dc-video-stage">
+        <video id="remote-video" autoplay playsinline></video>
+        <div id="remote-video-placeholder" class="dc-video-placeholder"><i class="fas fa-user"></i><span>Waiting for video…</span></div>
+        <video id="local-video" autoplay muted playsinline></video>
+      </div>
+      <p id="video-call-error" class="dc-error dc-video-error"></p>
+      <div class="dc-call-controls">
+        <button id="toggle-mic-btn" class="dc-call-control" type="button" title="Mute microphone"><i class="fas fa-microphone"></i></button>
+        <button id="toggle-camera-btn" class="dc-call-control" type="button" title="Turn camera off"><i class="fas fa-video"></i></button>
+        <button id="end-call-btn" class="dc-call-control dc-end-call" type="button" title="End call"><i class="fas fa-phone-slash"></i></button>
+      </div>
     </div>
   </div>
 </body>

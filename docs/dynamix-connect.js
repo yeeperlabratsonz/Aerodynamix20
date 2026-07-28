@@ -46,6 +46,29 @@
   const profileViewBio     = document.getElementById('profile-view-bio');
   const profileViewJoined  = document.getElementById('profile-view-joined');
   const profileViewPosts   = document.getElementById('profile-view-posts');
+  const profileCallBtn     = document.getElementById('profile-call-btn');
+  const incomingModal      = document.getElementById('incoming-call-modal');
+  const incomingCallerName = document.getElementById('incoming-caller-name');
+  const videoModal         = document.getElementById('video-call-modal');
+  const remoteVideo        = document.getElementById('remote-video');
+  const localVideo         = document.getElementById('local-video');
+  const remotePlaceholder  = document.getElementById('remote-video-placeholder');
+  const videoPeer          = document.getElementById('video-call-peer');
+  const videoStatus        = document.getElementById('video-call-status');
+  const videoError         = document.getElementById('video-call-error');
+  const answerCallBtn      = document.getElementById('answer-call-btn');
+  const declineCallBtn     = document.getElementById('decline-call-btn');
+  const endCallBtn         = document.getElementById('end-call-btn');
+  const closeVideoBtn      = document.getElementById('close-video-call-btn');
+  const toggleMicBtn       = document.getElementById('toggle-mic-btn');
+  const toggleCameraBtn    = document.getElementById('toggle-camera-btn');
+
+  let activeCall = null;
+  let peerConnection = null;
+  let localStream = null;
+  let signalCursor = 0;
+  let incomingCall = null;
+  let callPollTimer = null;
 
   // ── API helper ──────────────────────────────────────────────────────────────
   async function api(path, options = {}) {
@@ -512,6 +535,10 @@
       profileViewBio.textContent      = u.bio || '';
       profileViewJoined.textContent   = u.created_at ? `Joined ${u.created_at}` : '';
       applyAvatarStyle(profileViewAvatar, u.pfp_url, u.pfp_offset_x, u.pfp_offset_y, u.username);
+      if (profileCallBtn) {
+        profileCallBtn.dataset.username = u.username;
+        profileCallBtn.style.display = currentUser && currentUser.username !== u.username ? 'inline-flex' : 'none';
+      }
 
       if (!data.posts || data.posts.length === 0) {
         profileViewPosts.innerHTML = '<div class="dc-empty">No posts yet.</div>';
@@ -538,6 +565,203 @@
     });
   }
 
+  // ── One-to-one WebRTC calling ───────────────────────────────────────────────
+  function setVideoError(message) {
+    if (!videoError) return;
+    videoError.textContent = message || '';
+    videoError.style.display = message ? 'block' : 'none';
+  }
+
+  async function callApi(path, options = {}) {
+    return api(path, options);
+  }
+
+  function showVideoCall(call, status) {
+    activeCall = call;
+    videoPeer.textContent = currentUser.id === call.caller_id ? call.recipient_username : call.caller_username;
+    videoStatus.textContent = status || 'Connecting…';
+    setVideoError('');
+    videoModal.classList.remove('hidden');
+  }
+
+  async function getMedia() {
+    if (localStream) return localStream;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error('Video calling is not supported by this browser.');
+    }
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      localVideo.srcObject = localStream;
+      return localStream;
+    } catch (e) {
+      throw new Error('Camera and microphone access is required to make a video call.');
+    }
+  }
+
+  function createPeer() {
+    if (peerConnection) return peerConnection;
+    peerConnection = new RTCPeerConnection({
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+    });
+    peerConnection.onicecandidate = event => {
+      if (event.candidate && activeCall) {
+        sendSignal('candidate', event.candidate.toJSON()).catch(console.error);
+      }
+    };
+    peerConnection.ontrack = event => {
+      remoteVideo.srcObject = event.streams[0];
+      remotePlaceholder.classList.add('hidden');
+      videoStatus.textContent = 'Connected';
+    };
+    peerConnection.onconnectionstatechange = () => {
+      if (peerConnection.connectionState === 'connected') videoStatus.textContent = 'Connected';
+      if (['failed', 'disconnected'].includes(peerConnection.connectionState)) {
+        videoStatus.textContent = 'Connection lost';
+      }
+    };
+    if (localStream) localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+    return peerConnection;
+  }
+
+  async function sendSignal(type, payload) {
+    if (!activeCall) return;
+    await callApi(`/api/calls/${activeCall.id}/signals`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, payload })
+    });
+  }
+
+  async function startCallerCall(username) {
+    try {
+      const data = await callApi('/api/calls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username })
+      });
+      await getMedia();
+      showVideoCall(data.call, 'Calling…');
+      const pc = createPeer();
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      await sendSignal('offer', pc.localDescription.toJSON());
+      profileModal.classList.add('hidden');
+      pollSignals();
+    } catch (e) {
+      alert(e.message);
+      cleanupCall(false);
+    }
+  }
+
+  async function answerIncomingCall() {
+    if (!incomingCall) return;
+    const call = incomingCall;
+    incomingCall = null;
+    incomingModal.classList.add('hidden');
+    try {
+      await callApi(`/api/calls/${call.id}/accept`, { method: 'POST' });
+      await getMedia();
+      showVideoCall(call, 'Joining…');
+      createPeer();
+      pollSignals();
+    } catch (e) {
+      setVideoError(e.message);
+      showVideoCall(call, 'Unable to join');
+    }
+  }
+
+  async function pollIncomingCalls() {
+    if (!currentUser || activeCall || incomingCall) return;
+    try {
+      const data = await callApi('/api/calls/incoming');
+      if (data.calls && data.calls.length) {
+        incomingCall = data.calls[0];
+        incomingCallerName.textContent = incomingCall.caller_username;
+        incomingModal.classList.remove('hidden');
+      }
+    } catch (e) {
+      // Anonymous visitors simply have no call inbox.
+    }
+  }
+
+  async function pollSignals() {
+    if (!activeCall) return;
+    try {
+      const data = await callApi(`/api/calls/${activeCall.id}/signals?after=${signalCursor}`);
+      for (const signal of data.signals || []) {
+        signalCursor = Math.max(signalCursor, signal.id);
+        const pc = createPeer();
+        if (signal.type === 'offer') {
+          await pc.setRemoteDescription(signal.payload);
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          await sendSignal('answer', pc.localDescription.toJSON());
+          videoStatus.textContent = 'Connecting…';
+        } else if (signal.type === 'answer') {
+          await pc.setRemoteDescription(signal.payload);
+        } else if (signal.type === 'candidate') {
+          await pc.addIceCandidate(signal.payload);
+        }
+      }
+      if (data.status === 'ended') cleanupCall(false);
+    } catch (e) {
+      if (activeCall) setVideoError(e.message);
+    }
+    if (activeCall) setTimeout(pollSignals, 1000);
+  }
+
+  async function cleanupCall(notify = true) {
+    const call = activeCall;
+    activeCall = null;
+    signalCursor = 0;
+    if (notify && call) {
+      try { await callApi(`/api/calls/${call.id}/end`, { method: 'POST' }); } catch (e) {}
+    }
+    if (peerConnection) {
+      peerConnection.close();
+      peerConnection = null;
+    }
+    if (localStream) {
+      localStream.getTracks().forEach(track => track.stop());
+      localStream = null;
+    }
+    if (localVideo) localVideo.srcObject = null;
+    if (remoteVideo) remoteVideo.srcObject = null;
+    if (remotePlaceholder) remotePlaceholder.classList.remove('hidden');
+    if (videoModal) videoModal.classList.add('hidden');
+    if (incomingModal) incomingModal.classList.add('hidden');
+  }
+
+  if (profileCallBtn) profileCallBtn.addEventListener('click', () => {
+    if (profileCallBtn.dataset.username) startCallerCall(profileCallBtn.dataset.username);
+  });
+  if (answerCallBtn) answerCallBtn.addEventListener('click', answerIncomingCall);
+  if (declineCallBtn) declineCallBtn.addEventListener('click', async () => {
+    if (incomingCall) {
+      try { await callApi(`/api/calls/${incomingCall.id}/end`, { method: 'POST' }); } catch (e) {}
+    }
+    incomingCall = null;
+    incomingModal.classList.add('hidden');
+  });
+  if (endCallBtn) endCallBtn.addEventListener('click', () => cleanupCall(true));
+  if (closeVideoBtn) closeVideoBtn.addEventListener('click', () => cleanupCall(true));
+  if (toggleMicBtn) toggleMicBtn.addEventListener('click', () => {
+    const track = localStream && localStream.getAudioTracks()[0];
+    if (!track) return;
+    track.enabled = !track.enabled;
+    toggleMicBtn.classList.toggle('is-off', !track.enabled);
+    toggleMicBtn.innerHTML = `<i class="fas fa-microphone${track.enabled ? '' : '-slash'}"></i>`;
+  });
+  if (toggleCameraBtn) toggleCameraBtn.addEventListener('click', () => {
+    const track = localStream && localStream.getVideoTracks()[0];
+    if (!track) return;
+    track.enabled = !track.enabled;
+    toggleCameraBtn.classList.toggle('is-off', !track.enabled);
+    toggleCameraBtn.innerHTML = `<i class="fas fa-video${track.enabled ? '' : '-slash'}"></i>`;
+  });
+
   // ── Init ─────────────────────────────────────────────────────────────────────
-  checkMe();
+  checkMe().then(() => {
+    callPollTimer = setInterval(pollIncomingCalls, 3000);
+  });
 })();
