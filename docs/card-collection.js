@@ -66,6 +66,9 @@
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Could not sell card.');
       tokens.textContent = `${Number(result.disc_balance || 0).toLocaleString()} Dynamix Discs`;
+      if (window.AeroDiscs && window.AeroDiscs.updateNavWidget) {
+        await window.AeroDiscs.updateNavWidget(result.disc_balance, false);
+      }
       await load();
     } catch (error) {
       alert(error.message);

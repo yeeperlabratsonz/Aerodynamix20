@@ -77,7 +77,13 @@
       async function load() { apply(await api('/api/discs')); }
       button.addEventListener('click', async () => {
         button.disabled = true; button.textContent = 'Claiming…';
-        try { apply(await api('/api/discs/claim', { method:'POST' })); }
+         try {
+           const result = await api('/api/discs/claim', { method:'POST' });
+           apply(result);
+           if (window.AeroDiscs && window.AeroDiscs.updateNavWidget) {
+             await window.AeroDiscs.updateNavWidget(result.disc_balance, false);
+           }
+         }
         catch (e) { note.textContent = e.message; load(); }
       });
       load().catch(() => { balance.textContent = 'Could not load balance'; button.disabled = true; });
