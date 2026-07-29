@@ -313,12 +313,12 @@ RARITY_STYLES = {
     'GODLY': {'accent': '#ff4bd8', 'glow': 4},
 }
 CARD_SELL_VALUES = {
-    'COMMON': 10,
-    'UNCOMMON': 15,
-    'RARE': 20,
-    'EPIC': 25,
-    'LEGENDARY': 50,
-    'MYTHIC': 100,
+    'Common': 10,
+    'Uncommon': 15,
+    'Rare': 20,
+    'Epic': 25,
+    'Legendary': 50,
+    'Mythic': 100,
     'GODLY': 500,
 }
 
