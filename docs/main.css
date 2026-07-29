@@ -356,3 +356,338 @@ img[src$="disc.png"] {
     0% { background-position: 0% 50%; }
     100% { background-position: 100% 50%; }
 }
+
+/* ── Mobile experience ─────────────────────────────────────────────────── */
+@media (max-width: 700px) {
+    html {
+        overflow-x: hidden;
+    }
+
+    body {
+        min-width: 0;
+        overflow-x: hidden;
+    }
+
+    nav {
+        height: auto;
+        min-height: 64px;
+        padding: .55rem .7rem .45rem;
+        gap: .45rem;
+        flex-wrap: wrap;
+        align-content: center;
+        background: rgba(4, 10, 22, .94);
+    }
+
+    nav img {
+        width: 43px;
+        height: 43px;
+        flex: 0 0 43px;
+        margin-right: 0;
+        border-radius: 10px;
+        padding: 3px;
+    }
+
+    nav h1 {
+        margin: 0;
+        font-size: 1rem;
+        letter-spacing: .04em;
+        white-space: nowrap;
+    }
+
+    nav > div,
+    .collection-nav-links,
+    .discs-nav-links {
+        order: 3;
+        flex: 1 0 100% !important;
+        width: 100%;
+        min-width: 0;
+        justify-content: flex-start !important;
+        gap: .2rem !important;
+        overflow-x: auto;
+        scrollbar-width: none;
+        padding: .15rem 0 .05rem;
+    }
+
+    nav > div::-webkit-scrollbar,
+    .collection-nav-links::-webkit-scrollbar,
+    .discs-nav-links::-webkit-scrollbar {
+        display: none;
+    }
+
+    nav > div a,
+    .collection-nav-links a,
+    .discs-nav-links a {
+        flex: 0 0 auto;
+        min-height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: .55rem .72rem !important;
+        border-radius: 9px !important;
+        font-size: .72rem !important;
+        white-space: nowrap;
+    }
+
+    nav > a,
+    .collection-nav-settings,
+    .discs-nav-settings {
+        margin: 0 0 0 auto !important;
+        min-height: 38px;
+        display: inline-flex;
+        align-items: center;
+        padding: .55rem .75rem !important;
+        border-radius: 9px !important;
+        font-size: .72rem !important;
+        white-space: nowrap;
+    }
+
+    .content {
+        padding: 5.6rem .8rem 4rem;
+    }
+
+    .featured {
+        margin: 5.5rem 0 1.2rem;
+        padding: .6rem 0;
+    }
+
+    .featured h1 {
+        font-size: 1.35rem;
+        margin-bottom: .8rem;
+    }
+
+    .featured .games-row {
+        gap: .55rem;
+        overflow-x: auto;
+        justify-content: flex-start;
+        padding: 0 .8rem .4rem;
+        scroll-snap-type: x proximity;
+    }
+
+    .featured .games-row a {
+        flex: 0 0 72vw;
+        scroll-snap-align: start;
+    }
+
+    .featured img {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1 / 1;
+        object-fit: cover;
+        border-radius: 14px;
+    }
+
+    .featured .play-button {
+        opacity: 1;
+        font-size: 2rem;
+    }
+
+    .search {
+        width: 100%;
+        margin: 1rem 0 .8rem;
+    }
+
+    .search input {
+        min-width: 0;
+        flex: 1;
+        padding: .8rem 1rem;
+        font-size: 1rem;
+        border-radius: 12px 0 0 12px;
+    }
+
+    .search input::placeholder {
+        font-size: 1rem;
+    }
+
+    .search button {
+        min-width: 52px;
+        padding: .8rem 1rem;
+        font-size: 1rem;
+        border-radius: 0 12px 12px 0;
+    }
+
+    #games {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .55rem;
+        margin-top: .4rem;
+        padding-bottom: 3rem;
+    }
+
+    #games a {
+        min-width: 0;
+    }
+
+    #games img {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1 / 1;
+        object-fit: cover;
+        margin: 0;
+        border-radius: 12px;
+    }
+
+    .disc-nav-widget {
+        right: .7rem;
+        top: calc(100% + .45rem);
+        max-width: calc(100vw - 1.4rem);
+        padding: .45rem .6rem;
+        gap: .5rem;
+    }
+
+    .disc-balance {
+        font-size: .72rem;
+    }
+
+    .disc-balance .disc-icon {
+        width: 28px;
+        height: 28px;
+    }
+
+    .disc-claim-btn {
+        min-height: 34px;
+        padding: .45rem .6rem;
+        font-size: .68rem;
+    }
+
+    .shop-page,
+    .collection-page {
+        padding: 6.3rem .85rem 5rem;
+    }
+
+    .shop-heading,
+    .collection-heading {
+        margin-bottom: 1.5rem;
+        padding: 1.35rem 1.1rem;
+        border-radius: 18px;
+    }
+
+    .shop-heading h1,
+    .collection-heading h1 {
+        font-size: 2rem;
+    }
+
+    .shop-heading p,
+    .collection-heading p {
+        font-size: .85rem;
+    }
+
+    .shop-section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: .35rem;
+    }
+
+    .shop-grid,
+    .collection-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .65rem;
+    }
+
+    .shop-card-body {
+        min-height: 96px;
+        padding: .7rem;
+        gap: .55rem;
+    }
+
+    .shop-card h2 {
+        font-size: .75rem;
+    }
+
+    .shop-buy,
+    .sell-card {
+        min-height: 42px;
+        padding: .65rem .45rem;
+    }
+
+    .card-pack-inner {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1.5rem 1rem;
+        text-align: center;
+    }
+
+    .pack-art {
+        width: 128px;
+        height: 172px;
+        transform: scale(.9);
+    }
+
+    .pack-copy h2 {
+        font-size: 1.2rem;
+    }
+
+    .pack-copy p {
+        font-size: .82rem;
+    }
+
+    .pack-price {
+        justify-content: center;
+        font-size: .8rem;
+    }
+
+    .pack-buy {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .collection-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .collection-card-body {
+        padding: .65rem;
+    }
+
+    .collection-card h3 {
+        font-size: .75rem;
+    }
+
+    .discs-page {
+        min-height: 100svh;
+        padding: 8.2rem .8rem 4rem;
+    }
+
+    .discs-panel {
+        padding: 2rem 1rem 1.5rem;
+        border-radius: 20px;
+    }
+
+    .discs-panel h1 {
+        font-size: 2.25rem;
+    }
+
+    .discs-panel p {
+        font-size: .82rem;
+    }
+
+    .daily-disc {
+        width: min(58vw, 210px);
+        height: min(58vw, 210px);
+        margin: 1.5rem auto 1.2rem;
+    }
+
+    .daily-claim-button {
+        width: 100%;
+        min-width: 0;
+        min-height: 48px;
+        margin-top: 1.2rem;
+    }
+}
+
+@media (max-width: 380px) {
+    nav h1 {
+        font-size: .86rem;
+    }
+
+    nav > a,
+    .collection-nav-settings,
+    .discs-nav-settings {
+        padding-inline: .55rem !important;
+    }
+
+    #games,
+    .shop-grid,
+    .collection-grid {
+        gap: .4rem;
+    }
+}

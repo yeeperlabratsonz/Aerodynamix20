@@ -114,6 +114,43 @@
             border-top: 1px solid #222;
             font-family: 'Montserrat', sans-serif;
         }
+
+        @media (max-width: 700px) {
+            .game-header {
+                height: 58px;
+                padding: 0 .65rem;
+            }
+            .game-header img {
+                width: 40px;
+                height: 40px;
+                margin-right: .45rem;
+                border-radius: 9px;
+                padding: 3px;
+            }
+            .game-header h1 {
+                max-width: 42vw;
+                overflow: hidden;
+                font-size: .9rem;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .header-actions {
+                gap: .35rem;
+            }
+            .back-button {
+                min-height: 38px;
+                padding: .55rem .7rem;
+                border-radius: 9px;
+                font-size: .72rem;
+            }
+            .game-container,
+            .game-container.footer-visible {
+                margin-top: 58px;
+                height: calc(100svh - 58px);
+                min-height: calc(100svh - 58px);
+                border-width: 2px;
+            }
+        }
         .game-footer.visible { display: flex; }
 
         .game-footer .gf-art {
