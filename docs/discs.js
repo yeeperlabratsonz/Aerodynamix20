@@ -9,7 +9,7 @@
         DAILY_BONUS: 100
     };
 
-    const VISUAL_THEMES = ['frutiger-aero', 'purple', 'blue', 'christmas'];
+    const VISUAL_THEMES = ['frutiger-aero', 'purple', 'blue', 'christmas', 'bubble-gum-pink'];
 
     function isPaid()    { return sessionStorage.getItem('authorized') === 'true'; }
     function isFreeTrial(){ return sessionStorage.getItem('free_trial') === 'true'; }
