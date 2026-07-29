@@ -111,8 +111,7 @@
                 nav.style.borderBottom = '2px solid #ff1493';
             });
             navLinks.forEach(function (link) {
-                var inlineStyle = link.getAttribute('style') || '';
-                var isActive = link.classList.contains('active') || /background(?:-color)?\s*:\s*(?:#fff|white)/i.test(inlineStyle);
+                var isActive = link.classList.contains('active');
                 link.style.color = isActive ? '#07111f' : '#ffffff';
             });
             if (searchInput)  { searchInput.style.backgroundColor = '#ffb6d9'; searchInput.style.color = '#7a1248'; searchInput.style.border = '2px solid #ff1493'; searchInput.style.boxShadow = '0 0 0 2px #ff1493, 0 8px 24px rgba(128,0,64,0.22)'; }

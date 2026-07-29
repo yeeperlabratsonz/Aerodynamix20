@@ -9,8 +9,10 @@ nav a {
 }
 
 nav a.active {
-  color: #000;
-  background-color: #fff;
+  color: #fff;
+  background-color: #2c7ffc;
+  border-color: rgba(255,255,255,.35);
+  box-shadow: 0 4px 16px rgba(44,127,252,.3);
 }
 
 nav a:hover {
@@ -18,7 +20,7 @@ nav a:hover {
 }
 
 nav a.active:hover {
-  background-color: #fff;
+  background-color: #2c7ffc;
 }
 
 .dc-container {

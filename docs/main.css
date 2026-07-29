@@ -83,7 +83,9 @@ nav > div a,
 nav > div a.active,
 .collection-nav-links a.active,
 .discs-nav-links a.active {
-    color: #07111f !important;
+    color: #fff !important;
+    background: #2c7ffc !important;
+    border-color: rgba(255,255,255,.35) !important;
 }
 
 .logo-a {
