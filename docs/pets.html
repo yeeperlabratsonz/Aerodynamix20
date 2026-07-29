@@ -22,11 +22,11 @@
         .pet-stage,.pet-panel { border:1px solid rgba(143,222,255,.2); border-radius:24px; background:var(--pet-card); box-shadow:0 18px 50px rgba(0,0,0,.28); }
         .pet-stage { min-height:600px; display:grid; place-items:center; overflow:hidden; position:relative; perspective:1000px; }
         .pet-stage::before { content:""; position:absolute; inset:0; background:radial-gradient(circle at 50% 35%,rgba(97,218,255,.28),transparent 35%),linear-gradient(145deg,transparent 50%,rgba(255,255,255,.05)); }
-        .orb { position:relative; width:min(75%,430px); aspect-ratio:1; display:grid; place-items:center; transform-style:preserve-3d; animation:float 4s ease-in-out infinite; }
-        .orb::before { content:""; position:absolute; width:78%; height:20%; bottom:4%; border-radius:50%; background:rgba(0,0,0,.45); filter:blur(18px); transform:translateZ(-60px); }
-        .pet-image { position:relative; z-index:1; width:88%; height:88%; object-fit:contain; mix-blend-mode:screen; filter:drop-shadow(18px 24px 12px rgba(0,0,0,.4)) drop-shadow(-8px -8px 14px rgba(125,225,255,.23)); transform:translateZ(35px) rotateY(-7deg); transition:transform .5s ease,filter .5s ease; }
-        .orb:hover .pet-image { transform:translateZ(55px) rotateY(9deg) rotateX(-4deg) scale(1.04); }
-        .orb .shine { position:absolute; z-index:2; width:52%; height:70%; top:11%; left:20%; border-radius:50%; background:linear-gradient(110deg,rgba(255,255,255,.24),transparent 38%); transform:translateZ(60px) rotate(-25deg); pointer-events:none; }
+        #pet-canvas { position:relative; z-index:1; width:min(100%,560px); height:520px; display:block; cursor:grab; touch-action:none; }
+        #pet-canvas:active { cursor:grabbing; }
+        .pet-fallback { position:relative; z-index:1; width:230px; height:330px; object-fit:contain; animation:fallback-float 3.5s ease-in-out infinite; filter:drop-shadow(0 24px 14px rgba(0,0,0,.42)); }
+        .pet-fallback-note { position:absolute; z-index:2; top:1rem; left:1rem; right:1rem; padding:.55rem .75rem; border-radius:9px; color:rgba(255,255,255,.65); background:rgba(4,13,25,.6); font-size:.68rem; text-align:center; }
+        @keyframes fallback-float { 0%,100% { transform:translateY(5px) rotate(-2deg); } 50% { transform:translateY(-10px) rotate(2deg); } }
         .pet-nameplate { position:absolute; z-index:3; bottom:1.4rem; text-align:center; }
         .pet-nameplate h2 { margin:0 0 .25rem; font-size:1.5rem; }
         .pet-nameplate span { padding:.35rem .65rem; border-radius:999px; color:#9ce8ff; background:rgba(40,159,211,.18); font-size:.7rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
@@ -44,9 +44,7 @@
         .pet-action i { display:block; margin-bottom:.45rem; color:#9deaff; font-size:1.2rem; }
         .pet-note { margin:1.25rem 0 0; padding:1rem; border-radius:14px; color:rgba(255,255,255,.62); background:rgba(255,255,255,.05); font-size:.78rem; line-height:1.5; }
         .pet-chip { display:inline-block; margin-top:1rem; padding:.45rem .7rem; border:1px solid rgba(255,255,255,.1); border-radius:8px; color:rgba(255,255,255,.55); font-size:.7rem; }
-        .sleeping .pet-image { filter:grayscale(.55) brightness(.72) drop-shadow(12px 18px 9px rgba(0,0,0,.5)); }
-        .sleeping .orb { animation:float 7s ease-in-out infinite; }
-        @keyframes float { 0%,100%{transform:translateY(5px) rotateX(1deg)} 50%{transform:translateY(-12px) rotateX(-2deg)} }
+        .sleeping #pet-canvas { filter:saturate(.65) brightness(.78); }
         @media(max-width:800px){ nav h1{display:none} .pets-page{padding-top:24vw}.pet-layout{grid-template-columns:1fr}.pet-stage{min-height:500px}.pets-hero{padding:1.5rem} }
     </style>
 </head>
@@ -64,7 +62,7 @@
             <header class="pets-hero"><div class="eyebrow">Aerodynamix Pet Lab · 3D companion</div><h1>Meet Byte.</h1><p>Your first digital pet is a stylish arcade bear with a big personality. Keep Byte full, happy, and rested — their needs are saved on this device.</p></header>
             <section class="pet-layout" aria-label="Byte pet care">
                 <div class="pet-stage" id="pet-stage">
-                    <div class="orb"><img class="pet-image" src="attached_assets/pet-mascot.png" alt="Byte, a stylish bear pet wearing glasses and a varsity jacket"><div class="shine"></div></div>
+                    <canvas id="pet-canvas" aria-label="Interactive 3D model of Byte, a stylish bear pet"></canvas>
                     <div class="pet-nameplate"><h2>Byte</h2><span id="activity">Ready to hang out</span></div>
                 </div>
                 <aside class="pet-panel">
@@ -83,6 +81,6 @@
             </section>
         </div>
     </main>
-    <script src="pets.js"></script>
+    <script type="module" src="pets.js"></script>
 </body>
 </html>
