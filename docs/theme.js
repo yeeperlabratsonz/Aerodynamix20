@@ -95,16 +95,16 @@
             h1Elements.forEach(function (h) { h.style.color = '#fcebd4'; });
 
         } else if (theme === 'bubble-gum-pink') {
-            body.style.backgroundColor   = '#2a0b20';
-            body.style.backgroundImage   = 'radial-gradient(ellipse at 50% 120%, rgba(255,84,176,0.4) 0%, rgba(236,72,153,0.14) 45%, transparent 68%), radial-gradient(ellipse at 15% 0%, rgba(255,182,224,0.2) 0%, transparent 34%), radial-gradient(ellipse at 90% 20%, rgba(244,114,182,0.16) 0%, transparent 30%)';
-            body.style.backgroundSize    = 'cover';
-            body.style.backgroundAttachment = 'fixed';
-            body.style.backgroundRepeat  = 'no-repeat';
-            body.style.color             = '#fff0fa';
-            if (searchInput)  { searchInput.style.backgroundColor = 'rgba(255,245,252,0.08)'; searchInput.style.color = '#fff0fa'; searchInput.style.border = '1px solid rgba(255,145,207,0.55)'; searchInput.style.boxShadow = '0 0 0 1px rgba(255,105,180,0.2), 0 8px 24px rgba(236,72,153,0.16)'; }
-            if (searchButton) { searchButton.style.background = 'linear-gradient(135deg, #f472b6 0%, #db2777 100%)'; searchButton.style.color = '#fff'; searchButton.style.border = 'none'; searchButton.style.boxShadow = '0 8px 28px rgba(236,72,153,0.45), 0 0 0 1px rgba(255,145,207,0.25)'; }
-            if (settingsButton) { settingsButton.style.background = 'linear-gradient(135deg, #f472b6 0%, #db2777 100%)'; settingsButton.style.color = '#fff'; settingsButton.style.boxShadow = '0 8px 28px rgba(236,72,153,0.4), 0 0 0 1px rgba(255,145,207,0.25)'; }
-            h1Elements.forEach(function (h) { h.style.color = '#fff0fa'; });
+            body.style.backgroundColor   = '#ff1493';
+            body.style.backgroundImage   = 'none';
+            body.style.backgroundSize    = '';
+            body.style.backgroundAttachment = '';
+            body.style.backgroundRepeat  = '';
+            body.style.color             = '#ffffff';
+            if (searchInput)  { searchInput.style.backgroundColor = '#ff69b4'; searchInput.style.color = '#ffffff'; searchInput.style.border = '2px solid #ffb6d9'; searchInput.style.boxShadow = '0 0 0 2px #e60073, 0 8px 24px rgba(128,0,64,0.3)'; }
+            if (searchButton) { searchButton.style.background = '#e60073'; searchButton.style.color = '#fff'; searchButton.style.border = '2px solid #ffb6d9'; searchButton.style.boxShadow = '0 8px 28px rgba(128,0,64,0.35)'; }
+            if (settingsButton) { settingsButton.style.background = '#e60073'; settingsButton.style.color = '#fff'; settingsButton.style.border = '2px solid #ffb6d9'; settingsButton.style.boxShadow = '0 8px 28px rgba(128,0,64,0.35)'; }
+            h1Elements.forEach(function (h) { h.style.color = '#ffffff'; });
         }
 
     };
