@@ -6,3 +6,27 @@ id = "rJYFOMCaShrogX4hGMgJG"
 uri = "file://docs/images/disc.png"
 type = "image"
 title = "Updated disc icon (white background removed)"
+
+[[outputs]]
+id = "Rc_u0GQDJCaBc7H49Rt3R"
+uri = "file://attached_assets/generated_images/pixel-frog-desktop.png"
+type = "image"
+title = "Pixel Frog — Desktop Buddy"
+
+[[outputs]]
+id = "yOSIP_SjRVQIWd0VXI6Or"
+uri = "file://attached_assets/generated_images/pixel-frog-pond.png"
+type = "image"
+title = "Pixel Frog — Pond Pop"
+
+[[outputs]]
+id = "qivJPhZagkMMCmR120ZdR"
+uri = "file://attached_assets/generated_images/sky-whale-screensaver.png"
+type = "image"
+title = "Sky Whale — Screensaver Dream"
+
+[[outputs]]
+id = "yx8CPTkw9EMQPV_VAcZQ9"
+uri = "file://attached_assets/generated_images/sky-whale-orbit.png"
+type = "image"
+title = "Sky Whale — Orbit Buddy"
