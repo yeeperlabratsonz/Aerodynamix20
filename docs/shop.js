@@ -17,6 +17,12 @@
         localStorage.setItem('aerodynamixPurchasedGames', JSON.stringify(games));
     }
 
+    function gameBuyLabel(label = 'Buy for 100') {
+        return `${label} ${window.AeroDiscs && window.AeroDiscs.discIconHTML
+            ? window.AeroDiscs.discIconHTML('sm')
+            : '<img src="images/disc.png" alt="Dynamix Disc" class="disc-icon sm">'} `;
+    }
+
     async function loadOwned() {
         const local = getOwned();
         try {
@@ -52,7 +58,7 @@
         } catch (e) {
             alert(e.message);
             button.disabled = false;
-            button.textContent = 'Buy for 100';
+            button.innerHTML = gameBuyLabel();
         }
     }
 
@@ -232,11 +238,13 @@
         document.querySelectorAll('.shop-card').forEach(card => {
             if (card.classList.contains('theme-shop-card')) return;
             const button = card.querySelector('.shop-buy');
+            if (!button) return;
             if (isPaid() || owned.includes(card.dataset.game)) {
                 card.classList.add('owned');
                 button.textContent = isPaid() ? 'Included' : 'Owned';
                 button.disabled = true;
             } else {
+                button.innerHTML = gameBuyLabel();
                 button.addEventListener('click', () => purchase(card));
             }
         });
