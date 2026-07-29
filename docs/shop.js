@@ -124,7 +124,7 @@
     async function purchaseCardPack() {
         const button = document.getElementById('buy-card-pack');
         if (!button || button.disabled) return;
-        const fullVersion = Boolean(window.AeroDiscs && window.AeroDiscs.isPaid());
+            const fullVersion = Boolean(window.AeroDiscs && window.AeroDiscs.isPaid());
         button.disabled = true;
         button.firstChild.textContent = 'Purchasing…';
         try {
@@ -185,11 +185,13 @@
         const description = document.getElementById('pack-description');
         if (!button) return;
         dailyPackLocked = !available;
-        if (price && window.AeroDiscs && window.AeroDiscs.isPaid()) {
-            price.textContent = available ? 'Daily pack included with full access' : 'Daily pack claimed';
+            if (price && window.AeroDiscs && window.AeroDiscs.isPaid()) {
+                price.innerHTML = available
+                    ? '<img src="images/disc.png" alt="" class="disc-icon sm"> 75 Dynamix Discs'
+                    : 'Daily pack claimed';
         }
         if (description && window.AeroDiscs && window.AeroDiscs.isPaid()) {
-            description.textContent = 'Full-version members receive 3 free Aerodynamix cards once each day.';
+                description.textContent = 'Full-version members can open one card pack each day using 75 Dynamix Discs.';
         }
         if (available) {
             button.disabled = false;
@@ -225,9 +227,9 @@
         if (packButton && isPaid()) {
             packButton.firstChild.textContent = 'Open daily pack';
             const packPrice = document.querySelector('.pack-price');
-            if (packPrice) packPrice.innerHTML = 'Daily pack included with full access';
+            if (packPrice) packPrice.innerHTML = '<img src="images/disc.png" alt="" class="disc-icon sm"> 75 Dynamix Discs';
             const packDescription = document.getElementById('pack-description');
-            if (packDescription) packDescription.textContent = 'Full-version members receive 3 free Aerodynamix cards once each day.';
+            if (packDescription) packDescription.textContent = 'Full-version members can open one card pack each day using 75 Dynamix Discs.';
             try {
                 const info = await window.AeroDiscs.getBalance();
                 setDailyPackState(info.next_card_pack_at, info.card_pack_available);

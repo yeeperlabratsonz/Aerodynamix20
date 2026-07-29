@@ -109,13 +109,8 @@
             return;
         }
 
-        if (isPaid()) {
-            display.innerHTML = discIconHTML('sm') + ' <span class="disc-unlimited">Unlimited</span>';
-            claimBtn.style.display = 'none';
-            return;
-        }
-
-        // Free trial: could not load balance
+        // Every user type has a real balance. Full access only changes which
+        // features are included; it does not make the card economy unlimited.
         if (balance === null || balance === undefined) {
             display.innerHTML = discIconHTML('sm') + ' <span class="disc-login">--</span>';
             claimBtn.style.display = 'none';
@@ -127,11 +122,7 @@
     }
 
     async function refreshNavWidget() {
-        if (isPaid()) {
-            updateNavWidget(0, false);
-            return;
-        }
-        if (!isFreeTrial()) {
+        if (!isPaid() && !isFreeTrial()) {
             updateNavWidget(null, false);
             return;
         }

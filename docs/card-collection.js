@@ -23,8 +23,8 @@
       return `<article class="collection-card" style="--accent:${card.accent || '#fff'}">
         <div class="collection-card-art"><img src="${safeImage(card.image)}" alt="${esc(card.name)}"></div>
         <div class="collection-card-body"><h3>${esc(card.name || 'Mystery Card')}</h3>
-        <div class="collection-rarity">${esc(rarity)}</div><small>#${esc(card.number || index + 1)} · Sell for ${value} tokens</small>
-        <button class="sell-card" data-card-id="${esc(card.id)}" data-card-name="${esc(card.name || 'this card')}" data-card-value="${value}">Sell for ${value}<img class="disc-icon" src="images/disc.png" alt="tokens"></button></div>
+        <div class="collection-rarity">${esc(rarity)}</div><small>#${esc(card.number || index + 1)} · Sell for ${value} Dynamix Discs</small>
+        <button class="sell-card" data-card-id="${esc(card.id)}" data-card-name="${esc(card.name || 'this card')}" data-card-value="${value}">Sell for ${value}<img class="disc-icon" src="images/disc.png" alt="Dynamix Discs"></button></div>
       </article>`;
     }).join('');
     grid.querySelectorAll('.sell-card').forEach(button => button.addEventListener('click', () => askToSell(button)));
@@ -32,7 +32,7 @@
 
   function askToSell(button) {
     pendingSell = button;
-    confirmMessage.textContent = `Are you sure you want to sell ${button.dataset.cardName} for ${button.dataset.cardValue} tokens? This cannot be undone.`;
+    confirmMessage.textContent = `Are you sure you want to sell ${button.dataset.cardName} for ${button.dataset.cardValue} Dynamix Discs? This cannot be undone.`;
     confirmBackdrop.classList.add('open');
     confirmBackdrop.setAttribute('aria-hidden', 'false');
     confirmSell.focus();
@@ -51,7 +51,7 @@
     ]);
     const cards = (await cardsResponse.json()).cards || [];
     const discData = (await discsResponse.json()).discs || {};
-    tokens.textContent = `${Number(discData.disc_balance || 0).toLocaleString()} tokens`;
+    tokens.textContent = `${Number(discData.disc_balance || 0).toLocaleString()} Dynamix Discs`;
     render(cards);
   }
 
@@ -65,7 +65,7 @@
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Could not sell card.');
-      tokens.textContent = `${Number(result.disc_balance || 0).toLocaleString()} tokens`;
+      tokens.textContent = `${Number(result.disc_balance || 0).toLocaleString()} Dynamix Discs`;
       await load();
     } catch (error) {
       alert(error.message);

@@ -240,6 +240,11 @@ def _set_session_discs(amount):
     session['disc_balance'] = max(0, int(amount))
 
 
+def _has_full_access():
+    """Full access includes games and site features, not unlimited Discs."""
+    return session.get('authorized') is True or session.get('authorized') == 'true'
+
+
 def _get_session_last_daily():
     last = session.get('last_daily_login')
     if last:
@@ -713,11 +718,10 @@ def get_trading_cards():
 @app.route('/api/trading-cards/purchase-pack', methods=['POST'])
 def purchase_trading_card_pack():
     data = request.get_json(silent=True) or {}
-    # The full-version entitlement is currently a client-side access-key gate.
-    # Keep the temporary testing override scoped to this pack endpoint; trial
-    # requests continue to use the normal 100-disc price.
+    # Full access includes the site and games, but card packs use the shared
+    # Dynamix Disc balance for every user type.
     full_version = bool(data.get('full_version'))
-    pack_cost = 0 if full_version else TRADING_CARD_PACK_COST
+    pack_cost = TRADING_CARD_PACK_COST
     now = datetime.datetime.now(datetime.timezone.utc)
     cards = random.choices(
         AERODYNAMIX_CARD_POOL,
@@ -929,6 +933,10 @@ def purchase_theme():
     if not theme:
         return jsonify({'error': 'Theme name required'}), 400
 
+    if _has_full_access():
+        return jsonify({'success': True, 'purchased': True, 'included': True,
+                        'disc_balance': _get_session_discs()})
+
     if 'user_id' in session:
         db = DBSession()
         user = db.query(User).filter_by(id=session['user_id']).first()
@@ -968,6 +976,10 @@ def purchase_theme():
 @app.route('/api/discs/unlock-media', methods=['POST'])
 def unlock_media_player():
     cost = 1000
+
+    if _has_full_access():
+        return jsonify({'success': True, 'unlocked': True, 'included': True,
+                        'disc_balance': _get_session_discs()})
 
     if 'user_id' in session:
         db = DBSession()
@@ -1020,6 +1032,10 @@ def purchase_game():
 
     if not game:
         return jsonify({'error': 'Game name required'}), 400
+
+    if _has_full_access():
+        return jsonify({'success': True, 'purchased': True, 'included': True,
+                        'disc_balance': _get_session_discs()})
 
     if 'user_id' in session:
         db = DBSession()
