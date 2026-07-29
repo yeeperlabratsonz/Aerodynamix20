@@ -330,56 +330,29 @@ AERODYNAMIX_CARD_POOL = [
     {'name': 'Run 3', 'image': 'images/run-3.jpg', 'rarity': 'Common', 'number': '001'},
     {'name': 'Drive Mad', 'image': 'images/drive-mad.jpg', 'rarity': 'Common', 'number': '002'},
     {'name': 'Retro Bowl', 'image': 'images/retro-bowl.jpg', 'rarity': 'Common', 'number': '003'},
-    {'name': 'Slope', 'image': 'images/slope.jpg', 'rarity': 'Common', 'number': '004'},
-    {'name': 'Minecraft', 'image': 'images/mc.png', 'rarity': 'Common', 'number': '005'},
-    {'name': "Papa's Pizzeria", 'image': 'images/papaspizzeria.png', 'rarity': 'Common', 'number': '006'},
-    {'name': "Papa's Freezeria", 'image': 'images/papasfreezeria.png', 'rarity': 'Common', 'number': '007'},
-    {'name': 'Adventure Capitalist', 'image': 'images/adventure-capitalist.png', 'rarity': 'Uncommon', 'number': '008'},
-    {'name': 'Friday Night Funkin’', 'image': 'images/fridaynightfunkin.png', 'rarity': 'Uncommon', 'number': '009'},
-    {'name': 'Run 2', 'image': 'images/run-2.png', 'rarity': 'Uncommon', 'number': '010'},
-    {'name': 'Pico’s School', 'image': 'images/picoschool.png', 'rarity': 'Uncommon', 'number': '011'},
-    {'name': 'World’s Hardest Game', 'image': 'images/worldshardestgame.png', 'rarity': 'Uncommon', 'number': '012'},
-    {'name': 'Sandboxels', 'image': 'images/sandboxels.png', 'rarity': 'Uncommon', 'number': '013'},
-    {'name': 'Super Smash Flash', 'image': 'images/supersmashflash.jpg', 'rarity': 'Rare', 'number': '014'},
-    {'name': 'Subway Surfers SF', 'image': 'images/subway-surfers-sf.jpg', 'rarity': 'Rare', 'number': '015'},
-    {'name': 'Hobo 1', 'image': 'images/hobo-1.png', 'rarity': 'Rare', 'number': '016'},
-    {'name': 'Hobo 2', 'image': 'images/hobo-2.png', 'rarity': 'Rare', 'number': '017'},
-    {'name': 'Hobo 3', 'image': 'images/hobo-3.png', 'rarity': 'Rare', 'number': '018'},
-    {'name': 'Gladihoppers', 'image': 'images/gladihoppers.jpg', 'rarity': 'Rare', 'number': '019'},
-    {'name': 'Hobo 4', 'image': 'images/hobo-4.png', 'rarity': 'Epic', 'number': '020'},
-    {'name': 'Hobo 5', 'image': 'images/hobo-5.png', 'rarity': 'Epic', 'number': '021'},
-    {'name': 'Hobo 6', 'image': 'images/hobo-6.png', 'rarity': 'Epic', 'number': '022'},
-    {'name': 'Hobo 7', 'image': 'images/hobo-7.png', 'rarity': 'Epic', 'number': '023'},
-    {'name': 'Fruit Ninja', 'image': 'images/fruit-ninja.png', 'rarity': 'Legendary', 'number': '024'},
-    {'name': 'Binding of Isaac', 'image': 'images/binding-of-isaac.png', 'rarity': 'Legendary', 'number': '025'},
-    {'name': 'Alien Hominid', 'image': 'images/alien-hominid.png', 'rarity': 'Mythic', 'number': '026'},
-    {'name': 'Geometry Dash Lite', 'image': 'images/geometry-dash-lite.jpg', 'rarity': 'Mythic', 'number': '027'},
-    {'name': 'Crossy Road', 'image': 'images/crossy-road.png', 'rarity': 'Mythic', 'number': '028'},
-    {'name': 'Cookie Clicker', 'image': 'images/cookie-clicker.png', 'rarity': 'Mythic', 'number': '029'},
-    {'name': 'Duck Life', 'image': 'images/duck-life.png', 'rarity': 'Legendary', 'number': '030'},
-    {'name': 'DOOM', 'image': 'images/doom.png', 'rarity': 'GODLY', 'number': '031'},
-    {'name': 'Doki Doki Literature Club', 'image': 'images/doki-doki-literature-club.jpg', 'rarity': 'GODLY', 'number': '032'},
+    {'name': 'Slope', 'image': 'images/slope.jpg', 'rarity': 'Uncommon', 'number': '004'},
+    {'name': 'Minecraft', 'image': 'images/mc.png', 'rarity': 'Uncommon', 'number': '005'},
+    {'name': 'Super Smash Flash', 'image': 'images/supersmashflash.jpg', 'rarity': 'Rare', 'number': '006'},
+    {'name': "Papa's Pizzeria", 'image': 'images/papaspizzeria.png', 'rarity': 'Rare', 'number': '007'},
+    {'name': 'Friday Night Funkin’', 'image': 'images/fridaynightfunkin.png', 'rarity': 'Epic', 'number': '008'},
+    {'name': 'Run 2', 'image': 'images/run-2.png', 'rarity': 'Epic', 'number': '009'},
+    {'name': 'Pico’s School', 'image': 'images/picoschool.png', 'rarity': 'Legendary', 'number': '010'},
+    {'name': 'World’s Hardest Game', 'image': 'images/worldshardestgame.png', 'rarity': 'Legendary', 'number': '011'},
+    {'name': 'Alien Hominid', 'image': 'images/alien-hominid.png', 'rarity': 'Mythic', 'number': '012'},
+    {'name': 'Geometry Dash Lite', 'image': 'images/geometry-dash-lite.jpg', 'rarity': 'Mythic', 'number': '013'},
+    {'name': 'DOOM', 'image': 'images/doom.png', 'rarity': 'GODLY', 'number': '014'},
 ]
 for _card in AERODYNAMIX_CARD_POOL:
     _card.update(RARITY_STYLES[_card['rarity']])
 
-# Keep the published rarity odds stable as the set grows: each card shares
-# the odds assigned to its rarity tier.
-RARITY_ODDS = {
-    'Common': 50,
-    'Uncommon': 20,
-    'Rare': 12,
-    'Epic': 7,
-    'Legendary': 5,
-    'Mythic': 4,
-    'GODLY': 2,
-}
 AERODYNAMIX_CARD_WEIGHTS = [
-    RARITY_ODDS[card['rarity']] / sum(
-        1 for pool_card in AERODYNAMIX_CARD_POOL
-        if pool_card['rarity'] == card['rarity']
-    )
-    for card in AERODYNAMIX_CARD_POOL
+    50 / 3, 50 / 3, 50 / 3,  # Common
+    20 / 2, 20 / 2,           # Uncommon
+    12 / 2, 12 / 2,           # Rare
+    7 / 2, 7 / 2,             # Epic
+    5 / 2, 5 / 2,             # Legendary
+    4 / 2, 4 / 2,             # Mythic
+    2,                        # GODLY
 ]
 
 
