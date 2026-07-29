@@ -49,9 +49,9 @@
          .pack-art:hover { animation-play-state:paused; }
          .pack-face, .pack-edge { position:absolute; display:block; backface-visibility:hidden; }
          .pack-face { inset:0; overflow:hidden; border:2px solid #8be4ff; border-radius:11px 13px 14px 12px; color:#fff; text-align:center; }
-          .pack-front { overflow:hidden; transform:translateZ(11px) rotateX(1deg); background:linear-gradient(118deg,#071c4c 0%,#126ea8 23%,#354bb4 52%,#762e9e 78%,#11152f 100%); box-shadow:inset 0 0 22px #07112f99,inset 14px 0 18px #ffffff1b,inset -12px 0 22px #07112f55,0 0 0 4px #14295b,0 15px 25px #000b,0 0 20px #62dcff3d; }
-          .pack-front::before { content:''; position:absolute; inset:18px 7px 15px; border:1px solid #b8f3ff88; border-radius:5px; background:radial-gradient(circle at 50% 52%,#d5fbff1c 0 20%,transparent 21%),radial-gradient(ellipse at 50% 56%,#94eaff42 0 25%,transparent 26%),repeating-linear-gradient(135deg,transparent 0 15px,#8ceaff1c 16px 18px),linear-gradient(155deg,#1b78bd,#48258e 60%,#111b43); box-shadow:inset 12px 0 20px #ffffff14,inset -15px 0 25px #07112f55; }
-         .pack-front::after { content:''; position:absolute; inset:0; pointer-events:none; background:linear-gradient(73deg,transparent 12%,#fff7 22%,transparent 30%,transparent 62%,#fff5 72%,transparent 82%),radial-gradient(ellipse at 50% 45%,transparent 48%,#00123855 100%); mix-blend-mode:screen; opacity:.58; }
+          .pack-front { overflow:hidden; transform:translateZ(11px) rotateX(1deg); background:radial-gradient(circle at 50% 51%,#43bfff55 0 10%,transparent 11%),conic-gradient(from 20deg at 50% 52%,#102c68,#126ea8 16%,#452a9d 34%,#0d245b 48%,#8a2fa0 66%,#10275d 82%,#102c68); box-shadow:inset 0 0 22px #07112f99,inset 14px 0 18px #ffffff1b,inset -12px 0 22px #07112f55,0 0 0 4px #14295b,0 15px 25px #000b,0 0 20px #62dcff3d; }
+          .pack-front::before { content:''; position:absolute; inset:18px 7px 15px; border:1px solid #b8f3ff88; border-radius:5px; background:radial-gradient(circle at 50% 52%,transparent 0 18%,#8beaff20 19% 20%,transparent 21%),repeating-conic-gradient(from 8deg at 50% 52%,#8ceaff1c 0 3deg,transparent 3deg 22deg),repeating-linear-gradient(135deg,transparent 0 15px,#8ceaff1c 16px 18px),linear-gradient(155deg,#1b78bd,#48258e 60%,#111b43); box-shadow:inset 12px 0 20px #ffffff14,inset -15px 0 25px #07112f55; }
+          .pack-front::after { content:''; position:absolute; inset:31px 18px 29px; pointer-events:none; border:1px solid #9feeff66; border-radius:50% 44% 52% 46%; transform:rotate(-18deg); box-shadow:0 0 0 5px #47c9ff16,0 0 18px #47c9ff66, inset 0 0 12px #8eeaff33; }
          .pack-back { transform:rotateY(180deg) translateZ(11px); background:linear-gradient(110deg,#101d48,#374da4 45%,#111a3d); box-shadow:inset 15px 0 20px #ffffff15,inset -15px 0 22px #0008,0 15px 25px #000b; }
          .pack-back::after { content:'AERODYNAMIX\\A ARCADE SERIES\\A 3 GODLY CARDS'; white-space:pre; position:absolute; inset:35% 0 auto; color:#c8f5ff; font-size:.48rem; line-height:1.7; letter-spacing:.1em; }
          .pack-edge { background:linear-gradient(180deg,#5fcfff,#223878 45%,#c166e4 80%,#16234e); border:1px solid #92e8ff; }
@@ -71,8 +71,8 @@
          .pack-footer { bottom:0; height:17px; border-radius:0 0 10px 9px; font-size:.33rem; }
          .pack-seam { position:absolute; top:39px; left:0; right:0; z-index:3; height:5px; background:linear-gradient(#dfffff,#49d9ff 45%,#0f81be 55%,#dfffff); box-shadow:0 2px 4px #001b; }
           .pack-art span { position:absolute; inset:91px 0 auto; z-index:2; font-size:1.3rem; line-height:.9; font-weight:900; letter-spacing:.08em; color:#f5fdff; text-shadow:0 3px 9px #000,0 0 16px #65dfff; }
-          .pack-art span::before { content:'A'; display:grid; place-items:center; width:42px; height:42px; margin:0 auto 9px; border:2px solid #baf7ff; border-radius:50%; color:#fff; background:conic-gradient(from 210deg,#2c7ffc,#a855f7,#2c7ffc); box-shadow:0 0 0 4px #132d6dcc,0 0 18px #65dfff99,inset 0 0 12px #ffffff66; font-size:1.55rem; line-height:1; font-weight:900; font-style:italic; letter-spacing:-.08em; text-shadow:0 2px 5px #14295b; }
-          .pack-art span::after { content:'AERODYNAMIX  •  ARCADE SERIES  •  3 CARDS'; display:block; margin-top:10px; padding-top:5px; border-top:1px solid #b9f4ff99; color:#e2fbff; font-size:.28rem; letter-spacing:.08em; }
+           .pack-art span::before { content:'A'; display:grid; place-items:center; width:42px; height:42px; margin:0 auto 9px; border:2px solid #9feeff; border-radius:50%; color:#dffaff; background:radial-gradient(circle,#65d8ff 0 18%,#147de8 19% 48%,#063caa 49% 100%); box-shadow:0 0 0 4px #132d6dcc,0 0 10px #29aaff,0 0 26px #1688ff,inset 0 0 12px #ffffff99; font-size:1.55rem; line-height:1; font-weight:900; font-style:normal; letter-spacing:0; text-shadow:0 0 5px #fff,0 2px 5px #062c83; }
+           .pack-art span::after { content:'AeroDynamix  •  ARCADE SERIES  •  3 CARDS'; display:block; margin-top:10px; padding-top:5px; border-top:1px solid #b9f4ff99; color:#e2fbff; font-size:.28rem; letter-spacing:.08em; text-shadow:0 0 7px #48cfff; }
          .pack-art + .pack-copy { margin-left:.5rem; }
          .pack-copy { flex:1; }
          .pack-copy h2 { margin:0 0 .35rem; color:#fff; font-size:1.5rem; }
@@ -205,7 +205,7 @@
                                <div class="pack-seam"></div>
                                 <div class="pack-fold-left" aria-hidden="true"></div>
                                 <div class="pack-fold-right" aria-hidden="true"></div>
-                                <span>Aero<br><b>dynamix</b></span>
+                                <span>Aero<br><b>Dynamix</b></span>
                                <div class="pack-footer">3 DIGITAL CARDS</div>
                            </div>
                           <div class="pack-face pack-back"></div>
