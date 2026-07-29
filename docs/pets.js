@@ -1,4 +1,4 @@
-import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+import * as THREE from 'three';
 import { GLTFLoader } from 'https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
 
 (function () {
@@ -40,6 +40,9 @@ import { GLTFLoader } from 'https://unpkg.com/three@0.160.0/examples/jsm/loaders
     const pet = new THREE.Group();
     pet.position.y = -.45;
     scene.add(pet);
+    let mixer = null;
+    let clips = {};
+    let activeAction = null;
     const modelStatus = document.createElement('div');
     modelStatus.className = 'pet-fallback-note';
     modelStatus.textContent = 'Loading Byte from Blender…';
@@ -97,6 +100,9 @@ import { GLTFLoader } from 'https://unpkg.com/three@0.160.0/examples/jsm/loaders
         });
         proceduralParts.forEach((part) => pet.remove(part));
         pet.add(imported);
+        mixer = new THREE.AnimationMixer(imported);
+        gltf.animations.forEach((clip) => { clips[clip.name] = clip; });
+        playAnimation(state.sleeping ? 'Sleep' : 'Idle', true);
         modelStatus.textContent = 'Blender model · DropoutBear';
     }, undefined, (error) => {
         modelStatus.textContent = 'Blender model unavailable · using low-poly fallback';
@@ -113,6 +119,7 @@ import { GLTFLoader } from 'https://unpkg.com/three@0.160.0/examples/jsm/loaders
     function animate() {
         requestAnimationFrame(animate);
         const t = clock.getElapsedTime();
+        if (mixer) mixer.update(clock.getDelta());
         if (!dragging) targetRotation += .0022;
         rotation += (targetRotation - rotation) * .08;
         pet.rotation.y = rotation;
@@ -129,10 +136,21 @@ import { GLTFLoader } from 'https://unpkg.com/three@0.160.0/examples/jsm/loaders
         document.getElementById('mood').textContent = state.sleeping ? 'Dozing peacefully' : state.fun < 35 ? 'Needs attention' : 'Feeling good';
         document.getElementById('activity').textContent = state.sleeping ? 'Zzz... power nap' : 'Ready to hang out';
     }
+    function playAnimation(name, loop = false) {
+        if (!mixer || !clips[name]) return;
+        const next = mixer.clipAction(clips[name]);
+        next.reset();
+        next.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, loop ? Infinity : 1);
+        next.clampWhenFinished = !loop;
+        if (activeAction) activeAction.fadeOut(.15);
+        next.fadeIn(.15).play();
+        activeAction = next;
+        if (!loop) next.getMixer().addEventListener('finished', () => playAnimation(state.sleeping ? 'Sleep' : 'Idle', true), { once: true });
+    }
     function act(action) {
-        if (action === 'feed') { state.hunger = Math.min(100, state.hunger + 24); state.sleeping = false; document.getElementById('pet-note').textContent = 'Byte had a crunchy snack.'; }
-        if (action === 'play') { state.fun = Math.min(100, state.fun + 25); state.energy = Math.max(0, state.energy - 14); state.sleeping = false; document.getElementById('pet-note').textContent = 'Byte is doing a victory dance!'; }
-        if (action === 'sleep') { state.sleeping = !state.sleeping; if (!state.sleeping) state.energy = Math.min(100, state.energy + 28); document.getElementById('pet-note').textContent = state.sleeping ? 'Byte is taking a power nap.' : 'Sweet dreams. Energy is back!'; }
+        if (action === 'feed') { state.hunger = Math.min(100, state.hunger + 24); state.sleeping = false; playAnimation('Eat'); document.getElementById('pet-note').textContent = 'Byte had a crunchy snack.'; }
+        if (action === 'play') { state.fun = Math.min(100, state.fun + 25); state.energy = Math.max(0, state.energy - 14); state.sleeping = false; playAnimation('Play'); document.getElementById('pet-note').textContent = 'Byte is doing a victory dance!'; }
+        if (action === 'sleep') { state.sleeping = !state.sleeping; if (!state.sleeping) { state.energy = Math.min(100, state.energy + 28); playAnimation('Idle', true); } else { playAnimation('Sleep', true); } document.getElementById('pet-note').textContent = state.sleeping ? 'Byte is taking a power nap.' : 'Sweet dreams. Energy is back!'; }
         save(); render();
     }
     document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => act(button.dataset.action)));
