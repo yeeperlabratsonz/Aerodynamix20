@@ -77,6 +77,13 @@ nav > div a,
     white-space: nowrap;
     font-size: clamp(.62rem, .78vw, .82rem) !important;
     padding: .45rem .72rem !important;
+    color: #fff !important;
+}
+
+nav > div a.active,
+.collection-nav-links a.active,
+.discs-nav-links a.active {
+    color: #fff !important;
 }
 
 .logo-a {

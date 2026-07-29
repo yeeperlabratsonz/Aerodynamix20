@@ -111,7 +111,7 @@
                 nav.style.borderBottom = '2px solid #ff1493';
             });
             navLinks.forEach(function (link) {
-                if (link !== settingsButton) link.style.color = '#8a1450';
+                link.style.color = '#ffffff';
             });
             if (searchInput)  { searchInput.style.backgroundColor = '#ffb6d9'; searchInput.style.color = '#7a1248'; searchInput.style.border = '2px solid #ff1493'; searchInput.style.boxShadow = '0 0 0 2px #ff1493, 0 8px 24px rgba(128,0,64,0.22)'; }
             if (searchButton) { searchButton.style.background = '#ff1493'; searchButton.style.color = '#fff'; searchButton.style.border = '2px solid #ffb6d9'; searchButton.style.boxShadow = '0 8px 28px rgba(128,0,64,0.3)'; }
