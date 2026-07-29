@@ -151,6 +151,31 @@
                 border-width: 2px;
             }
         }
+
+        @media (max-width: 900px) and (orientation: landscape) and (max-height: 600px) {
+            .game-header {
+                height: 48px;
+                padding: 0 .55rem;
+            }
+            .game-header img {
+                width: 34px;
+                height: 34px;
+            }
+            .game-header h1 {
+                font-size: .78rem;
+            }
+            .back-button {
+                min-height: 32px;
+                padding: .4rem .6rem;
+                font-size: .65rem;
+            }
+            .game-container,
+            .game-container.footer-visible {
+                margin-top: 48px;
+                height: calc(100svh - 48px);
+                min-height: calc(100svh - 48px);
+            }
+        }
         .game-footer.visible { display: flex; }
 
         .game-footer .gf-art {
