@@ -302,7 +302,7 @@ def _daily_claim_payload(last_claim):
     }
 
 
-TRADING_CARD_PACK_COST = 75
+TRADING_CARD_PACK_COST = 100
 RARITY_STYLES = {
     'Common': {'accent': '#ffffff', 'glow': 0},
     'Uncommon': {'accent': '#42d979', 'glow': 0},
@@ -726,7 +726,7 @@ def purchase_trading_card_pack():
     cards = random.choices(
         AERODYNAMIX_CARD_POOL,
         weights=AERODYNAMIX_CARD_WEIGHTS,
-        k=3,
+        k=4,
     )
     awarded = [
         {**card, 'id': str(uuid.uuid4()), 'game': 'Aerodynamix',

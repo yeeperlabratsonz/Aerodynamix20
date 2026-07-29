@@ -179,10 +179,10 @@
         const description = document.getElementById('pack-description');
         if (!button) return;
         if (price && window.AeroDiscs && window.AeroDiscs.isPaid()) {
-            price.innerHTML = '<img src="images/disc.png" alt="" class="disc-icon sm"> 75 Dynamix Discs';
+            price.innerHTML = '<img src="images/disc.png" alt="" class="disc-icon sm"> 100 Dynamix Discs';
         }
         if (description && window.AeroDiscs && window.AeroDiscs.isPaid()) {
-            description.textContent = 'Full-version members can open card packs using 75 Dynamix Discs, just like free members.';
+            description.textContent = 'Full-version members can open card packs using 100 Dynamix Discs, just like free members.';
         }
         button.disabled = false;
         button.classList.remove('daily-pack-locked');
@@ -197,9 +197,9 @@
         if (packButton && isPaid()) {
             packButton.firstChild.textContent = 'Open pack';
             const packPrice = document.querySelector('.pack-price');
-            if (packPrice) packPrice.innerHTML = '<img src="images/disc.png" alt="" class="disc-icon sm"> 75 Dynamix Discs';
+            if (packPrice) packPrice.innerHTML = '<img src="images/disc.png" alt="" class="disc-icon sm"> 100 Dynamix Discs';
             const packDescription = document.getElementById('pack-description');
-            if (packDescription) packDescription.textContent = 'Full-version members can open card packs using 75 Dynamix Discs, just like free members.';
+            if (packDescription) packDescription.textContent = 'Full-version members can open card packs using 100 Dynamix Discs, just like free members.';
             setDailyPackState();
         }
         document.querySelectorAll('.shop-card').forEach(card => {
