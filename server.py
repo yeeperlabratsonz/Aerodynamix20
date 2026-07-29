@@ -319,6 +319,8 @@ CARD_SELL_VALUES = {
 
 # Cards are built from the same game art shown in the Games shop.
 # Cards in the Aerodynamix set use the rarity odds shown in the shop.
+# The per-card values divide each rarity's target chance evenly across the
+# cards in that rarity.
 AERODYNAMIX_CARD_POOL = [
     {'name': 'Run 3', 'image': 'images/run-3.jpg', 'rarity': 'Common', 'number': '001'},
     {'name': 'Drive Mad', 'image': 'images/drive-mad.jpg', 'rarity': 'Common', 'number': '002'},
@@ -337,6 +339,16 @@ AERODYNAMIX_CARD_POOL = [
 ]
 for _card in AERODYNAMIX_CARD_POOL:
     _card.update(RARITY_STYLES[_card['rarity']])
+
+AERODYNAMIX_CARD_WEIGHTS = [
+    50 / 3, 50 / 3, 50 / 3,  # Common
+    20 / 2, 20 / 2,           # Uncommon
+    12 / 2, 12 / 2,           # Rare
+    7 / 2, 7 / 2,             # Epic
+    5 / 2, 5 / 2,             # Legendary
+    4 / 2, 4 / 2,             # Mythic
+    2,                        # GODLY
+]
 
 
 def _get_session_trading_cards():
@@ -709,7 +721,7 @@ def purchase_trading_card_pack():
     now = datetime.datetime.now(datetime.timezone.utc)
     cards = random.choices(
         AERODYNAMIX_CARD_POOL,
-        weights=[28, 20, 14, 10, 7, 4, 1, 1, 1, 1, 1, 1, 1, 0.35],
+        weights=AERODYNAMIX_CARD_WEIGHTS,
         k=3,
     )
     awarded = [
