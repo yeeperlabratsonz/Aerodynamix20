@@ -164,78 +164,43 @@
             if (subtitle) subtitle.textContent = 'Add these cards to your collection.';
             if (doneButton) doneButton.hidden = false;
             await loadTradingCards();
-            button.firstChild.textContent = fullVersion ? 'Daily pack claimed' : 'Open another pack';
-            if (fullVersion) {
-                setDailyPackState(data.next_card_pack_at, false);
-            }
+            button.firstChild.textContent = 'Open another pack';
         } catch (e) {
             alert(e.message);
-            if (!fullVersion || !dailyPackLocked) button.firstChild.textContent = 'Open pack';
+            button.firstChild.textContent = 'Open pack';
         } finally {
-            if (!fullVersion || !dailyPackLocked) button.disabled = false;
+            button.disabled = false;
         }
     }
 
-    let dailyPackLocked = false;
-    let dailyPackTimer = null;
-
-    function setDailyPackState(nextClaimAt, available) {
+    function setDailyPackState() {
         const button = document.getElementById('buy-card-pack');
         const price = document.getElementById('pack-price');
         const description = document.getElementById('pack-description');
         if (!button) return;
-        dailyPackLocked = !available;
-            if (price && window.AeroDiscs && window.AeroDiscs.isPaid()) {
-                price.innerHTML = available
-                    ? '<img src="images/disc.png" alt="" class="disc-icon sm"> 75 Dynamix Discs'
-                    : 'Daily pack claimed';
+        if (price && window.AeroDiscs && window.AeroDiscs.isPaid()) {
+            price.innerHTML = '<img src="images/disc.png" alt="" class="disc-icon sm"> 75 Dynamix Discs';
         }
         if (description && window.AeroDiscs && window.AeroDiscs.isPaid()) {
-                description.textContent = 'Full-version members can open one card pack each day using 75 Dynamix Discs.';
+            description.textContent = 'Full-version members can open card packs using 75 Dynamix Discs, just like free members.';
         }
-        if (available) {
-            button.disabled = false;
-            button.classList.remove('daily-pack-locked');
-            button.firstChild.textContent = 'Open daily pack';
-            button.querySelector('small').textContent = 'Available until midnight PST';
-            if (dailyPackTimer) clearInterval(dailyPackTimer);
-            return;
-        }
-        function updateTimer() {
-            const remaining = new Date(nextClaimAt) - new Date();
-            if (remaining <= 0) {
-                setDailyPackState(nextClaimAt, true);
-                return;
-            }
-            const total = Math.floor(remaining / 1000);
-            const hours = Math.floor(total / 3600);
-            const minutes = Math.floor((total % 3600) / 60);
-            const seconds = total % 60;
-            button.disabled = true;
-            button.classList.add('daily-pack-locked');
-            button.firstChild.textContent = `Next pack in ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-            button.querySelector('small').textContent = 'Resets at 12:00 AM Pacific Time';
-        }
-        updateTimer();
-        if (dailyPackTimer) clearInterval(dailyPackTimer);
-        dailyPackTimer = setInterval(updateTimer, 1000);
+        button.disabled = false;
+        button.classList.remove('daily-pack-locked');
+        button.firstChild.textContent = 'Open pack';
+        const small = button.querySelector('small');
+        if (small) small.textContent = 'Open another pack whenever you have enough Discs';
     }
 
     async function init() {
         const owned = await loadOwned();
         const packButton = document.getElementById('buy-card-pack');
         if (packButton && isPaid()) {
-            packButton.firstChild.textContent = 'Open daily pack';
+            packButton.firstChild.textContent = 'Open pack';
             const packPrice = document.querySelector('.pack-price');
             if (packPrice) packPrice.innerHTML = '<img src="images/disc.png" alt="" class="disc-icon sm"> 75 Dynamix Discs';
             const packDescription = document.getElementById('pack-description');
-            if (packDescription) packDescription.textContent = 'Full-version members can open one card pack each day using 75 Dynamix Discs.';
-            try {
-                const info = await window.AeroDiscs.getBalance();
-                setDailyPackState(info.next_card_pack_at, info.card_pack_available);
-            } catch (e) {
-                setDailyPackState(null, true);
-            }
+            if (packDescription) packDescription.textContent = 'Full-version members can open card packs using 75 Dynamix Discs, just like free members.';
+            setDailyPackState();
         }
         document.querySelectorAll('.shop-card').forEach(card => {
             if (card.classList.contains('theme-shop-card')) return;

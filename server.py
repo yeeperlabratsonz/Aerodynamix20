@@ -740,14 +740,6 @@ def purchase_trading_card_pack():
         if not user:
             db.close()
             return jsonify({'error': 'User not found'}), 404
-        if full_version:
-            available, next_midnight = _daily_claim_status(user.last_daily_card_pack)
-            if not available:
-                db.close()
-                return jsonify({
-                    'error': 'Daily card pack already claimed',
-                    'next_card_pack_at': next_midnight.isoformat(),
-                }), 429
         if (user.disc_balance or 0) < pack_cost:
             db.close()
             return jsonify({'error': 'Not enough Dynamix Discs',
@@ -756,27 +748,14 @@ def purchase_trading_card_pack():
         owned.extend(awarded)
         user.disc_balance = (user.disc_balance or 0) - pack_cost
         user.trading_cards = json.dumps(owned)
-        if full_version:
-            user.last_daily_card_pack = now.replace(tzinfo=None)
         db.commit()
         db.refresh(user)
         result = {'success': True, 'cards': awarded,
                   'disc_balance': user.disc_balance}
-        if full_version:
-            result.update(_daily_claim_payload(user.last_daily_card_pack))
-            result['next_card_pack_at'] = result.pop('next_claim_at')
-            result['card_pack_available'] = False
         db.close()
         return jsonify(result)
 
     balance = _get_session_discs()
-    if full_version:
-        available, next_midnight = _daily_claim_status(_get_session_last_card_pack())
-        if not available:
-            return jsonify({
-                'error': 'Daily card pack already claimed',
-                'next_card_pack_at': next_midnight.isoformat(),
-            }), 429
     if balance < pack_cost:
         return jsonify({'error': 'Not enough Dynamix Discs',
                         'disc_balance': balance}), 402
@@ -786,13 +765,6 @@ def purchase_trading_card_pack():
     _set_session_discs(balance - pack_cost)
     result = {'success': True, 'cards': awarded,
               'disc_balance': _get_session_discs()}
-    if full_version:
-        _set_session_last_card_pack(now.replace(tzinfo=None))
-        available, next_midnight = _daily_claim_status(now)
-        result.update({
-            'card_pack_available': available,
-            'next_card_pack_at': next_midnight.isoformat(),
-        })
     return jsonify(result)
 
 
