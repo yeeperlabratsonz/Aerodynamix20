@@ -297,7 +297,7 @@ def _daily_claim_payload(last_claim):
     }
 
 
-TRADING_CARD_PACK_COST = 100
+TRADING_CARD_PACK_COST = 75
 RARITY_STYLES = {
     'Common': {'accent': '#ffffff', 'glow': 0},
     'Uncommon': {'accent': '#42d979', 'glow': 0},
