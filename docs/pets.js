@@ -1,4 +1,5 @@
 import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+import { GLTFLoader } from 'https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
 
 (function () {
     const storageKey = 'aerodynamixBytePet';
@@ -39,6 +40,10 @@ import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
     const pet = new THREE.Group();
     pet.position.y = -.45;
     scene.add(pet);
+    const modelStatus = document.createElement('div');
+    modelStatus.className = 'pet-fallback-note';
+    modelStatus.textContent = 'Loading Byte from Blender…';
+    stage.appendChild(modelStatus);
     const mat = (color, roughness = .72) => new THREE.MeshStandardMaterial({ color, roughness, metalness: .05 });
     const brown = mat(0x684a32), darkBrown = mat(0x3e2a20), cream = mat(0xc6aa8f);
     const white = mat(0xf4f2ed), blue = mat(0x123cbb), grey = mat(0x4c5360);
@@ -71,6 +76,32 @@ import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
     mesh(new THREE.CapsuleGeometry(.14, .72, 5, 8), blue, [.52, -.98, 0], [1,1,.9]);
     mesh(new THREE.CapsuleGeometry(.22, .65, 5, 8), white, [-.52, -1.55, .1], [1.15,1,.9]);
     mesh(new THREE.CapsuleGeometry(.22, .65, 5, 8), white, [.52, -1.55, .1], [1.15,1,.9]);
+    const proceduralParts = [...pet.children];
+    const loader = new GLTFLoader();
+    loader.load('attached_assets/dropout-bear.glb', (gltf) => {
+        const imported = gltf.scene;
+        const bounds = new THREE.Box3().setFromObject(imported);
+        const size = bounds.getSize(new THREE.Vector3());
+        const center = bounds.getCenter(new THREE.Vector3());
+        const targetHeight = 3.75;
+        const scale = targetHeight / Math.max(size.y, size.x, size.z);
+        imported.scale.setScalar(scale);
+        imported.position.set(-center.x * scale, -center.y * scale - .18, -center.z * scale);
+        imported.rotation.y = Math.PI;
+        imported.traverse((object) => {
+            if (object.isMesh) {
+                object.frustumCulled = true;
+                object.castShadow = false;
+                object.receiveShadow = false;
+            }
+        });
+        proceduralParts.forEach((part) => pet.remove(part));
+        pet.add(imported);
+        modelStatus.textContent = 'Blender model · DropoutBear';
+    }, undefined, (error) => {
+        modelStatus.textContent = 'Blender model unavailable · using low-poly fallback';
+        console.warn('Could not load the exported Blender model.', error);
+    });
     const bodyParts = pet.children;
     function resize() { if (!renderer) return; const r = canvas.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); camera.aspect = r.width / r.height; camera.updateProjectionMatrix(); }
     window.addEventListener('resize', resize); resize();
