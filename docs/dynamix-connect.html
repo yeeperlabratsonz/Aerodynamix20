@@ -172,6 +172,9 @@
           <div id="dm-messages" class="dc-dm-messages"></div>
           <form id="dm-form" class="dc-dm-form">
             <input type="text" id="dm-input" placeholder="Type a message…" maxlength="1000" autocomplete="off">
+            <button type="button" id="dm-trade-btn" class="dc-trade-btn" title="Trade cards with this friend">
+              <i class="fas fa-right-left"></i><span>Trade</span>
+            </button>
             <button type="submit" class="dc-btn dc-btn-sm"><i class="fas fa-paper-plane"></i></button>
           </form>
         </div>
@@ -179,6 +182,35 @@
     </div><!-- /#page-messages -->
 
   </div><!-- /.dc-container -->
+
+  <!-- Card trade modal -->
+  <div id="trade-modal" class="dc-modal-overlay hidden" aria-hidden="true">
+    <div class="dc-modal-content dc-trade-modal-content">
+      <button class="dc-modal-close-btn" id="trade-close-btn" type="button" aria-label="Close trade">
+        <i class="fas fa-times"></i>
+      </button>
+      <h3 class="dc-modal-title">Trade cards with <span id="trade-peer-name">your friend</span></h3>
+      <p class="dc-trade-safety"><i class="fas fa-shield-halved"></i> Only trade what you see here. Cards are locked while an offer is pending, and nothing moves until the recipient reviews and accepts the exact offer.</p>
+      <div id="incoming-trades" class="dc-incoming-trades hidden"></div>
+      <div class="dc-trade-columns">
+        <section class="dc-trade-side">
+          <h4><i class="fas fa-arrow-up"></i> You offer</h4>
+          <p class="dc-trade-side-hint">Select cards you will give.</p>
+          <div id="trade-my-cards" class="dc-trade-card-grid"><div class="dc-loading">Loading cards…</div></div>
+        </section>
+        <section class="dc-trade-side">
+          <h4><i class="fas fa-arrow-down"></i> You receive</h4>
+          <p class="dc-trade-side-hint">Select cards you want from your friend.</p>
+          <div id="trade-peer-cards" class="dc-trade-card-grid"><div class="dc-loading">Loading cards…</div></div>
+        </section>
+      </div>
+      <p id="trade-selection-summary" class="dc-trade-selection-summary">Select cards on either side.</p>
+      <div class="dc-modal-actions dc-trade-actions">
+        <button id="trade-send-btn" class="dc-btn" type="button" disabled>Send offer</button>
+        <button id="trade-cancel-btn" class="dc-btn-secondary" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
 
   <!-- PFP Editor Modal -->
   <div id="pfp-modal" class="dc-modal-overlay hidden">

@@ -1169,6 +1169,194 @@
   // ── Messages page ─────────────────────────────────────────────────────────────
   let activeDmPeer = null;
   let dmPollTimer  = null;
+  let tradeCardsMine = [];
+  let tradeCardsPeer = [];
+  let tradeSelectedMine = new Set();
+  let tradeSelectedPeer = new Set();
+
+  function tradeCardMarkup(card, selected) {
+    const rarity = escapeHtml(card.rarity || 'Common');
+    const accent = escapeHtml(card.accent || '#fff');
+    return `<button type="button" class="dc-trade-card${selected ? ' selected' : ''}" data-trade-card-id="${escapeHtml(card.id)}" style="--trade-accent:${accent}">
+      <span class="dc-trade-card-check"><i class="fas fa-check"></i></span>
+      <img src="${escapeHtml(card.image || '')}" alt="${escapeHtml(card.name || 'Card')}">
+      <span class="dc-trade-card-name">${escapeHtml(card.name || 'Mystery Card')}</span>
+      <span class="dc-trade-card-rarity">${rarity}</span>
+    </button>`;
+  }
+
+  function renderTradeCardGrid(elementId, cards, selected) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.innerHTML = cards.length
+      ? cards.map(card => tradeCardMarkup(card, selected.has(String(card.id))).join(''))
+      : '<div class="dc-empty" style="grid-column:1/-1;padding:1rem;font-size:.75rem;">No available cards.</div>';
+    el.querySelectorAll('[data-trade-card-id]').forEach(button => {
+      button.addEventListener('click', () => {
+        const id = String(button.dataset.tradeCardId);
+        if (selected.has(id)) selected.delete(id);
+        else selected.add(id);
+        button.classList.toggle('selected', selected.has(id));
+        updateTradeSummary();
+      });
+    });
+  }
+
+  function updateTradeSummary() {
+    const summary = document.getElementById('trade-selection-summary');
+    const send = document.getElementById('trade-send-btn');
+    const mine = tradeCardsMine.filter(card => tradeSelectedMine.has(String(card.id)));
+    const peer = tradeCardsPeer.filter(card => tradeSelectedPeer.has(String(card.id)));
+    if (summary) {
+      summary.textContent = mine.length || peer.length
+        ? `You give ${mine.length} card${mine.length === 1 ? '' : 's'} and receive ${peer.length} card${peer.length === 1 ? '' : 's'}. Both sides will review this exact offer before anything moves.`
+        : 'Select cards on either side.';
+    }
+    if (send) send.disabled = !(mine.length || peer.length);
+  }
+
+  function closeTradeModal() {
+    const modal = document.getElementById('trade-modal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  function tradeCardsByIds(cards, ids) {
+    const selected = new Set(ids);
+    return cards.filter(card => selected.has(String(card.id)));
+  }
+
+  function renderIncomingTrades(trades) {
+    const el = document.getElementById('incoming-trades');
+    if (!el) return;
+    const incoming = trades.filter(trade => trade.is_incoming);
+    const outgoing = trades.filter(trade => !trade.is_incoming);
+    if (!incoming.length && !outgoing.length) {
+      el.classList.add('hidden');
+      el.innerHTML = '';
+      return;
+    }
+    el.classList.remove('hidden');
+    el.innerHTML = (incoming.length
+      ? `<strong style="display:block;margin-bottom:.45rem;color:#ffe082;"><i class="fas fa-bell"></i> Incoming trade offer${incoming.length === 1 ? '' : 's'}</strong>` +
+        incoming.map(trade => {
+        const gives = trade.offered_cards.map(card => escapeHtml(card.name)).join(', ') || 'Nothing';
+        const gets = trade.requested_cards.map(card => escapeHtml(card.name)).join(', ') || 'Nothing';
+        return `<div class="dc-incoming-trade">
+          <span><strong>${escapeHtml(trade.initiator.username)}</strong> offers <b>${gives}</b> for <b>${gets}</b>.</span>
+          <div class="dc-incoming-trade-actions">
+            <button type="button" class="dc-btn-sm" data-trade-accept="${trade.id}">Review &amp; accept</button>
+            <button type="button" class="dc-btn-sm" data-trade-reject="${trade.id}">Decline</button>
+          </div>
+        </div>`;
+        }).join('')
+      : '') +
+      (outgoing.length
+        ? `<strong style="display:block;margin:.65rem 0 .45rem;color:#d8b4fe;"><i class="fas fa-clock"></i> Your pending offer${outgoing.length === 1 ? '' : 's'}</strong>` +
+          outgoing.map(trade => {
+            const gives = trade.offered_cards.map(card => escapeHtml(card.name)).join(', ') || 'Nothing';
+            const gets = trade.requested_cards.map(card => escapeHtml(card.name)).join(', ') || 'Nothing';
+            return `<div class="dc-incoming-trade">
+              <span>You offer <b>${gives}</b> to <strong>${escapeHtml(trade.recipient.username)}</strong> for <b>${gets}</b>.</span>
+              <div class="dc-incoming-trade-actions">
+                <button type="button" class="dc-btn-sm" data-trade-cancel="${trade.id}">Cancel offer</button>
+              </div>
+            </div>`;
+          }).join('')
+        : '');
+    el.querySelectorAll('[data-trade-reject]').forEach(button => {
+      button.addEventListener('click', async () => {
+        button.disabled = true;
+        try {
+          await api(`/api/trades/${button.dataset.tradeReject}/reject`, { method: 'POST' });
+          await openTradeModal();
+        } catch (err) { alert(err.message); button.disabled = false; }
+      });
+    });
+    el.querySelectorAll('[data-trade-accept]').forEach(button => {
+      button.addEventListener('click', async () => {
+        button.disabled = true;
+        try {
+          const trade = incoming.find(item => String(item.id) === String(button.dataset.tradeAccept));
+          const gives = trade.offered_cards.map(card => card.name).join(', ') || 'nothing';
+          const gets = trade.requested_cards.map(card => card.name).join(', ') || 'nothing';
+          if (!confirm(`Final review:\n\nYou will give: ${gets}\nYou will receive: ${gives}\n\nAccept this exact trade? This cannot be undone.`)) {
+            button.disabled = false;
+            return;
+          }
+          await api(`/api/trades/${button.dataset.tradeAccept}/accept`, { method: 'POST' });
+          alert('Trade completed. Your cards have been exchanged.');
+          await openTradeModal();
+        } catch (err) { alert(err.message); button.disabled = false; }
+      });
+    });
+    el.querySelectorAll('[data-trade-cancel]').forEach(button => {
+      button.addEventListener('click', async () => {
+        button.disabled = true;
+        try {
+          await api(`/api/trades/${button.dataset.tradeCancel}/cancel`, { method: 'POST' });
+          await openTradeModal();
+        } catch (err) { alert(err.message); button.disabled = false; }
+      });
+    });
+  }
+
+  async function openTradeModal() {
+    if (!activeDmPeer) return;
+    const modal = document.getElementById('trade-modal');
+    const peerName = document.getElementById('trade-peer-name');
+    if (!modal) return;
+    if (peerName) peerName.textContent = activeDmPeer;
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    tradeSelectedMine = new Set();
+    tradeSelectedPeer = new Set();
+    try {
+      const [mine, peer, trades] = await Promise.all([
+        api('/api/tradeable-cards/self'),
+        api(`/api/tradeable-cards/${encodeURIComponent(activeDmPeer)}`),
+        api(`/api/trades?with=${encodeURIComponent(activeDmPeer)}`)
+      ]);
+      tradeCardsMine = mine.cards || [];
+      tradeCardsPeer = peer.cards || [];
+      renderTradeCardGrid('trade-my-cards', tradeCardsMine, tradeSelectedMine);
+      renderTradeCardGrid('trade-peer-cards', tradeCardsPeer, tradeSelectedPeer);
+      renderIncomingTrades(trades.trades || []);
+      updateTradeSummary();
+    } catch (err) {
+      alert(err.message);
+      closeTradeModal();
+    }
+  }
+
+  async function sendTradeOffer() {
+    const send = document.getElementById('trade-send-btn');
+    const mine = tradeCardsByIds(tradeCardsMine, tradeSelectedMine);
+    const peer = tradeCardsByIds(tradeCardsPeer, tradeSelectedPeer);
+    if (!mine.length && !peer.length || !activeDmPeer) return;
+    const giveNames = mine.map(card => card.name).join(', ') || 'nothing';
+    const receiveNames = peer.map(card => card.name).join(', ') || 'nothing';
+    if (!confirm(`You will offer: ${giveNames}\nYou will request: ${receiveNames}\n\nThe cards will be reserved until your friend accepts or declines. Send this exact offer?`)) return;
+    if (send) { send.disabled = true; send.textContent = 'Sending…'; }
+    try {
+      await api('/api/trades', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipient_username: activeDmPeer,
+          offered_card_ids: mine.map(card => card.id),
+          requested_card_ids: peer.map(card => card.id)
+        })
+      });
+      alert('Trade offer sent. Your selected cards are reserved until your friend responds.');
+      await openTradeModal();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      if (send) { send.disabled = false; send.textContent = 'Send offer'; }
+    }
+  }
 
   async function loadMessagesPage() {
     const card     = document.getElementById('messages-card');
@@ -1299,6 +1487,21 @@
         }
         loadConversations();
       } catch (err) { input.value = text; alert(err.message); }
+    });
+  }
+
+  const dmTradeBtn = document.getElementById('dm-trade-btn');
+  if (dmTradeBtn) dmTradeBtn.addEventListener('click', openTradeModal);
+  const tradeSendBtn = document.getElementById('trade-send-btn');
+  if (tradeSendBtn) tradeSendBtn.addEventListener('click', sendTradeOffer);
+  ['trade-close-btn', 'trade-cancel-btn'].forEach(id => {
+    const button = document.getElementById(id);
+    if (button) button.addEventListener('click', closeTradeModal);
+  });
+  const tradeModal = document.getElementById('trade-modal');
+  if (tradeModal) {
+    tradeModal.addEventListener('click', event => {
+      if (event.target === tradeModal) closeTradeModal();
     });
   }
 

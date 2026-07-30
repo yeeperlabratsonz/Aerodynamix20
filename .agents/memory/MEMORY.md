@@ -3,3 +3,4 @@
 - [Game purchase persistence](game-purchase-persistence.md) — game unlocks are stored in both localStorage (anonymous users, same-device replay) and the DB (logged-in users, cross-device replay), synced on game-frame load.
 - [WebRTC calling architecture](webrtc-calling-architecture.md) — one-to-one calls use Flask polling for signaling and browser peer connections; production reliability may require TURN.
 - [Trading card rarity maintenance](trading-card-rarity-maintenance.md) — card-pool size, pull weights, and normalized sell values must stay synchronized after rarity changes.
+- [Card trade safety](card-trade-safety.md) — card trades must validate server-side and reserve cards until a pending offer is resolved.

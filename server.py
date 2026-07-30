@@ -10,6 +10,7 @@ from flask import Flask, request, jsonify, session, send_from_directory, abort, 
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from sqlalchemy import create_engine, Column, String, Integer, DateTime, LargeBinary, Text, Float, Boolean, ForeignKey, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import declarative_base, sessionmaker, scoped_session, relationship
 from sqlalchemy.sql import func
 from bad_words import contains_bad_words
@@ -122,6 +123,29 @@ class DirectMessage(Base):
     text         = Column(Text, nullable=False)
     created_at   = Column(DateTime, default=datetime.datetime.utcnow)
     is_read      = Column(Boolean, default=False)
+
+
+class TradeOffer(Base):
+    __tablename__ = 'trade_offers'
+    id                   = Column(Integer, primary_key=True, autoincrement=True)
+    initiator_id         = Column(Integer, ForeignKey('users.id'), nullable=False)
+    recipient_id         = Column(Integer, ForeignKey('users.id'), nullable=False)
+    offered_card_ids     = Column(Text, nullable=False)
+    requested_card_ids   = Column(Text, nullable=False)
+    status               = Column(String(20), nullable=False, default='pending')
+    created_at           = Column(DateTime, default=datetime.datetime.utcnow)
+    responded_at         = Column(DateTime, nullable=True)
+
+
+class TradeCardLock(Base):
+    """One row per card reserved by a pending trade.
+
+    A primary key on card_id makes it impossible for the same card to be
+    promised in two pending trades, even if two requests arrive together.
+    """
+    __tablename__ = 'trade_card_locks'
+    card_id   = Column(String(36), primary_key=True)
+    trade_id  = Column(Integer, ForeignKey('trade_offers.id'), nullable=False)
 
 
 Base.metadata.create_all(engine)
@@ -817,6 +841,9 @@ def sell_trading_card():
             db.close()
             return jsonify({'error': 'User not found'}), 404
         owned = json.loads(user.trading_cards or '[]') if user.trading_cards else []
+        if db.query(TradeCardLock).filter_by(card_id=card_id).first():
+            db.close()
+            return jsonify({'error': 'This card is reserved in a pending trade. Cancel or finish the trade before selling it.'}), 409
         remaining, card = remove_card(owned)
         if not card:
             db.close()
@@ -1489,6 +1516,68 @@ def _user_mini(u):
     }
 
 
+def _load_card_inventory(user):
+    try:
+        cards = json.loads(user.trading_cards or '[]') if user.trading_cards else []
+        return cards if isinstance(cards, list) else []
+    except (TypeError, ValueError):
+        return []
+
+
+def _card_view(card):
+    rarity = str(card.get('rarity') or 'Common')
+    return {
+        'id': str(card.get('id') or ''),
+        'name': str(card.get('name') or 'Mystery Card'),
+        'image': str(card.get('image') or ''),
+        'rarity': rarity,
+        'number': str(card.get('number') or ''),
+        'sell_value': CARD_SELL_VALUES.get(rarity.upper(), CARD_SELL_VALUES['COMMON']),
+        'accent': card.get('accent') or RARITY_STYLES.get(
+            rarity, RARITY_STYLES['Common']
+        )['accent'],
+    }
+
+
+def _card_map(cards):
+    return {str(card.get('id')): card for card in cards if card.get('id')}
+
+
+def _locked_card_ids(db):
+    return {str(row.card_id) for row in db.query(TradeCardLock).all()}
+
+
+def _is_accepted_friend(db, uid, other_id):
+    friendship = _friendship_between(db, uid, other_id)
+    return bool(friendship and friendship.status == 'accepted')
+
+
+def _trade_payload(db, trade, viewer_id):
+    initiator = db.query(User).filter_by(id=trade.initiator_id).first()
+    recipient = db.query(User).filter_by(id=trade.recipient_id).first()
+    offered_ids = json.loads(trade.offered_card_ids or '[]')
+    requested_ids = json.loads(trade.requested_card_ids or '[]')
+    initiator_cards = _card_map(_load_card_inventory(initiator)) if initiator else {}
+    recipient_cards = _card_map(_load_card_inventory(recipient)) if recipient else {}
+    return {
+        'id': trade.id,
+        'status': trade.status,
+        'created_at': trade.created_at.strftime('%Y-%m-%d %H:%M:%S') if trade.created_at else None,
+        'responded_at': trade.responded_at.strftime('%Y-%m-%d %H:%M:%S') if trade.responded_at else None,
+        'is_incoming': trade.recipient_id == viewer_id,
+        'initiator': _user_mini(initiator) if initiator else None,
+        'recipient': _user_mini(recipient) if recipient else None,
+        'offered_cards': [
+            _card_view(initiator_cards[card_id])
+            for card_id in offered_ids if card_id in initiator_cards
+        ],
+        'requested_cards': [
+            _card_view(recipient_cards[card_id])
+            for card_id in requested_ids if card_id in recipient_cards
+        ],
+    }
+
+
 @app.route('/api/friends/request', methods=['POST'])
 def send_friend_request():
     if 'user_id' not in session:
@@ -1569,6 +1658,15 @@ def remove_friend(friendship_id):
         ).first()
         if not f:
             return jsonify({'error': 'Friendship not found'}), 404
+        pending_trades = db.query(TradeOffer).filter(
+            TradeOffer.status == 'pending',
+            ((TradeOffer.initiator_id == f.requester_id) & (TradeOffer.recipient_id == f.addressee_id)) |
+            ((TradeOffer.initiator_id == f.addressee_id) & (TradeOffer.recipient_id == f.requester_id))
+        ).all()
+        for trade in pending_trades:
+            trade.status = 'cancelled'
+            trade.responded_at = datetime.datetime.utcnow()
+            db.query(TradeCardLock).filter_by(trade_id=trade.id).delete()
         db.delete(f)
         db.commit()
         return jsonify({'success': True})
@@ -1605,6 +1703,216 @@ def get_friends():
                 requests_in.append({'friendship_id': f.id, 'user': _user_mini(other)})
 
         return jsonify({'friends': friends, 'requests': requests_in})
+    finally:
+        db.close()
+
+
+# ── Card Trades ─────────────────────────────────────────────────────────────────
+
+@app.route('/api/tradeable-cards/self', methods=['GET'])
+def get_my_tradeable_cards():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    db = DBSession()
+    try:
+        locked = _locked_card_ids(db)
+        user = db.query(User).filter_by(id=session['user_id']).first()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        cards = [
+            _card_view(card) for card in _load_card_inventory(user)
+            if str(card.get('id') or '') not in locked
+        ]
+        return jsonify({'cards': cards})
+    finally:
+        db.close()
+
+
+@app.route('/api/tradeable-cards/<username>', methods=['GET'])
+def get_tradeable_cards(username):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    db = DBSession()
+    try:
+        uid = session['user_id']
+        other = db.query(User).filter_by(username=username).first()
+        if not other:
+            return jsonify({'error': 'User not found'}), 404
+        if other.id == uid or not _is_accepted_friend(db, uid, other.id):
+            return jsonify({'error': 'You can only trade with accepted friends'}), 403
+        locked = _locked_card_ids(db)
+        cards = [
+            _card_view(card) for card in _load_card_inventory(other)
+            if str(card.get('id') or '') not in locked
+        ]
+        return jsonify({'cards': cards})
+    finally:
+        db.close()
+
+
+@app.route('/api/trades', methods=['GET'])
+def list_trades():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    db = DBSession()
+    try:
+        uid = session['user_id']
+        peer_name = (request.args.get('with') or '').strip()
+        query = db.query(TradeOffer).filter(
+            TradeOffer.status == 'pending',
+            (TradeOffer.initiator_id == uid) | (TradeOffer.recipient_id == uid)
+        )
+        if peer_name:
+            peer = db.query(User).filter_by(username=peer_name).first()
+            if not peer:
+                return jsonify({'trades': []})
+            query = query.filter(
+                ((TradeOffer.initiator_id == uid) & (TradeOffer.recipient_id == peer.id)) |
+                ((TradeOffer.initiator_id == peer.id) & (TradeOffer.recipient_id == uid))
+            )
+        trades = query.order_by(TradeOffer.created_at.desc()).all()
+        return jsonify({'trades': [_trade_payload(db, trade, uid) for trade in trades]})
+    finally:
+        db.close()
+
+
+@app.route('/api/trades', methods=['POST'])
+def create_trade():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    data = request.get_json(silent=True) or {}
+    recipient_username = (data.get('recipient_username') or '').strip()
+    offered_ids = [str(value).strip() for value in (data.get('offered_card_ids') or [])]
+    requested_ids = [str(value).strip() for value in (data.get('requested_card_ids') or [])]
+    if not recipient_username:
+        return jsonify({'error': 'Choose a friend to trade with'}), 400
+    if not offered_ids and not requested_ids:
+        return jsonify({'error': 'Select at least one card'}), 400
+    if len(offered_ids) > 12 or len(requested_ids) > 12:
+        return jsonify({'error': 'A trade can include at most 12 cards per side'}), 400
+    if len(set(offered_ids)) != len(offered_ids) or len(set(requested_ids)) != len(requested_ids):
+        return jsonify({'error': 'A card can only appear once in a trade'}), 400
+    db = DBSession()
+    try:
+        uid = session['user_id']
+        recipient = db.query(User).filter_by(username=recipient_username).first()
+        if not recipient:
+            return jsonify({'error': 'Friend not found'}), 404
+        if recipient.id == uid or not _is_accepted_friend(db, uid, recipient.id):
+            return jsonify({'error': 'You can only trade with accepted friends'}), 403
+        initiator = db.query(User).filter_by(id=uid).first()
+        initiator_map = _card_map(_load_card_inventory(initiator))
+        recipient_map = _card_map(_load_card_inventory(recipient))
+        if any(card_id not in initiator_map for card_id in offered_ids):
+            return jsonify({'error': 'One or more offered cards are not in your collection'}), 400
+        if any(card_id not in recipient_map for card_id in requested_ids):
+            return jsonify({'error': 'One or more requested cards are no longer available'}), 400
+        locked = _locked_card_ids(db)
+        if any(card_id in locked for card_id in offered_ids + requested_ids):
+            return jsonify({'error': 'One or more selected cards are already reserved in another trade'}), 409
+        trade = TradeOffer(
+            initiator_id=uid,
+            recipient_id=recipient.id,
+            offered_card_ids=json.dumps(offered_ids),
+            requested_card_ids=json.dumps(requested_ids),
+        )
+        db.add(trade)
+        db.flush()
+        db.add_all([TradeCardLock(card_id=card_id, trade_id=trade.id)
+                    for card_id in offered_ids + requested_ids])
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            return jsonify({'error': 'A selected card was just reserved. Refresh and try again.'}), 409
+        db.refresh(trade)
+        return jsonify({'success': True, 'trade': _trade_payload(db, trade, uid)}), 201
+    except Exception:
+        db.rollback()
+        return jsonify({'error': 'Could not create trade offer'}), 500
+    finally:
+        db.close()
+
+
+def _change_trade_status(trade_id, status):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    db = DBSession()
+    try:
+        uid = session['user_id']
+        trade = db.query(TradeOffer).filter_by(id=trade_id, status='pending').first()
+        if not trade:
+            return jsonify({'error': 'Trade offer is no longer pending'}), 404
+        if status == 'rejected' and trade.recipient_id != uid:
+            return jsonify({'error': 'You cannot reject this trade offer'}), 403
+        if status == 'cancelled' and trade.initiator_id != uid:
+            return jsonify({'error': 'You cannot cancel this trade offer'}), 403
+        trade.status = status
+        trade.responded_at = datetime.datetime.utcnow()
+        db.query(TradeCardLock).filter_by(trade_id=trade.id).delete()
+        db.commit()
+        return jsonify({'success': True, 'status': status})
+    except Exception:
+        db.rollback()
+        return jsonify({'error': 'Could not update trade offer'}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/trades/<int:trade_id>/reject', methods=['POST'])
+def reject_trade(trade_id):
+    return _change_trade_status(trade_id, 'rejected')
+
+
+@app.route('/api/trades/<int:trade_id>/cancel', methods=['POST'])
+def cancel_trade(trade_id):
+    return _change_trade_status(trade_id, 'cancelled')
+
+
+@app.route('/api/trades/<int:trade_id>/accept', methods=['POST'])
+def accept_trade(trade_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    db = DBSession()
+    try:
+        uid = session['user_id']
+        trade = db.query(TradeOffer).filter_by(id=trade_id, status='pending').first()
+        if not trade:
+            return jsonify({'error': 'Trade offer is no longer pending'}), 404
+        if trade.recipient_id != uid:
+            return jsonify({'error': 'Only the receiving friend can accept this offer'}), 403
+        if not _is_accepted_friend(db, trade.initiator_id, trade.recipient_id):
+            return jsonify({'error': 'Trading is only available between accepted friends'}), 403
+
+        initiator = db.query(User).filter_by(id=trade.initiator_id).first()
+        recipient = db.query(User).filter_by(id=trade.recipient_id).first()
+        offered_ids = json.loads(trade.offered_card_ids or '[]')
+        requested_ids = json.loads(trade.requested_card_ids or '[]')
+        initiator_cards = _load_card_inventory(initiator)
+        recipient_cards = _load_card_inventory(recipient)
+        initiator_map = _card_map(initiator_cards)
+        recipient_map = _card_map(recipient_cards)
+        if any(card_id not in initiator_map for card_id in offered_ids) or any(card_id not in recipient_map for card_id in requested_ids):
+            return jsonify({'error': 'A card in this offer is no longer available'}), 409
+
+        offered_set = set(offered_ids)
+        requested_set = set(requested_ids)
+        initiator.trading_cards = json.dumps(
+            [card for card in initiator_cards if str(card.get('id')) not in offered_set] +
+            [recipient_map[card_id] for card_id in requested_ids]
+        )
+        recipient.trading_cards = json.dumps(
+            [card for card in recipient_cards if str(card.get('id')) not in requested_set] +
+            [initiator_map[card_id] for card_id in offered_ids]
+        )
+        trade.status = 'accepted'
+        trade.responded_at = datetime.datetime.utcnow()
+        db.query(TradeCardLock).filter_by(trade_id=trade.id).delete()
+        db.commit()
+        return jsonify({'success': True, 'status': 'accepted'})
+    except Exception:
+        db.rollback()
+        return jsonify({'error': 'Could not complete this trade'}), 500
     finally:
         db.close()
 
