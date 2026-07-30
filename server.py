@@ -313,12 +313,12 @@ RARITY_STYLES = {
     'GODLY': {'accent': '#ff4bd8', 'glow': 4},
 }
 CARD_SELL_VALUES = {
-    'Common': 10,
-    'Uncommon': 15,
-    'Rare': 20,
-    'Epic': 25,
-    'Legendary': 50,
-    'Mythic': 100,
+    'COMMON': 10,
+    'UNCOMMON': 15,
+    'RARE': 20,
+    'EPIC': 25,
+    'LEGENDARY': 50,
+    'MYTHIC': 100,
     'GODLY': 500,
 }
 
@@ -372,13 +372,13 @@ for _card in AERODYNAMIX_CARD_POOL:
 
 # Weights keep per-rarity drop-rate percentages constant; each card within a
 # rarity shares that rarity's total weight equally.
-# Common 50% (11 cards), Uncommon 20% (7), Rare 12% (4), Epic 7% (5),
+# Common 50% (11 cards), Uncommon 20% (7), Rare 12% (4), Epic 7% (4),
 # Legendary 5% (2), Mythic 4% (2), GODLY 2% (2)
 AERODYNAMIX_CARD_WEIGHTS = [
     *([50 / 11] * 11),  # Common
     *([20 / 7]  * 7),   # Uncommon
     *([12 / 4]  * 4),   # Rare
-    *([7  / 5]  * 5),   # Epic
+    *([7  / 4]  * 4),   # Epic
     *([5  / 2]  * 2),   # Legendary
     *([4  / 2]  * 2),   # Mythic
     *([2  / 2]  * 2),   # GODLY
@@ -822,7 +822,7 @@ def sell_trading_card():
             db.close()
             return jsonify({'error': 'Card not found'}), 404
         rarity = str(card.get('rarity') or 'Common').upper()
-        value = CARD_SELL_VALUES.get(rarity, CARD_SELL_VALUES['Common'])
+        value = CARD_SELL_VALUES.get(rarity, CARD_SELL_VALUES['COMMON'])
         user.trading_cards = json.dumps(remaining)
         user.disc_balance = (user.disc_balance or 0) + value
         db.commit()
@@ -835,7 +835,7 @@ def sell_trading_card():
     if not card:
         return jsonify({'error': 'Card not found'}), 404
     rarity = str(card.get('rarity') or 'Common').upper()
-    value = CARD_SELL_VALUES.get(rarity, CARD_SELL_VALUES['Common'])
+    value = CARD_SELL_VALUES.get(rarity, CARD_SELL_VALUES['COMMON'])
     _set_session_trading_cards(remaining)
     balance = _get_session_discs() + value
     _set_session_discs(balance)

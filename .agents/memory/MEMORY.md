@@ -2,3 +2,4 @@
 - [Scoped session nesting](scoped-session-nesting.md) — helper functions in `server.py` must not close the shared scoped session when called from inside another database operation, or the caller's object becomes detached.
 - [Game purchase persistence](game-purchase-persistence.md) — game unlocks are stored in both localStorage (anonymous users, same-device replay) and the DB (logged-in users, cross-device replay), synced on game-frame load.
 - [WebRTC calling architecture](webrtc-calling-architecture.md) — one-to-one calls use Flask polling for signaling and browser peer connections; production reliability may require TURN.
+- [Trading card rarity maintenance](trading-card-rarity-maintenance.md) — card-pool size, pull weights, and normalized sell values must stay synchronized after rarity changes.
