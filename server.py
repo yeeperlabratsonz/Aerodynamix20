@@ -350,13 +350,12 @@ AERODYNAMIX_CARD_POOL = [
     # ── Rare ────────────────────────────────────────────────────────────────
     {'name': 'Super Smash Flash',  'image': 'images/supersmashflash.jpg',    'rarity': 'Rare',     'number': '019'},
     {'name': "Papa's Pizzeria",    'image': 'images/papaspizzeria.png',      'rarity': 'Rare',     'number': '020'},
-    {'name': 'Binding of Isaac',   'image': 'images/binding-of-isaac.png',   'rarity': 'Rare',     'number': '021'},
     {'name': 'Hobo 5',             'image': 'images/hobo-5.png',             'rarity': 'Rare',     'number': '022'},
     {'name': 'Hobo 6',             'image': 'images/hobo-6.png',             'rarity': 'Rare',     'number': '023'},
     # ── Epic ────────────────────────────────────────────────────────────────
+    {'name': 'Binding of Isaac',   'image': 'images/binding-of-isaac.png',   'rarity': 'Epic',     'number': '021'},
     {'name': 'Friday Night Funkin\u2019', 'image': 'images/fridaynightfunkin.png', 'rarity': 'Epic', 'number': '024'},
     {'name': 'Run 2',              'image': 'images/run-2.png',              'rarity': 'Epic',     'number': '025'},
-    {'name': 'Doki Doki Literature Club', 'image': 'images/doki-doki-literature-club.jpg', 'rarity': 'Epic', 'number': '026'},
     {'name': 'Hobo 7',             'image': 'images/hobo-7.png',             'rarity': 'Epic',     'number': '027'},
     # ── Legendary ───────────────────────────────────────────────────────────
     {'name': 'Pico\u2019s School', 'image': 'images/picoschool.png',         'rarity': 'Legendary','number': '028'},
@@ -365,6 +364,7 @@ AERODYNAMIX_CARD_POOL = [
     {'name': 'Alien Hominid',      'image': 'images/alien-hominid.png',      'rarity': 'Mythic',   'number': '030'},
     {'name': 'Geometry Dash Lite', 'image': 'images/geometry-dash-lite.jpg', 'rarity': 'Mythic',   'number': '031'},
     # ── GODLY ───────────────────────────────────────────────────────────────
+    {'name': 'Doki Doki Literature Club', 'image': 'images/doki-doki-literature-club.jpg', 'rarity': 'GODLY', 'number': '026'},
     {'name': 'DOOM',               'image': 'images/doom.png',               'rarity': 'GODLY',    'number': '032'},
 ]
 for _card in AERODYNAMIX_CARD_POOL:
@@ -372,16 +372,16 @@ for _card in AERODYNAMIX_CARD_POOL:
 
 # Weights keep per-rarity drop-rate percentages constant; each card within a
 # rarity shares that rarity's total weight equally.
-# Common 50% (11 cards), Uncommon 20% (7), Rare 12% (5), Epic 7% (4),
-# Legendary 5% (2), Mythic 4% (2), GODLY 2% (1)
+# Common 50% (11 cards), Uncommon 20% (7), Rare 12% (4), Epic 7% (5),
+# Legendary 5% (2), Mythic 4% (2), GODLY 2% (2)
 AERODYNAMIX_CARD_WEIGHTS = [
     *([50 / 11] * 11),  # Common
     *([20 / 7]  * 7),   # Uncommon
-    *([12 / 5]  * 5),   # Rare
-    *([7  / 4]  * 4),   # Epic
+    *([12 / 4]  * 4),   # Rare
+    *([7  / 5]  * 5),   # Epic
     *([5  / 2]  * 2),   # Legendary
     *([4  / 2]  * 2),   # Mythic
-    2,                  # GODLY
+    *([2  / 2]  * 2),   # GODLY
 ]
 
 
