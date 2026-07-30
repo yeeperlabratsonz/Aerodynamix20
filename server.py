@@ -366,6 +366,7 @@ AERODYNAMIX_CARD_POOL = [
     # ── Uncommon ────────────────────────────────────────────────────────────
     {'name': 'Slope',              'image': 'images/slope.jpg',              'rarity': 'Uncommon', 'number': '012'},
     {'name': 'Minecraft',          'image': 'images/mc.png',                 'rarity': 'Uncommon', 'number': '013'},
+    {'name': 'Better Minecraft',   'image': 'images/mc.png',                 'rarity': 'Uncommon', 'number': '033'},
     {'name': 'Subway Surfers SF',  'image': 'images/subway-surfers-sf.jpg',  'rarity': 'Uncommon', 'number': '014'},
     {'name': 'Gladihoppers',       'image': 'images/gladihoppers.jpg',       'rarity': 'Uncommon', 'number': '015'},
     {'name': "Papa's Freezeria",   'image': 'images/papasfreezeria.png',     'rarity': 'Uncommon', 'number': '016'},
@@ -396,11 +397,11 @@ for _card in AERODYNAMIX_CARD_POOL:
 
 # Weights keep per-rarity drop-rate percentages constant; each card within a
 # rarity shares that rarity's total weight equally.
-# Common 50% (11 cards), Uncommon 20% (7), Rare 12% (4), Epic 7% (4),
+# Common 50% (11 cards), Uncommon 20% (8), Rare 12% (4), Epic 7% (4),
 # Legendary 5% (2), Mythic 4% (2), GODLY 2% (2)
 AERODYNAMIX_CARD_WEIGHTS = [
     *([50 / 11] * 11),  # Common
-    *([20 / 7]  * 7),   # Uncommon
+    *([20 / 8]  * 8),   # Uncommon
     *([12 / 4]  * 4),   # Rare
     *([7  / 4]  * 4),   # Epic
     *([5  / 2]  * 2),   # Legendary
