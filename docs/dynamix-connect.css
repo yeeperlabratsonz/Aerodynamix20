@@ -1354,6 +1354,19 @@ nav a.active:hover {
   font-size: .75rem;
   line-height: 1.45;
 }
+.dc-trade-error {
+  width: 100%;
+  box-sizing: border-box;
+  margin: .5rem 0;
+  padding: .6rem .75rem;
+  border: 1px solid rgba(239,83,80,.45);
+  border-radius: 8px;
+  color: #ffcdd2;
+  background: rgba(239,83,80,.12);
+  font-size: .78rem;
+  line-height: 1.4;
+}
+.dc-trade-error:empty { display: none; }
 .dc-trade-modal-content { max-width: 760px; align-items: stretch; }
 .dc-trade-columns { display:grid; grid-template-columns:1fr 1fr; gap:1rem; width:100%; }
 .dc-trade-side { min-width:0; }

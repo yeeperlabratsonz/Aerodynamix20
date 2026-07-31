@@ -1306,8 +1306,10 @@
     if (!activeDmPeer) return;
     const modal = document.getElementById('trade-modal');
     const peerName = document.getElementById('trade-peer-name');
+    const errorEl = document.getElementById('trade-error');
     if (!modal) return;
     if (peerName) peerName.textContent = activeDmPeer;
+    if (errorEl) errorEl.textContent = '';
     modal.classList.remove('hidden');
     modal.setAttribute('aria-hidden', 'false');
     tradeSelectedMine = new Set();
@@ -1325,8 +1327,14 @@
       renderIncomingTrades(trades.trades || []);
       updateTradeSummary();
     } catch (err) {
-      alert(err.message);
-      closeTradeModal();
+      tradeCardsMine = [];
+      tradeCardsPeer = [];
+      renderTradeCardGrid('trade-my-cards', [], tradeSelectedMine);
+      renderTradeCardGrid('trade-peer-cards', [], tradeSelectedPeer);
+      updateTradeSummary();
+      if (errorEl) {
+        errorEl.textContent = `Could not load trading data: ${err.message}`;
+      }
     }
   }
 
