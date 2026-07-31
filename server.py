@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sys
 import time
+import resource
 from concurrent.futures import ThreadPoolExecutor
 from threading import Lock
 from io import BytesIO
@@ -221,6 +222,26 @@ def _cleanup_old_beat_stems(max_age_seconds=3600):
                 shutil.rmtree(entry.path, ignore_errors=True)
     except OSError:
         pass
+
+
+def _beat_memory_snapshot():
+    limit_path = '/sys/fs/cgroup/memory.max'
+    current_path = '/sys/fs/cgroup/memory.current'
+    snapshot = {}
+    try:
+        raw_limit = open(limit_path, encoding='utf-8').read().strip()
+        if raw_limit != 'max':
+            snapshot['memory_limit_mb'] = round(int(raw_limit) / 1024 / 1024)
+    except (OSError, ValueError):
+        pass
+    try:
+        snapshot['memory_current_mb'] = round(
+            int(open(current_path, encoding='utf-8').read().strip()) / 1024 / 1024
+        )
+    except (OSError, ValueError):
+        pass
+    snapshot['process_peak_mb'] = round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024)
+    return snapshot
 
 
 def _beat_job_status_path(job_dir):
@@ -1502,6 +1523,7 @@ def _run_beat_separation(job_id, job_dir, input_path, output_dir):
         'processing',
         message=f'AI separation is running with {model_name}',
         model=model_name,
+        **_beat_memory_snapshot(),
     )
     try:
         command = [
