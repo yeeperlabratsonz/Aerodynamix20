@@ -32,6 +32,14 @@ BEAT_STEMS_FOLDER = 'docs/beat-stems'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'}
 ALLOWED_AUDIO_EXTENSIONS = {'mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac', 'webm'}
 BEAT_SEPARATOR_WORKERS = int(os.environ.get('BEAT_SEPARATOR_WORKERS', '1'))
+ALLOWED_CORS_ORIGINS = {
+    origin.strip().rstrip('/')
+    for origin in os.environ.get(
+        'ALLOWED_CORS_ORIGINS',
+        'https://yeeperlabratsonz.github.io'
+    ).split(',')
+    if origin.strip()
+}
 
 app = Flask(__name__, static_folder='docs', static_url_path='')
 app.secret_key = os.environ.get('SESSION_SECRET', 'dev-secret-key')
@@ -555,6 +563,12 @@ def add_no_cache_headers(response):
     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     response.headers['Pragma']  = 'no-cache'
     response.headers['Expires'] = '0'
+    request_origin = request.headers.get('Origin', '').rstrip('/')
+    if request_origin in ALLOWED_CORS_ORIGINS:
+        response.headers['Access-Control-Allow-Origin'] = request_origin
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        response.headers['Vary'] = 'Origin'
     if not request.cookies.get('aerodynamix_device_id'):
         response.set_cookie(
             'aerodynamix_device_id',
