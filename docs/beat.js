@@ -190,9 +190,10 @@
             body.append('file', state.file);
             const response = await fetch('/api/beat-separate', { method: 'POST', body });
             const result = await response.json();
-            if (!response.ok) throw new Error(result.error || 'Stem separation failed.');
+            if (!response.ok) throw new Error(result.error || 'Could not start stem separation.');
+            const job = await waitForSeparation(result.job_id);
             await ensureAudio();
-            const decoded = await Promise.all(Object.entries(result.stems).map(async ([stem, url]) => {
+            const decoded = await Promise.all(Object.entries(job.stems).map(async ([stem, url]) => {
                 const stemResponse = await fetch(url);
                 if (!stemResponse.ok) throw new Error(`Could not load the ${stem} stem.`);
                 return [stem, await state.context.decodeAudioData(await stemResponse.arrayBuffer())];
@@ -205,7 +206,7 @@
             renderStemMixer();
             STEMS.forEach(stem => {
                 const link = document.querySelector(`[data-stem-download="${stem.id}"]`);
-                if (link && result.stems[stem.id]) link.href = result.stems[stem.id];
+                if (link && job.stems[stem.id]) link.href = job.stems[stem.id];
             });
             resultsPanel.hidden = false;
             separateButton.innerHTML = '<i class="fas fa-check"></i><span>Stems ready</span>';
@@ -215,6 +216,28 @@
             separateButton.innerHTML = '<i class="fas fa-scissors"></i><span>Try again</span>';
             setStatus(error.message, 'triangle-exclamation', 'error');
         }
+    }
+
+    async function waitForSeparation(jobId) {
+        const startedAt = Date.now();
+        const maxWaitMs = 30 * 60 * 1000;
+        while (Date.now() - startedAt < maxWaitMs) {
+            const response = await fetch(`/api/beat-separate/${encodeURIComponent(jobId)}`, {
+                cache: 'no-store'
+            });
+            const status = await response.json();
+            if (!response.ok) throw new Error(status.error || 'Could not check separation status.');
+            if (status.status === 'complete') return status;
+            if (status.status === 'error') throw new Error(status.error || 'Stem separation failed.');
+            setStatus(
+                status.status === 'queued'
+                    ? 'Your song is queued for the AI separator.'
+                    : 'AI separation is still processing. You can keep this page open.',
+                status.status === 'queued' ? 'clock' : 'hourglass-half'
+            );
+            await new Promise(resolve => window.setTimeout(resolve, 2000));
+        }
+        throw new Error('Stem separation took too long. Try a shorter song.');
     }
 
     function selectSong(file) {
