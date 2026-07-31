@@ -6,6 +6,21 @@
     <title>Apps - Aerodynamix</title>
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="main.css">
+    <style>
+        .apps-page { min-height:calc(100vh - 7vw); padding:8vw 7vw 8rem; }
+        .apps-title { margin:0 0 .55rem; color:#fff; font-size:clamp(2rem,3.5vw,3.2rem); text-align:center; letter-spacing:.12em; text-transform:uppercase; }
+        .apps-subtitle { margin:0 auto; max-width:620px; color:rgba(255,255,255,.58); text-align:center; line-height:1.6; }
+        .apps-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,320px)); justify-content:center; gap:1.2rem; margin:3.5rem auto 0; max-width:1100px; }
+        .app-card { display:flex; flex-direction:column; overflow:hidden; min-height:290px; border:1px solid rgba(125,184,255,.22); border-radius:20px; background:linear-gradient(150deg,rgba(19,38,73,.96),rgba(11,16,29,.96)); box-shadow:0 18px 42px rgba(0,0,0,.3); color:#fff; text-decoration:none; transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease; }
+        .app-card:hover { transform:translateY(-5px); border-color:rgba(125,184,255,.65); box-shadow:0 22px 48px rgba(0,0,0,.4),0 0 28px rgba(44,127,252,.12); }
+        .app-card-art { display:grid; place-items:center; height:175px; background:radial-gradient(circle at 30% 25%,#72d9ff 0 4%,transparent 5%),linear-gradient(135deg,#173f87,#6b37a8 60%,#ef7b9a); }
+        .app-card-art i { color:#fff; font-size:4.5rem; filter:drop-shadow(0 7px 8px rgba(0,0,0,.3)); transform:rotate(-8deg); }
+        .app-card-body { display:flex; flex:1; flex-direction:column; gap:.65rem; padding:1.1rem 1.2rem 1.2rem; }
+        .app-card-body h2 { margin:0; font-size:1.05rem; }
+        .app-card-body p { margin:0; color:rgba(255,255,255,.58); font-size:.78rem; line-height:1.5; }
+        .app-card-launch { margin-top:auto; padding:.68rem .8rem; border:1px solid rgba(125,184,255,.25); border-radius:9px; background:linear-gradient(135deg,#2c7ffc,#1a5fd0); color:#fff; font-size:.76rem; font-weight:800; text-align:center; }
+        @media (max-width:768px) { .apps-page { padding:24vw 4vw 7rem; } .apps-grid { margin-top:2.5rem; } }
+    </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="theme.js"></script>
     <script src="tab-cloak.js"></script>
@@ -28,14 +43,22 @@
         <a href="colors.html" style="margin-right:1.5vw; color:#fff; text-decoration:none; padding:0.55vw 1.3vw; background-color:#2c7ffc; border-radius:0.5vw; font-weight:600; font-size:0.95vw; transition:all 0.3s ease;">Settings</a>
     </nav>
 
-    <main class="content" style="min-height:calc(100vh - 7vw); padding-top:8vw;">
-        <h1 style="margin:0 0 1rem; color:#fff; font-size:2.8vw; text-align:center; letter-spacing:.12em; text-transform:uppercase;">Apps</h1>
+    <main class="apps-page">
+        <h1 class="apps-title">Apps</h1>
+        <p class="apps-subtitle">Small creative tools for your Aerodynamix workspace.</p>
         <div class="search">
-            <input type="text" placeholder="Search apps..." aria-label="Search apps" disabled>
-            <button type="button" disabled aria-label="Search apps"><i class="fas fa-search"></i></button>
+            <input type="text" placeholder="Search apps..." aria-label="Search apps">
+            <button type="button" aria-label="Search apps"><i class="fas fa-search"></i></button>
         </div>
-        <div id="apps" style="display:flex; justify-content:center; padding:5vw 1rem 10vw;">
-            <p style="color:rgba(255,255,255,.58); font-size:1.1rem; text-align:center;">No apps available yet.</p>
+        <div id="apps" class="apps-grid">
+            <a class="app-card" href="drawing.html" data-app-name="drawing studio draw canvas">
+                <div class="app-card-art"><i class="fas fa-paintbrush"></i></div>
+                <div class="app-card-body">
+                    <h2>Drawing Studio</h2>
+                    <p>Draw on a blank canvas or load an image from your device and sketch over it.</p>
+                    <span class="app-card-launch">Open app <i class="fas fa-arrow-right"></i></span>
+                </div>
+            </a>
         </div>
     </main>
 
@@ -43,5 +66,19 @@
     <script src="music-player.js"></script>
     <script src="bubble-overlay.js"></script>
     <script src="snow-overlay.js"></script>
+    <script>
+        (() => {
+            const input = document.querySelector('.search input');
+            const button = document.querySelector('.search button');
+            const card = document.querySelector('.app-card');
+            const filter = () => {
+                const query = (input.value || '').trim().toLowerCase();
+                const matches = !query || card.dataset.appName.includes(query);
+                card.hidden = !matches;
+            };
+            input.addEventListener('input', filter);
+            button.addEventListener('click', filter);
+        })();
+    </script>
 </body>
 </html>

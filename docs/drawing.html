@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drawing Studio - Aerodynamix</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="drawing.css">
+    <script src="theme.js"></script>
+    <script src="tab-cloak.js"></script>
+    <script src="discs.js" defer></script>
+    <script src="auth-overlay.js" defer></script>
+</head>
+<body>
+    <nav>
+        <img src="images/logo.gif" alt="logo" onclick="window.location='index.html'">
+        <h1><span class="logo-a" id="logo-a">A</span>ERODYNAMIX</h1>
+        <div class="drawing-nav-links" style="flex:1; display:flex; align-items:center; justify-content:center; gap:0.4vw;">
+            <a href="index.html">Games</a>
+            <a href="apps.html" class="active">Apps</a>
+            <a href="shop.html">Shop</a>
+            <a href="card-collection.html">Card Collection</a>
+            <a href="discs.html">Discs</a>
+            <a href="media-player.html">Media Player</a>
+            <a href="dynamix-connect.html">Connect</a>
+        </div>
+        <a class="drawing-nav-settings" href="colors.html">Settings</a>
+    </nav>
+
+    <main class="drawing-page">
+        <header class="drawing-heading">
+            <a class="drawing-back" href="apps.html"><i class="fas fa-arrow-left"></i> All apps</a>
+            <div>
+                <p class="drawing-eyebrow"><i class="fas fa-sparkles"></i> Creative tool</p>
+                <h1>Drawing Studio</h1>
+                <p>Start with a blank canvas or sketch over an image from your device.</p>
+            </div>
+        </header>
+
+        <section class="drawing-workspace" aria-label="Drawing workspace">
+            <div class="drawing-toolbar">
+                <div class="tool-group">
+                    <button class="tool-button active" id="brush-tool" type="button" title="Brush"><i class="fas fa-paintbrush"></i><span>Brush</span></button>
+                    <button class="tool-button" id="eraser-tool" type="button" title="Eraser"><i class="fas fa-eraser"></i><span>Eraser</span></button>
+                </div>
+                <label class="control-field" for="brush-color"><span>Color</span><input id="brush-color" type="color" value="#172554"></label>
+                <label class="control-field size-control" for="brush-size"><span>Size <b id="brush-size-value">8px</b></span><input id="brush-size" type="range" min="1" max="80" value="8"></label>
+                <div class="tool-group actions">
+                    <button class="icon-button" id="undo-button" type="button" title="Undo" disabled><i class="fas fa-undo"></i><span>Undo</span></button>
+                    <button class="icon-button" id="redo-button" type="button" title="Redo" disabled><i class="fas fa-redo"></i><span>Redo</span></button>
+                    <button class="icon-button" id="clear-button" type="button" title="Clear canvas"><i class="fas fa-trash"></i><span>Clear</span></button>
+                </div>
+                <div class="tool-group file-actions">
+                    <button class="secondary-button" id="blank-button" type="button"><i class="fas fa-file"></i> New blank</button>
+                    <label class="secondary-button upload-button" for="image-input"><i class="fas fa-image"></i> Open image</label>
+                    <input id="image-input" type="file" accept="image/*" hidden>
+                    <button class="primary-button" id="download-button" type="button"><i class="fas fa-download"></i> Download PNG</button>
+                </div>
+            </div>
+            <div class="canvas-stage">
+                <canvas id="drawing-canvas" width="1200" height="700" aria-label="Drawing canvas"></canvas>
+            </div>
+            <p class="drawing-hint"><i class="fas fa-circle-info"></i> Your work stays in this browser until you download it.</p>
+        </section>
+    </main>
+
+    <script src="music-player.js"></script>
+    <script src="bubble-overlay.js"></script>
+    <script src="snow-overlay.js"></script>
+    <script src="drawing.js"></script>
+</body>
+</html>
