@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beat Lab - Aerodynamix</title>
+    <title>Stem Studio - Aerodynamix</title>
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -33,86 +33,55 @@
         <header class="beat-heading">
             <a class="beat-back" href="apps.html"><i class="fas fa-arrow-left"></i> All apps</a>
             <div>
-                <p class="beat-eyebrow"><i class="fas fa-sliders"></i> Creative tool</p>
-                <h1>Beat Lab</h1>
-                <p>Make a loop in seconds. Tap in a groove, press play, and shape it as you go.</p>
+                <p class="beat-eyebrow"><i class="fas fa-scissors"></i> Audio separation</p>
+                <h1>Stem Studio</h1>
+                <p>Split a song into vocals, drums, bass, and other with real AI-powered source separation.</p>
             </div>
         </header>
 
-        <section class="beat-studio" aria-label="Beat Lab sequencer">
-            <div class="beat-transport">
-                <div class="transport-main">
-                    <button class="transport-play" id="play-button" type="button"><i class="fas fa-play"></i><span>Play</span></button>
-                    <button class="transport-stop" id="stop-button" type="button"><i class="fas fa-stop"></i><span>Stop</span></button>
-                    <div class="now-playing"><span class="status-dot" id="status-dot"></span><span id="transport-status">Ready to make a loop</span></div>
-                </div>
-                <div class="transport-settings">
-                    <label class="tempo-control" for="tempo-input"><span><i class="fas fa-gauge-high"></i> BPM <b id="tempo-value">112</b></span><input id="tempo-input" type="range" min="70" max="180" value="112"></label>
-                    <label class="swing-control" for="swing-input"><span>Swing <b id="swing-value">0%</b></span><input id="swing-input" type="range" min="0" max="40" value="0"></label>
-                    <label class="select-control" for="kit-select"><span>Kit</span><select id="kit-select"><option value="aero">Aero Glow</option><option value="punch">Punchy</option><option value="soft">Soft Touch</option></select></label>
+        <section class="stem-studio" aria-label="Stem separation workspace">
+            <div class="studio-intro">
+                <div class="intro-icon"><i class="fas fa-layer-group"></i></div>
+                <div>
+                    <h2>Separate your track</h2>
+                    <p>Your audio stays local until you choose to separate it. Processing runs on the server and may take a few minutes for longer songs.</p>
                 </div>
             </div>
 
-            <section class="song-deck" aria-label="Imported song controls">
-                <div class="song-deck-heading">
-                    <div class="song-icon"><i class="fas fa-music"></i></div>
+            <div class="upload-panel" id="upload-panel">
+                <label class="upload-dropzone" for="song-input" id="upload-dropzone">
+                    <i class="fas fa-cloud-arrow-up"></i>
+                    <strong>Choose an audio file</strong>
+                    <span>MP3, WAV, OGG, M4A, AAC, FLAC, or WebM · up to 30 MB</span>
+                    <span class="upload-file-name" id="upload-file-name"></span>
+                </label>
+                <input id="song-input" type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a,.aac,.flac,.webm" hidden>
+                <button class="separate-button" id="separate-button" type="button" disabled>
+                    <i class="fas fa-scissors"></i><span>Separate stems</span>
+                </button>
+                <p class="status-message" id="status-message" role="status"><i class="fas fa-circle-info"></i> Select a song to begin.</p>
+            </div>
+
+            <section class="results-panel" id="results-panel" hidden>
+                <div class="results-heading">
                     <div>
-                        <h2>Song deck</h2>
-                        <p>Bring in a local track and layer your editable Beat Lab groove over it.</p>
+                        <p class="results-kicker">Separation complete</p>
+                        <h2 id="song-name">Untitled track</h2>
+                        <span id="song-duration">0:00</span>
                     </div>
-                    <label class="song-import-button" for="song-input"><i class="fas fa-upload"></i> Import song</label>
-                    <input id="song-input" type="file" accept="audio/*" hidden>
+                    <button class="secondary-button" id="new-song-button" type="button"><i class="fas fa-arrow-rotate-left"></i> New song</button>
                 </div>
-                <div class="song-empty" id="song-empty"><i class="fas fa-file-audio"></i><span>No song loaded yet. Your audio stays in this browser.</span></div>
-                <div class="song-loaded" id="song-loaded" hidden>
-                    <div class="song-trackline">
-                        <button class="song-toggle" id="song-toggle" type="button"><i class="fas fa-play"></i><span>Play song</span></button>
-                        <div class="song-title"><strong id="song-name">Untitled track</strong><span id="song-duration">0:00</span></div>
-                        <button class="song-separate" id="song-separate" type="button"><i class="fas fa-scissors"></i><span>Separate stems</span></button>
-                        <button class="song-remove" id="song-remove" type="button" title="Remove song" aria-label="Remove song"><i class="fas fa-xmark"></i></button>
-                    </div>
-                    <label class="song-progress" for="song-progress"><span class="sr-only">Song position</span><input id="song-progress" type="range" min="0" max="0" step="0.01" value="0"><span id="song-time">0:00</span></label>
-                    <div class="song-controls">
-                        <label class="song-control" for="song-speed"><span>Speed <b id="song-speed-value">100%</b></span><input id="song-speed" type="range" min="50" max="150" value="100"></label>
-                        <label class="song-control" for="song-pitch"><span>Pitch <b id="song-pitch-value">0 st</b></span><input id="song-pitch" type="range" min="-12" max="12" value="0"></label>
-                        <label class="song-control" for="song-volume"><span>Volume <b id="song-volume-value">80%</b></span><input id="song-volume" type="range" min="0" max="100" value="80"></label>
-                        <label class="song-control" for="song-tone"><span>Mix</span><select id="song-tone"><option value="full">Full mix</option><option value="drum">Drum focus</option><option value="bass">Bass boost</option></select></label>
-                        <label class="song-loop"><input id="song-loop" type="checkbox"><span><i class="fas fa-repeat"></i> Loop song</span></label>
-                    </div>
-                    <p class="song-note" id="song-note"><i class="fas fa-circle-info"></i> Separate this song into real vocals, drums, bass, and other stems. Separation runs on the server and may take a few minutes.</p>
-                    <div class="stem-mixer" id="stem-mixer" hidden>
-                        <div class="stem-mixer-heading">
-                            <div><strong><i class="fas fa-layer-group"></i> Stem mixer</strong><span>Use the separated parts instead of the full mix.</span></div>
-                            <label class="stem-mode"><input id="stem-mode" type="checkbox"><span>Play separated stems</span></label>
-                        </div>
-                        <div class="stem-grid" id="stem-grid"></div>
-                    </div>
+
+                <div class="mix-controls">
+                    <button class="play-button" id="play-button" type="button"><i class="fas fa-play"></i><span>Play stems</span></button>
+                    <button class="stop-button" id="stop-button" type="button"><i class="fas fa-stop"></i><span>Stop</span></button>
+                    <label class="master-control" for="master-volume"><span>Master <b id="master-volume-value">80%</b></span><input id="master-volume" type="range" min="0" max="100" value="80"></label>
+                    <label class="loop-control"><input id="loop-input" type="checkbox"><span><i class="fas fa-repeat"></i> Loop</span></label>
                 </div>
+                <label class="timeline" for="timeline-input"><span id="current-time">0:00</span><input id="timeline-input" type="range" min="0" max="0" step="0.01" value="0"><span id="total-time">0:00</span></label>
+
+                <div class="stem-grid" id="stem-grid"></div>
             </section>
-
-            <div class="beat-actions">
-                <div class="beat-count"><strong>16</strong><span>steps</span></div>
-                <div class="beat-action-buttons">
-                    <button class="beat-button" id="demo-button" type="button"><i class="fas fa-wand-magic-sparkles"></i> Load starter</button>
-                    <button class="beat-button" id="random-button" type="button"><i class="fas fa-shuffle"></i> Randomize</button>
-                    <button class="beat-button" id="clear-pattern-button" type="button"><i class="fas fa-rotate-left"></i> Clear</button>
-                </div>
-            </div>
-
-            <div class="sequencer-shell">
-                <div class="step-ruler" aria-hidden="true">
-                    <span class="track-label-spacer">TRACKS</span>
-                    <div class="step-numbers">
-                        <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span>
-                    </div>
-                </div>
-                <div id="sequencer-grid" class="sequencer-grid"></div>
-            </div>
-
-            <div class="beat-footer">
-                <div class="beat-tip"><i class="fas fa-lightbulb"></i><span><strong>Quick tip:</strong> Start with kick on 1, 5, 9, 13 and snare on 5, 13.</span></div>
-                <p><i class="fas fa-volume-high"></i> Click Play to enable sound</p>
-            </div>
         </section>
     </main>
 

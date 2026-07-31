@@ -1,10 +1,10 @@
 ---
-name: Imported song editing
-description: Beat Lab keeps imported songs as a full mix and layers editable generated tracks over them.
+name: Imported song separation
+description: Stem Studio turns imported songs into editable separated stems.
 ---
 
-Beat Lab should treat user-imported songs as a single decoded audio mix. Users can change playback speed, pitch, volume, looping, and basic tonal focus, while editing the separate Beat Lab drum and melodic pattern on top.
+Stem Studio treats an imported song as the source for real server-side separation. The original file remains local until the user explicitly starts processing, and the resulting vocals, drums, bass, and other stems can be previewed, mixed, muted, and downloaded.
 
-**Why:** Reliable browser-only stem separation is not available without an analysis service or pre-separated source files, so presenting the original song as independently editable drums would be misleading.
+**Why:** The app is exclusively a stem-separation tool; it must not imply that a sequencer or frequency filter performs source separation.
 
-**How to apply:** Keep imported audio local to the browser, clearly label mix controls as whole-track effects, and offer the sequencer as the editable drum/melody layer.
+**How to apply:** Keep separation explicit and server-backed, label the four returned sources honestly, and preserve temporary-file cleanup and download access.
