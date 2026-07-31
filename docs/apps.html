@@ -19,6 +19,8 @@
         .app-card-body h2 { margin:0; font-size:1.05rem; }
         .app-card-body p { margin:0; color:rgba(255,255,255,.58); font-size:.78rem; line-height:1.5; }
         .app-card-launch { margin-top:auto; padding:.68rem .8rem; border:1px solid rgba(125,184,255,.25); border-radius:9px; background:linear-gradient(135deg,#2c7ffc,#1a5fd0); color:#fff; font-size:.76rem; font-weight:800; text-align:center; }
+        .app-card-art.beat-art { background:radial-gradient(circle at 68% 28%,#8ef5d0 0 4%,transparent 5%),linear-gradient(135deg,#123c6e,#147d8a 52%,#43d5b2); }
+        .app-card-art.beat-art i { transform:none; }
         @media (max-width:768px) { .apps-page { padding:24vw 4vw 7rem; } .apps-grid { margin-top:2.5rem; } }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -59,6 +61,14 @@
                     <span class="app-card-launch">Open app <i class="fas fa-arrow-right"></i></span>
                 </div>
             </a>
+            <a class="app-card" href="beat.html" data-app-name="beat lab beat maker music drum sequencer fl studio">
+                <div class="app-card-art beat-art"><i class="fas fa-wave-square"></i></div>
+                <div class="app-card-body">
+                    <h2>Beat Lab</h2>
+                    <p>Build drum loops and melodies with a friendly step sequencer inspired by music production tools.</p>
+                    <span class="app-card-launch">Open app <i class="fas fa-arrow-right"></i></span>
+                </div>
+            </a>
         </div>
     </main>
 
@@ -70,11 +80,12 @@
         (() => {
             const input = document.querySelector('.search input');
             const button = document.querySelector('.search button');
-            const card = document.querySelector('.app-card');
+            const cards = [...document.querySelectorAll('.app-card')];
             const filter = () => {
                 const query = (input.value || '').trim().toLowerCase();
-                const matches = !query || card.dataset.appName.includes(query);
-                card.hidden = !matches;
+                cards.forEach(card => {
+                    card.hidden = Boolean(query) && !card.dataset.appName.includes(query);
+                });
             };
             input.addEventListener('input', filter);
             button.addEventListener('click', filter);
