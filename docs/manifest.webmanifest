@@ -1,0 +1,19 @@
+{
+  "name": "Aerodynamix Arcade",
+  "short_name": "Aerodynamix",
+  "description": "Games, apps, cards, and community features from Aerodynamix.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#030509",
+  "theme_color": "#071226",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
