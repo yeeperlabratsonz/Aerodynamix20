@@ -1173,6 +1173,12 @@
   let tradeCardsPeer = [];
   let tradeSelectedMine = new Set();
   let tradeSelectedPeer = new Set();
+  let tradeLoadToken = 0;
+
+  function normalizeTradeCards(data) {
+    const cards = Array.isArray(data) ? data : data && Array.isArray(data.cards) ? data.cards : [];
+    return cards.filter(card => card && card.id !== undefined && card.id !== null);
+  }
 
   function tradeCardMarkup(card, selected) {
     const rarity = escapeHtml(card.rarity || 'Common');
@@ -1185,9 +1191,17 @@
     </button>`;
   }
 
-  function renderTradeCardGrid(elementId, cards, selected) {
+  function renderTradeCardGrid(elementId, cards, selected, state = 'ready') {
     const el = document.getElementById(elementId);
     if (!el) return;
+    if (state === 'loading') {
+      el.innerHTML = '<div class="dc-loading" style="grid-column:1/-1;padding:1rem;font-size:.75rem;">Loading cards…</div>';
+      return;
+    }
+    if (state === 'error') {
+      el.innerHTML = '<div class="dc-empty" style="grid-column:1/-1;padding:1rem;font-size:.75rem;color:#e57373;">Could not load cards.</div>';
+      return;
+    }
     el.innerHTML = cards.length
       ? cards.map(card => tradeCardMarkup(card, selected.has(String(card.id))).join(''))
       : '<div class="dc-empty" style="grid-column:1/-1;padding:1rem;font-size:.75rem;">No available cards.</div>';
@@ -1304,48 +1318,65 @@
 
   async function openTradeModal() {
     if (!activeDmPeer) return;
+    const peerUsername = activeDmPeer;
+    const loadToken = ++tradeLoadToken;
     const modal = document.getElementById('trade-modal');
     const peerName = document.getElementById('trade-peer-name');
     const errorEl = document.getElementById('trade-error');
     if (!modal) return;
-    if (peerName) peerName.textContent = activeDmPeer;
+    if (peerName) peerName.textContent = peerUsername;
     if (errorEl) errorEl.textContent = '';
     modal.classList.remove('hidden');
     modal.setAttribute('aria-hidden', 'false');
     tradeSelectedMine = new Set();
     tradeSelectedPeer = new Set();
+    renderTradeCardGrid('trade-my-cards', [], tradeSelectedMine, 'loading');
+    renderTradeCardGrid('trade-peer-cards', [], tradeSelectedPeer, 'loading');
+
+    // The trade endpoint also applies reservation rules. If that endpoint is
+    // temporarily unavailable, the collection endpoint still gives the user a
+    // useful inventory instead of incorrectly showing an empty collection.
+    const mineRequest = api('/api/tradeable-cards/self').catch(async tradeError => {
+      try {
+        return await api('/api/trading-cards');
+      } catch (fallbackError) {
+        throw tradeError;
+      }
+    });
     const results = await Promise.allSettled([
-      api('/api/tradeable-cards/self'),
-      api(`/api/tradeable-cards/${encodeURIComponent(activeDmPeer)}`),
-      api(`/api/trades?with=${encodeURIComponent(activeDmPeer)}`)
+      mineRequest,
+      api(`/api/tradeable-cards/${encodeURIComponent(peerUsername)}`),
+      api(`/api/trades?with=${encodeURIComponent(peerUsername)}`)
     ]);
+    if (loadToken !== tradeLoadToken || activeDmPeer !== peerUsername) return;
     const [mineResult, peerResult, tradesResult] = results;
     const errors = [];
 
     // Keep each side independent. A friend lookup or stale trade-history
     // failure must never hide cards that successfully loaded for the user.
     if (mineResult.status === 'fulfilled') {
-      tradeCardsMine = mineResult.value.cards || [];
+      tradeCardsMine = normalizeTradeCards(mineResult.value);
+      renderTradeCardGrid('trade-my-cards', tradeCardsMine, tradeSelectedMine);
     } else {
       tradeCardsMine = [];
-      errors.push(`your cards: ${mineResult.reason.message}`);
+      renderTradeCardGrid('trade-my-cards', [], tradeSelectedMine, 'error');
+      errors.push(`your cards: ${mineResult.reason && mineResult.reason.message ? mineResult.reason.message : 'request failed'}`);
     }
 
     if (peerResult.status === 'fulfilled') {
-      tradeCardsPeer = peerResult.value.cards || [];
+      tradeCardsPeer = normalizeTradeCards(peerResult.value);
+      renderTradeCardGrid('trade-peer-cards', tradeCardsPeer, tradeSelectedPeer);
     } else {
       tradeCardsPeer = [];
-      errors.push(`your friend's cards: ${peerResult.reason.message}`);
+      renderTradeCardGrid('trade-peer-cards', [], tradeSelectedPeer, 'error');
+      errors.push(`your friend's cards: ${peerResult.reason && peerResult.reason.message ? peerResult.reason.message : 'request failed'}`);
     }
 
-    renderTradeCardGrid('trade-my-cards', tradeCardsMine, tradeSelectedMine);
-    renderTradeCardGrid('trade-peer-cards', tradeCardsPeer, tradeSelectedPeer);
-
     if (tradesResult.status === 'fulfilled') {
-      renderIncomingTrades(tradesResult.value.trades || []);
+      renderIncomingTrades(Array.isArray(tradesResult.value.trades) ? tradesResult.value.trades : []);
     } else {
       renderIncomingTrades([]);
-      errors.push(`trade history: ${tradesResult.reason.message}`);
+      errors.push(`trade history: ${tradesResult.reason && tradesResult.reason.message ? tradesResult.reason.message : 'request failed'}`);
     }
 
     updateTradeSummary();
