@@ -9,3 +9,4 @@
 - [Shop secret full access](shop-secret-full-access.md) — Shop-only ArrowUp, ArrowDown, 2005 sequence activates the shared authorized state.
 - [Render deployment sync](render-deployment-sync.md) — the connected Render service may not auto-deploy GitHub main; verify the live build before debugging stale production behavior.
 - [Guest state persistence](guest-state-persistence.md) — anonymous discs, unlocks, and cards belong in durable device-keyed server state, not oversized Flask session cookies.
+- [Persistent full access](persistent-full-access.md) — successful direct-key and Shop-sequence unlocks persist in browser storage and server state, then migrate to accounts.

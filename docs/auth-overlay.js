@@ -2,6 +2,15 @@
 (function() {
     'use strict';
 
+    const PERSISTENT_ACCESS_KEY = 'aerodynamix_full_access';
+
+    // Full access is a one-time unlock. Restore it when a new browser session
+    // starts; the server also persists the same state by device/account.
+    if (localStorage.getItem(PERSISTENT_ACCESS_KEY) === 'true') {
+        sessionStorage.setItem('authorized', 'true');
+        sessionStorage.removeItem('free_trial');
+    }
+
     function isAuthorized() { return sessionStorage.getItem('authorized') === 'true'; }
     function isFreeTrial()  { return sessionStorage.getItem('free_trial') === 'true'; }
 
@@ -114,7 +123,7 @@
         toggleBtn.addEventListener('touchend', () => input.type = 'password');
 
         let snitchCount = 0;
-        function checkKey() {
+        async function checkKey() {
             const val = input.value.trim();
             if (val === 'snitch') {
                 snitchCount++;
@@ -129,15 +138,26 @@
                 error.innerText = 'Reality is an illusion, The universe is a hologram, buy gold, bye!';
                 error.className = 'rainbow-text'; error.style.display = 'block'; input.value = ''; return;
             } else if (val === validKey || val.toLowerCase() === validKey.toLowerCase()) {
-                sessionStorage.setItem('authorized', 'true');
-                sessionStorage.removeItem('free_trial');
-                dismissOverlay();
-                window.dispatchEvent(new CustomEvent('aerodynamixAuthorized'));
-                var _tries = 0;
-                (function tryApply() {
-                    if (typeof applyTheme === 'function') { applyTheme('black'); }
-                    else if (++_tries < 50) { setTimeout(tryApply, 80); }
-                })();
+                try {
+                    const response = await fetch('/api/access/secret-unlock', {
+                        method: 'POST',
+                        credentials: 'same-origin'
+                    });
+                    if (!response.ok) throw new Error('Could not save access.');
+                    localStorage.setItem(PERSISTENT_ACCESS_KEY, 'true');
+                    sessionStorage.setItem('authorized', 'true');
+                    sessionStorage.removeItem('free_trial');
+                    dismissOverlay();
+                    window.dispatchEvent(new CustomEvent('aerodynamixAuthorized'));
+                    var _tries = 0;
+                    (function tryApply() {
+                        if (typeof applyTheme === 'function') { applyTheme('black'); }
+                        else if (++_tries < 50) { setTimeout(tryApply, 80); }
+                    })();
+                } catch (unlockError) {
+                    error.innerText = 'Could not save access. Please try again.';
+                    error.className = ''; error.style.display = 'block';
+                }
             } else if (val === trialKey) {
                 sessionStorage.setItem('free_trial', 'true');
                 dismissOverlay();

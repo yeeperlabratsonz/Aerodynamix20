@@ -60,6 +60,7 @@ class User(Base):
     purchased_games  = Column(Text, nullable=True, default='[]')
     trading_cards    = Column(Text, nullable=True, default='[]')
     media_unlocked = Column(Boolean, default=False)
+    full_access = Column(Boolean, default=False, nullable=False)
     first_login_bonus_claimed = Column(Boolean, default=False)
     is_verified    = Column(Boolean, default=False, nullable=False)
     created_at     = Column(DateTime, default=datetime.datetime.utcnow)
@@ -81,6 +82,7 @@ class GuestState(Base):
     trading_cards       = Column(Text, nullable=False, default='[]')
     purchased_themes    = Column(Text, nullable=False, default='[]')
     media_unlocked      = Column(Boolean, nullable=False, default=False)
+    full_access          = Column(Boolean, nullable=False, default=False)
     last_daily_login    = Column(DateTime, nullable=True)
     last_card_pack      = Column(DateTime, nullable=True)
 
@@ -188,6 +190,7 @@ _new_user_cols = [
     ('purchased_games',  'TEXT DEFAULT \'[]\''),
     ('trading_cards',    'TEXT DEFAULT \'[]\''),
     ('media_unlocked', 'BOOLEAN DEFAULT FALSE'             if _is_pg else 'INTEGER DEFAULT 0'),
+    ('full_access', 'BOOLEAN DEFAULT FALSE'                if _is_pg else 'INTEGER DEFAULT 0'),
     ('first_login_bonus_claimed', 'BOOLEAN DEFAULT FALSE' if _is_pg else 'INTEGER DEFAULT 0'),
     ('is_verified', 'BOOLEAN DEFAULT FALSE' if _is_pg else 'INTEGER DEFAULT 0'),
 ]
@@ -201,6 +204,18 @@ for _col, _typedef in _new_user_cols:
         pass
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# Migrate the durable anonymous-state table for existing databases.
+try:
+    with engine.connect() as _conn:
+        _conn.execute(text(
+            f'ALTER TABLE guest_states ADD COLUMN '
+            f'{_if_not_exists} full_access '
+            f'{"BOOLEAN DEFAULT FALSE" if _is_pg else "INTEGER DEFAULT 0"}'
+        ))
+        _conn.commit()
+except Exception:
+    pass
 
 
 def allowed_file(filename):
@@ -220,6 +235,7 @@ def user_to_dict(user):
         'pfp_offset_y':     user.pfp_offset_y if user.pfp_offset_y is not None else 50.0,
         'disc_balance':     user.disc_balance or 0,
         'media_unlocked': bool(user.media_unlocked),
+        'full_access':     bool(user.full_access),
         'purchased_themes': json.loads(user.purchased_themes or '[]') if user.purchased_themes else [],
         'purchased_games':  json.loads(user.purchased_games  or '[]') if user.purchased_games  else [],
         'daily_available': daily_available,
@@ -305,6 +321,7 @@ def _read_guest_state():
                 'trading_cards': _parse_guest_json(state.trading_cards),
                 'purchased_themes': _parse_guest_json(state.purchased_themes),
                 'media_unlocked': bool(state.media_unlocked),
+        'full_access': bool(state.full_access),
                 'last_daily_login': state.last_daily_login,
                 'last_card_pack': state.last_card_pack,
             }
@@ -315,6 +332,7 @@ def _read_guest_state():
             'trading_cards': session.get('trading_cards', []),
             'purchased_themes': _parse_guest_json(session.get('purchased_themes')),
             'media_unlocked': bool(session.get('media_unlocked', False)),
+            'full_access': bool(session.get('authorized', False)),
             'last_daily_login': _parse_guest_datetime(session.get('last_daily_login')),
             'last_card_pack': _parse_guest_datetime(session.get('last_daily_card_pack')),
         }
@@ -336,7 +354,7 @@ def _parse_guest_datetime(value):
 def _clear_legacy_guest_session():
     for key in (
         'disc_balance', 'purchased_games', 'trading_cards',
-        'purchased_themes', 'media_unlocked', 'last_daily_login',
+        'purchased_themes', 'media_unlocked', 'full_access', 'last_daily_login',
         'last_daily_card_pack',
     ):
         session.pop(key, None)
@@ -358,6 +376,7 @@ def _update_guest_state(**changes):
                 trading_cards=json.dumps(current.get('trading_cards', [])),
                 purchased_themes=json.dumps(current.get('purchased_themes', [])),
                 media_unlocked=bool(current.get('media_unlocked', False)),
+                full_access=bool(current.get('full_access', False)),
                 last_daily_login=current.get('last_daily_login'),
                 last_card_pack=current.get('last_card_pack'),
             )
@@ -372,6 +391,8 @@ def _update_guest_state(**changes):
             state.purchased_themes = json.dumps(list(changes['purchased_themes']))
         if 'media_unlocked' in changes:
             state.media_unlocked = bool(changes['media_unlocked'])
+        if 'full_access' in changes:
+            state.full_access = bool(changes['full_access'])
         if 'last_daily_login' in changes:
             state.last_daily_login = changes['last_daily_login']
         if 'last_card_pack' in changes:
@@ -407,7 +428,16 @@ def _set_session_discs(amount):
 
 def _has_full_access():
     """Alternate access includes games and site features, not unlimited Discs."""
-    return session.get('authorized') is True or session.get('authorized') == 'true'
+    if session.get('authorized') is True or session.get('authorized') == 'true':
+        return True
+    if session.get('user_id'):
+        db = DBSession()
+        try:
+            user = db.query(User).filter_by(id=session['user_id']).first()
+            return bool(user and user.full_access)
+        finally:
+            db.close()
+    return bool(_read_guest_state().get('full_access', False))
 
 
 def _get_session_last_daily():
@@ -573,6 +603,7 @@ def _merge_session_trading_cards(user, db):
     user.purchased_themes = json.dumps(list(dict.fromkeys(owned_themes + guest_themes)))
     user.disc_balance = (user.disc_balance or 0) + int(guest.get('disc_balance', 0) or 0)
     user.media_unlocked = bool(user.media_unlocked or guest.get('media_unlocked', False))
+    user.full_access = bool(user.full_access or guest.get('full_access', False))
     if not user.last_daily_login and guest.get('last_daily_login'):
         user.last_daily_login = guest['last_daily_login']
     if not user.last_daily_card_pack and guest.get('last_card_pack'):
@@ -582,7 +613,7 @@ def _merge_session_trading_cards(user, db):
     db.refresh(user)
     _delete_guest_state()
     return bool(guest_cards or guest_games or guest_themes or guest.get('disc_balance')
-                or guest.get('media_unlocked'))
+                or guest.get('media_unlocked') or guest.get('full_access'))
 
 
 def _get_session_purchased_themes():
@@ -939,7 +970,19 @@ def get_discs():
 
 @app.route('/api/access/secret-unlock', methods=['POST'])
 def secret_unlock_access():
-    """Activate the existing alternate-access state for the hidden Shop combo."""
+    """Persist full access for the hidden Shop combo or the direct access key."""
+    if session.get('user_id'):
+        db = DBSession()
+        try:
+            user = db.query(User).filter_by(id=session['user_id']).first()
+            if not user:
+                return jsonify({'error': 'User not found'}), 404
+            user.full_access = True
+            db.commit()
+        finally:
+            db.close()
+    else:
+        _update_guest_state(full_access=True)
     session['authorized'] = True
     session.pop('free_trial', None)
     return jsonify({'success': True, 'authorized': True})

@@ -219,6 +219,7 @@
                     credentials: 'same-origin'
                 });
                 if (!response.ok) throw new Error('Could not activate access.');
+                localStorage.setItem('aerodynamix_full_access', 'true');
                 sessionStorage.setItem('authorized', 'true');
                 sessionStorage.removeItem('free_trial');
                 window.dispatchEvent(new CustomEvent('aerodynamixAuthorized'));
