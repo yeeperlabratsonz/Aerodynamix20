@@ -1491,7 +1491,7 @@ def uploaded_file(filename):
 
 
 def _run_beat_separation(job_id, job_dir, input_path, output_dir):
-    model_name = os.environ.get('DEMUCS_MODEL', 'htdemucs_6s')
+    model_name = os.environ.get('DEMUCS_MODEL', '83fc094f')
     device = os.environ.get('DEMUCS_DEVICE', 'cpu')
     demucs_jobs = os.environ.get('DEMUCS_JOBS', '0')
     demucs_segment = os.environ.get('DEMUCS_SEGMENT', '1')
@@ -1613,7 +1613,7 @@ def beat_separation_status(job_id):
 def beat_stem_file(job_id, stem):
     if not re.fullmatch(r'[a-f0-9]{32}', job_id) or stem not in {'vocals', 'drums', 'bass', 'other'}:
         abort(404)
-    job_dir = os.path.join(BEAT_STEMS_FOLDER, job_id, 'output', os.environ.get('DEMUCS_MODEL', 'htdemucs_6s'), 'song')
+    job_dir = os.path.join(BEAT_STEMS_FOLDER, job_id, 'output', os.environ.get('DEMUCS_MODEL', '83fc094f'), 'song')
     return send_from_directory(job_dir, stem + '.wav', mimetype='audio/wav', max_age=3600)
 
 

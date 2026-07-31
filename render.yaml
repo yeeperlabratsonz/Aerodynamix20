@@ -13,7 +13,7 @@ services:
           name: aerodynamix-db
           property: connectionString
       - key: DEMUCS_MODEL
-        value: htdemucs_6s
+        value: 83fc094f
       - key: DEMUCS_DEVICE
         value: cpu
       - key: DEMUCS_JOBS
