@@ -179,7 +179,7 @@
             const info = document.getElementById('theme-info');
             if (info) {
                 info.innerHTML = paid
-                    ? 'All themes are included with full access.'
+                    ? 'All themes are included.'
                     : 'Themes cost 200 <img src="images/disc.png" alt="Disc" class="disc-icon sm"> each. Black is free.';
             }
             document.querySelectorAll('.theme-price').forEach(price => {
@@ -188,8 +188,8 @@
             document.querySelectorAll('.theme-button[data-theme]').forEach(btn => {
                 const theme = btn.dataset.theme;
                 const owned = purchasedThemes.includes(theme) || paid;
-                // Black is always available in the free trial. Other themes
-                // appear only after the trial user unlocks them.
+                // Black is always available in the basic experience. Other themes
+                // appear after they are unlocked.
                 btn.hidden = trial && theme !== 'black' && !owned;
             });
             if (empty) empty.style.display = 'none';

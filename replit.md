@@ -19,13 +19,14 @@ Serves on port 5000. The `SESSION_SECRET` environment variable is used for Flask
 
 ## Access
 
-The site has an access key gate. A free 5-minute trial is available with the key `freetrial`.
+The basic arcade experience loads by default. The existing alternate access path remains
+available internally, but normal visitors do not need to enter a key.
 
 ## Key files
 
 - `docs/index.html` — main game listing page
 - `docs/game-frame.html` — game iframe wrapper
-- `docs/auth-overlay.js` — access key / trial gate
+- `docs/auth-overlay.js` — default access bootstrap and retained alternate access path
 - `docs/script.js` — main site logic
 - `docs/main.css` — global styles
 - `docs/games/` — self-hosted game directories

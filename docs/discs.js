@@ -109,7 +109,7 @@
             return;
         }
 
-        // Every user type has a real balance. Full access only changes which
+        // Every user type has a real balance. Alternate access changes which
         // features are included; it does not make the card economy unlimited.
         if (balance === null || balance === undefined) {
             display.innerHTML = discIconHTML('sm') + ' <span class="disc-login">--</span>';
@@ -158,7 +158,7 @@
             return;
         }
         if (!isFreeTrial()) return;
-        // Free trial users are sent to the game page where the unlock overlay handles purchase
+        // Basic users are sent to the game page where the unlock overlay handles purchase
         window.location.href = gameUrl;
     }
 

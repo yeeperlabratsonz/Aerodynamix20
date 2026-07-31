@@ -265,7 +265,7 @@ def _set_session_discs(amount):
 
 
 def _has_full_access():
-    """Full access includes games and site features, not unlimited Discs."""
+    """Alternate access includes games and site features, not unlimited Discs."""
     return session.get('authorized') is True or session.get('authorized') == 'true'
 
 
@@ -771,7 +771,7 @@ def get_trading_cards():
 @app.route('/api/trading-cards/purchase-pack', methods=['POST'])
 def purchase_trading_card_pack():
     data = request.get_json(silent=True) or {}
-    # Full access includes the site and games, but card packs use the shared
+    # Alternate access includes the site and games, but card packs use the shared
     # Dynamix Disc balance for every user type.
     full_version = bool(data.get('full_version'))
     pack_cost = TRADING_CARD_PACK_COST

@@ -5,7 +5,13 @@
     function isAuthorized() { return sessionStorage.getItem('authorized') === 'true'; }
     function isFreeTrial()  { return sessionStorage.getItem('free_trial') === 'true'; }
 
-    // Already authorized or free trial — dispatch event and let page load normally
+    // The basic experience is the default. Keep the alternate access path below
+    // intact for internal use, but do not make normal visitors enter a key.
+    if (!isAuthorized() && !isFreeTrial()) {
+        sessionStorage.setItem('free_trial', 'true');
+    }
+
+    // Already authorized or basic mode — dispatch event and let page load normally
     if (isAuthorized() || isFreeTrial()) {
         window.dispatchEvent(new CustomEvent('aerodynamixAuthorized'));
         if (isFreeTrial()) window.dispatchEvent(new CustomEvent('aerodynamixFreeTrial'));

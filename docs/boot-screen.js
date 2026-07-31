@@ -1,11 +1,12 @@
-/* Aerodynamix - Premium Boot Screen */
+/* Aerodynamix Boot Screen */
 (function() {
     'use strict';
 
     const SESSION_KEY = 'aerodynamix_booted';
 
-    function isAuthorized() {
-        return sessionStorage.getItem('authorized') === 'true';
+    function hasExperienceAccess() {
+        return sessionStorage.getItem('authorized') === 'true' ||
+            sessionStorage.getItem('free_trial') === 'true';
     }
 
     function alreadyBooted() {
@@ -199,7 +200,7 @@
 
     window.AeroBootScreen = {
         show: function() {
-            if (!isAuthorized()) return;
+            if (!hasExperienceAccess()) return;
             if (alreadyBooted()) return;
             markBooted();
             createBootScreen();
