@@ -53,6 +53,35 @@
                 </div>
             </div>
 
+            <section class="song-deck" aria-label="Imported song controls">
+                <div class="song-deck-heading">
+                    <div class="song-icon"><i class="fas fa-music"></i></div>
+                    <div>
+                        <h2>Song deck</h2>
+                        <p>Bring in a local track and layer your editable Beat Lab groove over it.</p>
+                    </div>
+                    <label class="song-import-button" for="song-input"><i class="fas fa-upload"></i> Import song</label>
+                    <input id="song-input" type="file" accept="audio/*" hidden>
+                </div>
+                <div class="song-empty" id="song-empty"><i class="fas fa-file-audio"></i><span>No song loaded yet. Your audio stays in this browser.</span></div>
+                <div class="song-loaded" id="song-loaded" hidden>
+                    <div class="song-trackline">
+                        <button class="song-toggle" id="song-toggle" type="button"><i class="fas fa-play"></i><span>Play song</span></button>
+                        <div class="song-title"><strong id="song-name">Untitled track</strong><span id="song-duration">0:00</span></div>
+                        <button class="song-remove" id="song-remove" type="button" title="Remove song" aria-label="Remove song"><i class="fas fa-xmark"></i></button>
+                    </div>
+                    <label class="song-progress" for="song-progress"><span class="sr-only">Song position</span><input id="song-progress" type="range" min="0" max="0" step="0.01" value="0"><span id="song-time">0:00</span></label>
+                    <div class="song-controls">
+                        <label class="song-control" for="song-speed"><span>Speed <b id="song-speed-value">100%</b></span><input id="song-speed" type="range" min="50" max="150" value="100"></label>
+                        <label class="song-control" for="song-pitch"><span>Pitch <b id="song-pitch-value">0 st</b></span><input id="song-pitch" type="range" min="-12" max="12" value="0"></label>
+                        <label class="song-control" for="song-volume"><span>Volume <b id="song-volume-value">80%</b></span><input id="song-volume" type="range" min="0" max="100" value="80"></label>
+                        <label class="song-control" for="song-tone"><span>Mix</span><select id="song-tone"><option value="full">Full mix</option><option value="drum">Drum focus</option><option value="bass">Bass boost</option></select></label>
+                        <label class="song-loop"><input id="song-loop" type="checkbox"><span><i class="fas fa-repeat"></i> Loop song</span></label>
+                    </div>
+                    <p class="song-note"><i class="fas fa-circle-info"></i> Pitch shifting and mix filters are live effects; Beat Lab cannot split an imported song into separate stems.</p>
+                </div>
+            </section>
+
             <div class="beat-actions">
                 <div class="beat-count"><strong>16</strong><span>steps</span></div>
                 <div class="beat-action-buttons">

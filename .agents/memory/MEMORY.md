@@ -6,3 +6,4 @@
 - [Card trade safety](card-trade-safety.md) — card trades must validate server-side and reserve cards until a pending offer is resolved.
 - [Default basic access](default-basic-access.md) — the arcade starts in basic mode; alternate access remains internal and is not advertised.
 - [Shop secret full access](shop-secret-full-access.md) — Shop-only ArrowUp, ArrowDown, 2005 sequence activates the shared authorized state.
+- [Imported song editing](imported-song-editing.md) — Beat Lab treats imported songs as full mixes and layers editable generated tracks over them.

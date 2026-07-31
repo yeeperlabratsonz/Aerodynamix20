@@ -21,6 +21,23 @@
     const swingInput = document.getElementById('swing-input');
     const swingValue = document.getElementById('swing-value');
     const kitSelect = document.getElementById('kit-select');
+    const songInput = document.getElementById('song-input');
+    const songEmpty = document.getElementById('song-empty');
+    const songLoaded = document.getElementById('song-loaded');
+    const songToggle = document.getElementById('song-toggle');
+    const songRemove = document.getElementById('song-remove');
+    const songName = document.getElementById('song-name');
+    const songDuration = document.getElementById('song-duration');
+    const songProgress = document.getElementById('song-progress');
+    const songTime = document.getElementById('song-time');
+    const songSpeed = document.getElementById('song-speed');
+    const songSpeedValue = document.getElementById('song-speed-value');
+    const songPitch = document.getElementById('song-pitch');
+    const songPitchValue = document.getElementById('song-pitch-value');
+    const songVolume = document.getElementById('song-volume');
+    const songVolumeValue = document.getElementById('song-volume-value');
+    const songTone = document.getElementById('song-tone');
+    const songLoop = document.getElementById('song-loop');
     const audio = {
         context: null,
         master: null,
@@ -28,6 +45,17 @@
         isPlaying: false,
         nextStepTime: 0,
         currentStep: 0
+    };
+    const song = {
+        buffer: null,
+        source: null,
+        gain: null,
+        filter: null,
+        offset: 0,
+        startedAt: 0,
+        playing: false,
+        stopping: false,
+        raf: null
     };
 
     const pattern = Object.fromEntries(TRACKS.map(track => [track.id, new Set(track.defaultSteps)]));
@@ -88,6 +116,155 @@
             audio.master.connect(audio.context.destination);
         }
         return audio.context.state === 'suspended' ? audio.context.resume() : Promise.resolve();
+    }
+
+    function formatTime(seconds) {
+        if (!Number.isFinite(seconds)) return '0:00';
+        const minutes = Math.floor(seconds / 60);
+        const remainder = Math.floor(seconds % 60).toString().padStart(2, '0');
+        return `${minutes}:${remainder}`;
+    }
+
+    function songRate() {
+        return Number(songSpeed.value) / 100 * Math.pow(2, Number(songPitch.value) / 12);
+    }
+
+    function songPosition() {
+        if (!song.buffer) return 0;
+        if (!song.playing) return song.offset;
+        return song.offset + (audio.context.currentTime - song.startedAt) * songRate();
+    }
+
+    function updateSongProgress() {
+        if (!song.buffer) return;
+        let position = songPosition();
+        if (songLoop.checked) position %= song.buffer.duration;
+        else position = Math.min(position, song.buffer.duration);
+        songProgress.value = position;
+        songTime.textContent = formatTime(position);
+        if (song.playing) song.raf = window.requestAnimationFrame(updateSongProgress);
+    }
+
+    function updateSongFilter() {
+        if (!song.filter) return;
+        song.filter.type = songTone.value === 'drum' ? 'highpass' : songTone.value === 'bass' ? 'lowshelf' : 'allpass';
+        if (songTone.value === 'drum') song.filter.frequency.value = 100;
+        if (songTone.value === 'bass') song.filter.frequency.value = 180;
+        song.filter.gain.value = songTone.value === 'bass' ? 5 : 0;
+    }
+
+    function updateSongGain() {
+        if (song.gain) song.gain.gain.value = Number(songVolume.value) / 100;
+    }
+
+    function connectSongSource(source) {
+        if (!song.filter) {
+            song.filter = audio.context.createBiquadFilter();
+            song.gain = audio.context.createGain();
+            song.filter.connect(song.gain).connect(audio.master);
+        }
+        updateSongFilter();
+        updateSongGain();
+        source.connect(song.filter);
+    }
+
+    function createSongSource(offset) {
+        const source = audio.context.createBufferSource();
+        source.buffer = song.buffer;
+        source.loop = songLoop.checked;
+        source.playbackRate.value = Number(songSpeed.value) / 100;
+        source.detune.value = Number(songPitch.value) * 100;
+        connectSongSource(source);
+        source.onended = () => {
+            if (song.source !== source || song.stopping) return;
+            song.source = null;
+            song.playing = false;
+            song.offset = 0;
+            songProgress.value = 0;
+            songTime.textContent = '0:00';
+            updateSongButton();
+        };
+        source.start(audio.context.currentTime, Math.max(0, Math.min(offset, song.buffer.duration - .001)));
+        return source;
+    }
+
+    function updateSongButton() {
+        songToggle.classList.toggle('is-playing', song.playing);
+        songToggle.innerHTML = song.playing
+            ? '<i class="fas fa-pause"></i><span>Pause song</span>'
+            : '<i class="fas fa-play"></i><span>Play song</span>';
+        if (song.playing) {
+            window.cancelAnimationFrame(song.raf);
+            song.raf = window.requestAnimationFrame(updateSongProgress);
+        }
+    }
+
+    async function startSong() {
+        if (!song.buffer || song.playing) return;
+        await ensureAudio();
+        song.stopping = false;
+        song.startedAt = audio.context.currentTime;
+        song.source = createSongSource(song.offset);
+        song.playing = true;
+        updateSongButton();
+    }
+
+    function stopSong(resetPosition) {
+        if (song.playing && song.source) {
+            song.offset = songPosition();
+            if (songLoop.checked) song.offset %= song.buffer.duration;
+            song.stopping = true;
+            try { song.source.stop(); } catch (error) { /* already stopped */ }
+            song.source.disconnect();
+            song.source = null;
+        }
+        song.playing = false;
+        song.stopping = false;
+        if (resetPosition) song.offset = 0;
+        window.cancelAnimationFrame(song.raf);
+        updateSongButton();
+        updateSongProgress();
+    }
+
+    function restartSongAtPosition() {
+        if (!song.playing) return;
+        const position = songPosition();
+        stopSong(false);
+        song.offset = position >= song.buffer.duration ? 0 : position;
+        startSong();
+    }
+
+    async function loadSong(file) {
+        if (!file || !file.type.startsWith('audio/')) return;
+        stopSong(true);
+        try {
+            await ensureAudio();
+            const data = await file.arrayBuffer();
+            song.buffer = await audio.context.decodeAudioData(data);
+            song.offset = 0;
+            songName.textContent = file.name;
+            songDuration.textContent = formatTime(song.buffer.duration);
+            songProgress.max = song.buffer.duration;
+            songProgress.value = 0;
+            songTime.textContent = '0:00';
+            songEmpty.hidden = true;
+            songLoaded.hidden = false;
+            setStatus('Song loaded — press Play to layer your beat');
+        } catch (error) {
+            song.buffer = null;
+            setStatus('That audio file could not be loaded');
+        } finally {
+            songInput.value = '';
+        }
+    }
+
+    function removeSong() {
+        stopSong(true);
+        song.buffer = null;
+        song.name = '';
+        songEmpty.hidden = false;
+        songLoaded.hidden = true;
+        setStatus('Ready to make a loop');
     }
 
     function noiseBuffer() {
@@ -214,6 +391,7 @@
             audio.currentStep = 0;
             audio.nextStepTime = audio.context.currentTime + 0.05;
             audio.scheduler = window.setInterval(scheduler, 25);
+            if (song.buffer && !song.playing) await startSong();
             playButton.classList.add('is-playing');
             playButton.innerHTML = '<i class="fas fa-pause"></i><span>Pause</span>';
             setStatus('Playing your loop');
@@ -230,6 +408,7 @@
         playButton.classList.remove('is-playing');
         playButton.innerHTML = '<i class="fas fa-play"></i><span>Play</span>';
         setStatus('Ready to make a loop');
+        stopSong(true);
     }
 
     function previewStep(track, step) {
@@ -265,6 +444,34 @@
     document.getElementById('demo-button').addEventListener('click', updateStarter);
     document.getElementById('random-button').addEventListener('click', randomize);
     document.getElementById('clear-pattern-button').addEventListener('click', clearPattern);
+    songInput.addEventListener('change', () => loadSong(songInput.files[0]));
+    songToggle.addEventListener('click', () => {
+        if (song.playing) stopSong(false);
+        else startSong();
+    });
+    songRemove.addEventListener('click', removeSong);
+    songProgress.addEventListener('input', () => {
+        song.offset = Number(songProgress.value);
+        songTime.textContent = formatTime(song.offset);
+        if (song.playing) restartSongAtPosition();
+    });
+    songSpeed.addEventListener('input', () => {
+        songSpeedValue.textContent = `${songSpeed.value}%`;
+        restartSongAtPosition();
+    });
+    songPitch.addEventListener('input', () => {
+        const value = Number(songPitch.value);
+        songPitchValue.textContent = `${value > 0 ? '+' : ''}${value} st`;
+        restartSongAtPosition();
+    });
+    songVolume.addEventListener('input', () => {
+        songVolumeValue.textContent = `${songVolume.value}%`;
+        updateSongGain();
+    });
+    songTone.addEventListener('change', updateSongFilter);
+    songLoop.addEventListener('change', () => {
+        if (song.playing) restartSongAtPosition();
+    });
     document.addEventListener('keydown', event => {
         if (event.code === 'Space' && !['INPUT', 'SELECT', 'BUTTON'].includes(document.activeElement.tagName)) {
             event.preventDefault();
