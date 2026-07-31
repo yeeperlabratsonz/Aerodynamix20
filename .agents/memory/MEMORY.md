@@ -1,6 +1,7 @@
 - [Attached assets serving path](attached-assets-serving.md) — uploaded files land in root `attached_assets`; the web server only serves `docs/`, so game files must be copied to `docs/attached_assets`.
 - [Scoped session nesting](scoped-session-nesting.md) — helper functions in `server.py` must not close the shared scoped session when called from inside another database operation, or the caller's object becomes detached.
 - [Game purchase persistence](game-purchase-persistence.md) — game unlocks are stored in both localStorage (anonymous users, same-device replay) and the DB (logged-in users, cross-device replay), synced on game-frame load.
+- [Card inventory auth boundary](card-inventory-auth-boundary.md) — cards collected before login must merge into the database inventory before authenticated card features use them.
 - [WebRTC calling architecture](webrtc-calling-architecture.md) — one-to-one calls use Flask polling for signaling and browser peer connections; production reliability may require TURN.
 - [Trading card rarity maintenance](trading-card-rarity-maintenance.md) — card-pool size, pull weights, and normalized sell values must stay synchronized after rarity changes.
 - [Card trade safety](card-trade-safety.md) — card trades must validate server-side and reserve cards until a pending offer is resolved.
