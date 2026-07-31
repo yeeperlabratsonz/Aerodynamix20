@@ -84,6 +84,11 @@
             background-color: #1e5bc4;
             transform: scale(1.05);
         }
+        .keyboard-button {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+        }
 
         .game-container {
             margin-top: 7vw;
@@ -105,6 +110,89 @@
             height: 100%;
             border: none;
             display: block;
+        }
+
+        .virtual-keyboard {
+            position: fixed;
+            left: 50%;
+            bottom: 0;
+            z-index: 25;
+            display: none;
+            width: min(860px, calc(100vw - 1rem));
+            max-height: min(58vh, 430px);
+            padding: .7rem;
+            box-sizing: border-box;
+            transform: translate(-50%, 0);
+            overflow-y: auto;
+            border: 1px solid rgba(130, 183, 255, .34);
+            border-bottom: 0;
+            border-radius: 16px 16px 0 0;
+            background: rgba(5, 11, 24, .97);
+            box-shadow: 0 -18px 55px rgba(0, 0, 0, .6);
+            backdrop-filter: blur(18px);
+            font-family: 'Montserrat', sans-serif;
+            touch-action: manipulation;
+        }
+        .virtual-keyboard.open { display: block; }
+        .virtual-keyboard-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: .6rem;
+            margin-bottom: .55rem;
+            color: #cfe3ff;
+            font-size: .68rem;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+        .virtual-keyboard-title span:last-child {
+            color: rgba(255, 255, 255, .46);
+            font-size: .58rem;
+            font-weight: 600;
+            letter-spacing: .02em;
+            text-transform: none;
+        }
+        .virtual-keyboard-row {
+            display: flex;
+            gap: .3rem;
+            margin-top: .3rem;
+        }
+        .virtual-key {
+            flex: 1 1 0;
+            min-width: 0;
+            min-height: 38px;
+            padding: .35rem .25rem;
+            border: 1px solid rgba(255, 255, 255, .13);
+            border-radius: 7px;
+            color: #eaf3ff;
+            background: linear-gradient(180deg, rgba(43, 62, 92, .96), rgba(19, 31, 55, .96));
+            box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .28);
+            font: 800 .68rem 'Montserrat', sans-serif;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: none;
+        }
+        .virtual-key:active,
+        .virtual-key.pressed,
+        .virtual-key.latched {
+            border-color: #7db8ff;
+            color: #fff;
+            background: linear-gradient(180deg, #2c7ffc, #174ea8);
+            box-shadow: 0 0 0 2px rgba(44, 127, 252, .2), inset 0 -1px 0 rgba(0, 0, 0, .24);
+            transform: translateY(1px);
+        }
+        .virtual-key.wide { flex-grow: 1.7; }
+        .virtual-key.extra-wide { flex-grow: 3.8; }
+        .virtual-key.arrow-key { flex-grow: .8; }
+        .virtual-key.small-label { font-size: .57rem; }
+        .virtual-keyboard-hint {
+            margin: .55rem 0 0;
+            color: rgba(255, 255, 255, .4);
+            font-size: .58rem;
+            text-align: center;
         }
 
         .game-footer {
@@ -151,6 +239,8 @@
                 border-radius: 9px;
                 font-size: .72rem;
             }
+            .keyboard-button span { display: none; }
+            .keyboard-button { padding-inline: .72rem; }
             .game-container,
             .game-container.footer-visible {
                 margin-top: 58px;
@@ -158,6 +248,17 @@
                 min-height: calc(100svh - 58px);
                 border-width: 2px;
             }
+            .virtual-keyboard {
+                width: calc(100vw - .5rem);
+                max-height: min(61vh, 440px);
+                padding: .5rem;
+                border-radius: 14px 14px 0 0;
+            }
+            .virtual-key {
+                min-height: 40px;
+                font-size: .65rem;
+            }
+            .virtual-keyboard-hint { display: none; }
         }
 
         @media (max-width: 900px) and (orientation: landscape) and (max-height: 600px) {
@@ -262,6 +363,7 @@
                 padding: .35rem .55rem;
                 font-size: .62rem;
             }
+            .keyboard-button { padding-inline: .58rem; }
 
             .game-container,
             .game-container.footer-visible {
@@ -269,6 +371,13 @@
                 height: calc(100svh - 46px - env(safe-area-inset-top));
                 min-height: calc(100svh - 46px - env(safe-area-inset-top));
             }
+            .virtual-keyboard {
+                max-height: min(72vh, 330px);
+                padding: .35rem;
+            }
+            .virtual-keyboard-title { margin-bottom: .25rem; }
+            .virtual-keyboard-row { gap: .2rem; margin-top: .2rem; }
+            .virtual-key { min-height: 30px; padding: .2rem .12rem; font-size: .55rem; }
         }
         .game-footer.visible { display: flex; }
 
@@ -389,6 +498,7 @@
         <img src="images/logo.gif" alt="logo" onclick="goHome()">
         <h1><span class="logo-a" id="logo-a">A</span>ERODYNAMIX</h1>
         <div class="header-actions">
+            <button class="back-button keyboard-button" id="keyboard-toggle" type="button" aria-expanded="false" aria-controls="virtual-keyboard" title="Open on-screen keyboard"><i class="fa-solid fa-keyboard"></i><span>Keys</span></button>
             <button class="back-button" onclick="toggleFullscreen()" title="Fullscreen"><i class="fa-solid fa-expand" id="fs-icon-header"></i></button>
             <button class="back-button" onclick="goHome()">← Back Home</button>
         </div>
@@ -397,6 +507,90 @@
     <div class="game-container">
         <iframe id="gameFrame"></iframe>
     </div>
+
+    <section class="virtual-keyboard" id="virtual-keyboard" aria-label="On-screen keyboard">
+        <div class="virtual-keyboard-title">
+            <span><i class="fa-solid fa-keyboard"></i> On-screen keyboard</span>
+            <span>Hold keys for movement and controls</span>
+        </div>
+        <div class="virtual-keyboard-row">
+            <button class="virtual-key small-label wide" type="button" data-key="Escape" data-code="Escape">Esc</button>
+            <button class="virtual-key" type="button" data-key="F1" data-code="F1">F1</button>
+            <button class="virtual-key" type="button" data-key="F2" data-code="F2">F2</button>
+            <button class="virtual-key" type="button" data-key="F3" data-code="F3">F3</button>
+            <button class="virtual-key" type="button" data-key="F4" data-code="F4">F4</button>
+            <button class="virtual-key" type="button" data-key="F5" data-code="F5">F5</button>
+            <button class="virtual-key" type="button" data-key="F6" data-code="F6">F6</button>
+            <button class="virtual-key" type="button" data-key="F7" data-code="F7">F7</button>
+            <button class="virtual-key" type="button" data-key="F8" data-code="F8">F8</button>
+            <button class="virtual-key" type="button" data-key="F9" data-code="F9">F9</button>
+            <button class="virtual-key" type="button" data-key="F10" data-code="F10">F10</button>
+        </div>
+        <div class="virtual-keyboard-row">
+            <button class="virtual-key" type="button" data-key="1" data-code="Digit1">1</button>
+            <button class="virtual-key" type="button" data-key="2" data-code="Digit2">2</button>
+            <button class="virtual-key" type="button" data-key="3" data-code="Digit3">3</button>
+            <button class="virtual-key" type="button" data-key="4" data-code="Digit4">4</button>
+            <button class="virtual-key" type="button" data-key="5" data-code="Digit5">5</button>
+            <button class="virtual-key" type="button" data-key="6" data-code="Digit6">6</button>
+            <button class="virtual-key" type="button" data-key="7" data-code="Digit7">7</button>
+            <button class="virtual-key" type="button" data-key="8" data-code="Digit8">8</button>
+            <button class="virtual-key" type="button" data-key="9" data-code="Digit9">9</button>
+            <button class="virtual-key" type="button" data-key="0" data-code="Digit0">0</button>
+            <button class="virtual-key small-label wide" type="button" data-key="Backspace" data-code="Backspace">Delete</button>
+        </div>
+        <div class="virtual-keyboard-row">
+            <button class="virtual-key small-label wide" type="button" data-key="Tab" data-code="Tab">Tab</button>
+            <button class="virtual-key" type="button" data-key="q" data-code="KeyQ">Q</button>
+            <button class="virtual-key" type="button" data-key="w" data-code="KeyW">W</button>
+            <button class="virtual-key" type="button" data-key="e" data-code="KeyE">E</button>
+            <button class="virtual-key" type="button" data-key="r" data-code="KeyR">R</button>
+            <button class="virtual-key" type="button" data-key="t" data-code="KeyT">T</button>
+            <button class="virtual-key" type="button" data-key="y" data-code="KeyY">Y</button>
+            <button class="virtual-key" type="button" data-key="u" data-code="KeyU">U</button>
+            <button class="virtual-key" type="button" data-key="i" data-code="KeyI">I</button>
+            <button class="virtual-key" type="button" data-key="o" data-code="KeyO">O</button>
+            <button class="virtual-key" type="button" data-key="p" data-code="KeyP">P</button>
+            <button class="virtual-key small-label wide" type="button" data-key="Enter" data-code="Enter">Enter</button>
+        </div>
+        <div class="virtual-keyboard-row">
+            <button class="virtual-key small-label wide" type="button" data-key="CapsLock" data-code="CapsLock">Caps</button>
+            <button class="virtual-key" type="button" data-key="a" data-code="KeyA">A</button>
+            <button class="virtual-key" type="button" data-key="s" data-code="KeyS">S</button>
+            <button class="virtual-key" type="button" data-key="d" data-code="KeyD">D</button>
+            <button class="virtual-key" type="button" data-key="f" data-code="KeyF">F</button>
+            <button class="virtual-key" type="button" data-key="g" data-code="KeyG">G</button>
+            <button class="virtual-key" type="button" data-key="h" data-code="KeyH">H</button>
+            <button class="virtual-key" type="button" data-key="j" data-code="KeyJ">J</button>
+            <button class="virtual-key" type="button" data-key="k" data-code="KeyK">K</button>
+            <button class="virtual-key" type="button" data-key="l" data-code="KeyL">L</button>
+            <button class="virtual-key small-label wide" type="button" data-key="'" data-code="Quote">'</button>
+        </div>
+        <div class="virtual-keyboard-row">
+            <button class="virtual-key small-label wide" type="button" data-key="Shift" data-code="ShiftLeft" data-latch="true">Shift</button>
+            <button class="virtual-key" type="button" data-key="z" data-code="KeyZ">Z</button>
+            <button class="virtual-key" type="button" data-key="x" data-code="KeyX">X</button>
+            <button class="virtual-key" type="button" data-key="c" data-code="KeyC">C</button>
+            <button class="virtual-key" type="button" data-key="v" data-code="KeyV">V</button>
+            <button class="virtual-key" type="button" data-key="b" data-code="KeyB">B</button>
+            <button class="virtual-key" type="button" data-key="n" data-code="KeyN">N</button>
+            <button class="virtual-key" type="button" data-key="m" data-code="KeyM">M</button>
+            <button class="virtual-key" type="button" data-key="," data-code="Comma">,</button>
+            <button class="virtual-key" type="button" data-key="." data-code="Period">.</button>
+            <button class="virtual-key small-label wide" type="button" data-key="Shift" data-code="ShiftRight" data-latch="true">Shift</button>
+        </div>
+        <div class="virtual-keyboard-row">
+            <button class="virtual-key small-label wide" type="button" data-key="Control" data-code="ControlLeft" data-latch="true">Ctrl</button>
+            <button class="virtual-key small-label wide" type="button" data-key="Alt" data-code="AltLeft" data-latch="true">Alt</button>
+            <button class="virtual-key extra-wide" type="button" data-key=" " data-code="Space">Space</button>
+            <button class="virtual-key small-label wide" type="button" data-key="Alt" data-code="AltRight" data-latch="true">Alt</button>
+            <button class="virtual-key arrow-key" type="button" data-key="ArrowLeft" data-code="ArrowLeft">←</button>
+            <button class="virtual-key arrow-key" type="button" data-key="ArrowDown" data-code="ArrowDown">↓</button>
+            <button class="virtual-key arrow-key" type="button" data-key="ArrowUp" data-code="ArrowUp">↑</button>
+            <button class="virtual-key arrow-key" type="button" data-key="ArrowRight" data-code="ArrowRight">→</button>
+        </div>
+        <p class="virtual-keyboard-hint">Tap the keyboard button again to close it. Keys are sent directly to the game.</p>
+    </section>
 
     <div class="game-footer" id="game-footer">
         <img class="gf-art" id="gf-art" src="images/music/yeezus.jpg" alt="">
@@ -457,6 +651,160 @@
                 gameFrame.src = gamePath.endsWith('/') ? `${gamePath}index.html` : gamePath;
             }
         }
+
+        // ─── On-screen keyboard ─────────────────────────────────────────────
+        // All games are hosted in this shared frame. Dispatching bubbling
+        // KeyboardEvents at the iframe's focused element lets canvas, DOM, and
+        // window-level game controls receive the same keydown/keyup pair that
+        // a physical keyboard would produce.
+        const keyboardToggle = document.getElementById('keyboard-toggle');
+        const virtualKeyboard = document.getElementById('virtual-keyboard');
+        const virtualKeys = [...document.querySelectorAll('.virtual-key')];
+        const heldVirtualKeys = new Map();
+        const latchedVirtualKeys = new Set();
+        const VIRTUAL_KEY_CODES = {
+            Backspace: 8, Tab: 9, Enter: 13, Shift: 16, Control: 17, Alt: 18,
+            Escape: 27, Space: 32, ArrowLeft: 37, ArrowUp: 38, ArrowRight: 39,
+            ArrowDown: 40, CapsLock: 20, Delete: 46,
+            "'": 222
+        };
+
+        function legacyKeyCode(key, code) {
+            if (VIRTUAL_KEY_CODES[key]) return VIRTUAL_KEY_CODES[key];
+            if (/^Key[A-Z]$/.test(code)) return code.charCodeAt(3);
+            if (/^Digit[0-9]$/.test(code)) return code.charCodeAt(5);
+            if (key === ',') return 188;
+            if (key === '.') return 190;
+            if (/^F(10|[1-9])$/.test(key)) return 111 + Number(key.slice(1));
+            return 0;
+        }
+
+        function getKeyboardTarget() {
+            try {
+                const frameWindow = gameFrame.contentWindow;
+                const target = frameWindow.document.activeElement || frameWindow.document.body;
+                frameWindow.focus();
+                if (target && typeof target.focus === 'function') target.focus();
+                return { frameWindow, target };
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function modifierIsActive(name) {
+            return virtualKeys.some(button => {
+                if (button.dataset.key !== name) return false;
+                const code = button.dataset.code;
+                return heldVirtualKeys.has(code) || latchedVirtualKeys.has(code);
+            });
+        }
+
+        function dispatchVirtualKey(type, key, code) {
+            const destination = getKeyboardTarget();
+            if (!destination) return;
+            const event = new destination.frameWindow.KeyboardEvent(type, {
+                key,
+                code,
+                location: code.endsWith('Left') ? 1 : code.endsWith('Right') ? 2 : 0,
+                bubbles: true,
+                cancelable: true,
+                composed: true,
+                repeat: false,
+                shiftKey: modifierIsActive('Shift'),
+                ctrlKey: modifierIsActive('Control'),
+                altKey: modifierIsActive('Alt'),
+                metaKey: modifierIsActive('Meta')
+            });
+            const keyCode = legacyKeyCode(key, code);
+            try {
+                Object.defineProperties(event, {
+                    keyCode: { configurable: true, get: () => keyCode },
+                    which: { configurable: true, get: () => keyCode },
+                    charCode: { configurable: true, get: () => type === 'keypress' ? keyCode : 0 }
+                });
+            } catch (error) {
+                // Some browser implementations expose these as non-configurable.
+            }
+            destination.target.dispatchEvent(event);
+        }
+
+        function releaseVirtualKey(button) {
+            const code = button.dataset.code;
+            const state = heldVirtualKeys.get(code);
+            if (!state) return;
+            dispatchVirtualKey('keyup', state.key, state.code);
+            heldVirtualKeys.delete(code);
+            button.classList.remove('pressed');
+        }
+
+        function releaseAllVirtualKeys(clearLatches = false) {
+            [...heldVirtualKeys.values()].forEach(state => {
+                dispatchVirtualKey('keyup', state.key, state.code);
+            });
+            heldVirtualKeys.clear();
+            virtualKeys.forEach(button => button.classList.remove('pressed'));
+            if (clearLatches) {
+                latchedVirtualKeys.clear();
+                virtualKeys.forEach(button => button.classList.remove('latched'));
+            }
+        }
+
+        function closeVirtualKeyboard() {
+            releaseAllVirtualKeys(true);
+            virtualKeyboard.classList.remove('open');
+            keyboardToggle.setAttribute('aria-expanded', 'false');
+        }
+
+        keyboardToggle.addEventListener('click', () => {
+            const opening = !virtualKeyboard.classList.contains('open');
+            if (opening) {
+                virtualKeyboard.classList.add('open');
+                keyboardToggle.setAttribute('aria-expanded', 'true');
+            } else {
+                closeVirtualKeyboard();
+            }
+        });
+
+        virtualKeys.forEach(button => {
+            button.addEventListener('pointerdown', event => {
+                event.preventDefault();
+                button.setPointerCapture?.(event.pointerId);
+                const key = button.dataset.key;
+                const code = button.dataset.code;
+                if (button.dataset.latch === 'true') {
+                    if (latchedVirtualKeys.has(code)) {
+                        dispatchVirtualKey('keyup', key, code);
+                        latchedVirtualKeys.delete(code);
+                        button.classList.remove('latched');
+                    } else {
+                        latchedVirtualKeys.add(code);
+                        button.classList.add('latched');
+                        dispatchVirtualKey('keydown', key, code);
+                    }
+                    return;
+                }
+                if (heldVirtualKeys.has(code)) return;
+                heldVirtualKeys.set(code, { key, code });
+                button.classList.add('pressed');
+                dispatchVirtualKey('keydown', key, code);
+            });
+            button.addEventListener('pointerup', event => {
+                event.preventDefault();
+                if (button.dataset.latch !== 'true') releaseVirtualKey(button);
+            });
+            button.addEventListener('pointercancel', () => {
+                if (button.dataset.latch !== 'true') releaseVirtualKey(button);
+            });
+            button.addEventListener('lostpointercapture', () => {
+                if (button.dataset.latch !== 'true') releaseVirtualKey(button);
+            });
+        });
+
+        window.addEventListener('blur', () => releaseAllVirtualKeys(true));
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) releaseAllVirtualKeys(true);
+        });
+        gameFrame.addEventListener('load', () => releaseAllVirtualKeys(true));
 
         function isGamePurchased() {
             if (!window.AeroDiscs || !window.AeroDiscs.getPurchasedGames) return false;
