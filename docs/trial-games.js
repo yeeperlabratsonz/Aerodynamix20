@@ -28,16 +28,15 @@
     }
 
     async function filterGamesForTrial() {
-        if (!isTrial()) return;
-
-        const owned = await getPurchases();
-        document.getElementById('spotlight')?.remove();
+        const trial = isTrial();
+        const owned = trial ? await getPurchases() : [];
+        if (trial) document.getElementById('spotlight')?.remove();
 
         const gameLinks = document.querySelectorAll('#games a[href*="game-frame.html?game="]');
         let visible = 0;
         gameLinks.forEach(link => {
             const game = new URL(link.href, window.location.href).searchParams.get('game');
-            const show = owned.includes(game);
+            const show = !trial || owned.includes(game);
             link.hidden = !show;
             if (show) visible++;
         });
@@ -49,6 +48,9 @@
                 : 'You do not own any games yet. Visit the Shop to unlock your first game.';
             empty.style.display = visible ? 'none' : 'block';
         }
+        const games = document.getElementById('games');
+        if (games) games.classList.add('game-visibility-ready');
+        document.body.classList.add('games-visibility-ready');
     }
 
     if (document.readyState === 'loading') {

@@ -40,6 +40,7 @@ app.config['MAX_CONTENT_LENGTH'] = 30 * 1024 * 1024  # 30 MB max upload
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 Base = declarative_base()
 DBSession = scoped_session(sessionmaker(bind=engine))
+GuestStateSession = sessionmaker(bind=engine, expire_on_commit=False)
 
 
 class User(Base):
@@ -69,6 +70,19 @@ class DeviceBonusClaim(Base):
     __tablename__ = 'device_bonus_claims'
     device_id    = Column(String(64), primary_key=True)
     claimed_at   = Column(DateTime, default=datetime.datetime.utcnow)
+
+
+class GuestState(Base):
+    """Durable state for visitors who have not created an account yet."""
+    __tablename__ = 'guest_states'
+    device_id           = Column(String(64), primary_key=True)
+    disc_balance        = Column(Integer, nullable=False, default=0)
+    purchased_games     = Column(Text, nullable=False, default='[]')
+    trading_cards       = Column(Text, nullable=False, default='[]')
+    purchased_themes    = Column(Text, nullable=False, default='[]')
+    media_unlocked      = Column(Boolean, nullable=False, default=False)
+    last_daily_login    = Column(DateTime, nullable=True)
+    last_card_pack      = Column(DateTime, nullable=True)
 
 
 class Post(Base):
@@ -263,14 +277,132 @@ def _mark_device_bonus_claimed(device_id, db=None):
             db.close()
 
 
-# ── Anonymous Dynamix Discs helpers (stored in Flask session) ───────────────────
+# ── Anonymous visitor state ───────────────────────────────────────────────────
+
+def _guest_state_device_id():
+    return getattr(g, 'device_id', None) or request.cookies.get('aerodynamix_device_id')
+
+
+def _parse_guest_json(value, fallback=None):
+    try:
+        parsed = json.loads(value or '[]')
+        return parsed if isinstance(parsed, list) else (fallback if fallback is not None else [])
+    except (TypeError, ValueError):
+        return fallback if fallback is not None else []
+
+
+def _read_guest_state():
+    device_id = _guest_state_device_id()
+    if not device_id:
+        return {}
+    db = GuestStateSession()
+    try:
+        state = db.query(GuestState).filter_by(device_id=device_id).first()
+        if state:
+            return {
+                'disc_balance': state.disc_balance or 0,
+                'purchased_games': _parse_guest_json(state.purchased_games),
+                'trading_cards': _parse_guest_json(state.trading_cards),
+                'purchased_themes': _parse_guest_json(state.purchased_themes),
+                'media_unlocked': bool(state.media_unlocked),
+                'last_daily_login': state.last_daily_login,
+                'last_card_pack': state.last_card_pack,
+            }
+        # Read old signed-cookie state once so it can be migrated on the next write.
+        return {
+            'disc_balance': int(session.get('disc_balance', 0) or 0),
+            'purchased_games': _parse_guest_json(session.get('purchased_games')),
+            'trading_cards': session.get('trading_cards', []),
+            'purchased_themes': _parse_guest_json(session.get('purchased_themes')),
+            'media_unlocked': bool(session.get('media_unlocked', False)),
+            'last_daily_login': _parse_guest_datetime(session.get('last_daily_login')),
+            'last_card_pack': _parse_guest_datetime(session.get('last_daily_card_pack')),
+        }
+    finally:
+        db.close()
+
+
+def _parse_guest_datetime(value):
+    if not value:
+        return None
+    if isinstance(value, datetime.datetime):
+        return value
+    try:
+        return datetime.datetime.fromisoformat(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _clear_legacy_guest_session():
+    for key in (
+        'disc_balance', 'purchased_games', 'trading_cards',
+        'purchased_themes', 'media_unlocked', 'last_daily_login',
+        'last_daily_card_pack',
+    ):
+        session.pop(key, None)
+
+
+def _update_guest_state(**changes):
+    device_id = _guest_state_device_id()
+    if not device_id:
+        return
+    current = _read_guest_state()
+    db = GuestStateSession()
+    try:
+        state = db.query(GuestState).filter_by(device_id=device_id).first()
+        if not state:
+            state = GuestState(
+                device_id=device_id,
+                disc_balance=int(current.get('disc_balance', 0) or 0),
+                purchased_games=json.dumps(current.get('purchased_games', [])),
+                trading_cards=json.dumps(current.get('trading_cards', [])),
+                purchased_themes=json.dumps(current.get('purchased_themes', [])),
+                media_unlocked=bool(current.get('media_unlocked', False)),
+                last_daily_login=current.get('last_daily_login'),
+                last_card_pack=current.get('last_card_pack'),
+            )
+            db.add(state)
+        if 'disc_balance' in changes:
+            state.disc_balance = max(0, int(changes['disc_balance']))
+        if 'purchased_games' in changes:
+            state.purchased_games = json.dumps(list(changes['purchased_games']))
+        if 'trading_cards' in changes:
+            state.trading_cards = json.dumps(list(changes['trading_cards']))
+        if 'purchased_themes' in changes:
+            state.purchased_themes = json.dumps(list(changes['purchased_themes']))
+        if 'media_unlocked' in changes:
+            state.media_unlocked = bool(changes['media_unlocked'])
+        if 'last_daily_login' in changes:
+            state.last_daily_login = changes['last_daily_login']
+        if 'last_card_pack' in changes:
+            state.last_card_pack = changes['last_card_pack']
+        db.commit()
+        _clear_legacy_guest_session()
+    finally:
+        db.close()
+
+
+def _delete_guest_state():
+    device_id = _guest_state_device_id()
+    if not device_id:
+        return
+    db = GuestStateSession()
+    try:
+        state = db.query(GuestState).filter_by(device_id=device_id).first()
+        if state:
+            db.delete(state)
+            db.commit()
+        _clear_legacy_guest_session()
+    finally:
+        db.close()
+
 
 def _get_session_discs():
-    return int(session.get('disc_balance', 0) or 0)
+    return int(_read_guest_state().get('disc_balance', 0) or 0)
 
 
 def _set_session_discs(amount):
-    session['disc_balance'] = max(0, int(amount))
+    _update_guest_state(disc_balance=max(0, int(amount)))
 
 
 def _has_full_access():
@@ -279,31 +411,19 @@ def _has_full_access():
 
 
 def _get_session_last_daily():
-    last = session.get('last_daily_login')
-    if last:
-        try:
-            return datetime.datetime.fromisoformat(last)
-        except ValueError:
-            return None
-    return None
+    return _parse_guest_datetime(_read_guest_state().get('last_daily_login'))
 
 
 def _set_session_last_daily(dt):
-    session['last_daily_login'] = dt.isoformat()
+    _update_guest_state(last_daily_login=dt)
 
 
 def _get_session_last_card_pack():
-    last = session.get('last_daily_card_pack')
-    if last:
-        try:
-            return datetime.datetime.fromisoformat(last)
-        except ValueError:
-            return None
-    return None
+    return _parse_guest_datetime(_read_guest_state().get('last_card_pack'))
 
 
 def _set_session_last_card_pack(dt):
-    session['last_daily_card_pack'] = dt.isoformat()
+    _update_guest_state(last_card_pack=dt)
 
 
 PACIFIC_TZ = ZoneInfo('America/Los_Angeles')
@@ -419,77 +539,74 @@ AERODYNAMIX_CARD_WEIGHTS = [
 
 
 def _get_session_trading_cards():
-    return session.get('trading_cards', [])
+    cards = _read_guest_state().get('trading_cards', [])
+    return cards if isinstance(cards, list) else []
 
 
 def _set_session_trading_cards(cards):
-    session['trading_cards'] = cards
+    _update_guest_state(trading_cards=cards)
 
 
 def _merge_session_trading_cards(user, db):
-    """Move cards collected before login into the authenticated inventory."""
-    pending = _get_session_trading_cards()
-    if not isinstance(pending, list) or not pending:
-        return False
+    """Transfer durable guest progress into an authenticated account."""
+    guest = _read_guest_state()
+    guest_cards = guest.get('trading_cards', [])
+    guest_games = guest.get('purchased_games', [])
+    guest_themes = guest.get('purchased_themes', [])
 
-    try:
-        owned = json.loads(user.trading_cards or '[]') if user.trading_cards else []
-    except (TypeError, ValueError):
-        owned = []
-    if not isinstance(owned, list):
-        owned = []
-
-    existing_ids = {
-        str(card.get('id'))
-        for card in owned
+    owned_cards = _parse_guest_json(user.trading_cards)
+    owned_card_ids = {
+        str(card.get('id')) for card in owned_cards
         if isinstance(card, dict) and card.get('id')
     }
-    merged = owned + [
-        card for card in pending
+    merged_cards = owned_cards + [
+        card for card in guest_cards
         if isinstance(card, dict)
         and card.get('id')
-        and str(card['id']) not in existing_ids
+        and str(card['id']) not in owned_card_ids
     ]
-    if len(merged) == len(owned):
-        session.pop('trading_cards', None)
-        return False
+    owned_games = _parse_guest_json(user.purchased_games)
+    owned_themes = _parse_guest_json(user.purchased_themes)
 
-    user.trading_cards = json.dumps(merged)
+    user.trading_cards = json.dumps(merged_cards)
+    user.purchased_games = json.dumps(list(dict.fromkeys(owned_games + guest_games)))
+    user.purchased_themes = json.dumps(list(dict.fromkeys(owned_themes + guest_themes)))
+    user.disc_balance = (user.disc_balance or 0) + int(guest.get('disc_balance', 0) or 0)
+    user.media_unlocked = bool(user.media_unlocked or guest.get('media_unlocked', False))
+    if not user.last_daily_login and guest.get('last_daily_login'):
+        user.last_daily_login = guest['last_daily_login']
+    if not user.last_daily_card_pack and guest.get('last_card_pack'):
+        user.last_daily_card_pack = guest['last_card_pack']
     db.add(user)
     db.commit()
     db.refresh(user)
-    session.pop('trading_cards', None)
-    return True
+    _delete_guest_state()
+    return bool(guest_cards or guest_games or guest_themes or guest.get('disc_balance')
+                or guest.get('media_unlocked'))
 
 
 def _get_session_purchased_themes():
-    try:
-        return json.loads(session.get('purchased_themes', '[]') or '[]')
-    except Exception:
-        return []
+    return _read_guest_state().get('purchased_themes', [])
 
 
 def _set_session_purchased_themes(themes):
-    session['purchased_themes'] = json.dumps(list(themes))
+    _update_guest_state(purchased_themes=themes)
 
 
 def _is_session_media_unlocked():
-    return bool(session.get('media_unlocked', False))
+    return bool(_read_guest_state().get('media_unlocked', False))
 
 
 def _set_session_media_unlocked():
-    session['media_unlocked'] = True
+    _update_guest_state(media_unlocked=True)
 
 
 def _get_session_purchased_games():
-    try:
-        return json.loads(session.get('purchased_games', '[]') or '[]')
-    except Exception:
-        return []
+    return _read_guest_state().get('purchased_games', [])
 
 
 def _set_session_purchased_games(games):
-    session['purchased_games'] = json.dumps(list(games))
+    _update_guest_state(purchased_games=games)
 
 
 def _anonymous_discs_dict():
