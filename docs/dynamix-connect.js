@@ -1314,27 +1314,43 @@
     modal.setAttribute('aria-hidden', 'false');
     tradeSelectedMine = new Set();
     tradeSelectedPeer = new Set();
-    try {
-      const [mine, peer, trades] = await Promise.all([
-        api('/api/tradeable-cards/self'),
-        api(`/api/tradeable-cards/${encodeURIComponent(activeDmPeer)}`),
-        api(`/api/trades?with=${encodeURIComponent(activeDmPeer)}`)
-      ]);
-      tradeCardsMine = mine.cards || [];
-      tradeCardsPeer = peer.cards || [];
-      renderTradeCardGrid('trade-my-cards', tradeCardsMine, tradeSelectedMine);
-      renderTradeCardGrid('trade-peer-cards', tradeCardsPeer, tradeSelectedPeer);
-      renderIncomingTrades(trades.trades || []);
-      updateTradeSummary();
-    } catch (err) {
+    const results = await Promise.allSettled([
+      api('/api/tradeable-cards/self'),
+      api(`/api/tradeable-cards/${encodeURIComponent(activeDmPeer)}`),
+      api(`/api/trades?with=${encodeURIComponent(activeDmPeer)}`)
+    ]);
+    const [mineResult, peerResult, tradesResult] = results;
+    const errors = [];
+
+    // Keep each side independent. A friend lookup or stale trade-history
+    // failure must never hide cards that successfully loaded for the user.
+    if (mineResult.status === 'fulfilled') {
+      tradeCardsMine = mineResult.value.cards || [];
+    } else {
       tradeCardsMine = [];
+      errors.push(`your cards: ${mineResult.reason.message}`);
+    }
+
+    if (peerResult.status === 'fulfilled') {
+      tradeCardsPeer = peerResult.value.cards || [];
+    } else {
       tradeCardsPeer = [];
-      renderTradeCardGrid('trade-my-cards', [], tradeSelectedMine);
-      renderTradeCardGrid('trade-peer-cards', [], tradeSelectedPeer);
-      updateTradeSummary();
-      if (errorEl) {
-        errorEl.textContent = `Could not load trading data: ${err.message}`;
-      }
+      errors.push(`your friend's cards: ${peerResult.reason.message}`);
+    }
+
+    renderTradeCardGrid('trade-my-cards', tradeCardsMine, tradeSelectedMine);
+    renderTradeCardGrid('trade-peer-cards', tradeCardsPeer, tradeSelectedPeer);
+
+    if (tradesResult.status === 'fulfilled') {
+      renderIncomingTrades(tradesResult.value.trades || []);
+    } else {
+      renderIncomingTrades([]);
+      errors.push(`trade history: ${tradesResult.reason.message}`);
+    }
+
+    updateTradeSummary();
+    if (errorEl && errors.length) {
+      errorEl.textContent = `Some trading data could not load — ${errors.join('; ')}.`;
     }
   }
 

@@ -12,3 +12,4 @@
 - [Persistent full access](persistent-full-access.md) — successful direct-key and Shop-sequence unlocks persist in browser storage and server state, then migrate to accounts.
 - [Mobile access entry](mobile-access-entry.md) — mobile users enter the same full-access code through a Shop touch modal instead of the keyboard sequence.
 - [Shared mobile foundation](mobile-responsive-foundation.md) — all navigable pages use one responsive layer, mobile menu, manifest, and home-screen icon convention.
+- [Trade modal loading](trade-modal-independent-loading.md) — current-user cards, friend cards, and pending trades load independently so one failure cannot blank the user’s inventory.
