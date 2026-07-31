@@ -1386,10 +1386,12 @@
             ? `style="background-image:url('${escapeHtml(u.pfp_url)}');background-position:${u.pfp_offset_x}% ${u.pfp_offset_y}%;background-size:cover;"`
             : '';
           const initials = u.pfp_url ? '' : u.username.slice(0, 2).toUpperCase();
-          const preview  = c.last_message
-            ? (c.last_message.sender_id === currentUser.id ? 'You: ' : '') + escapeHtml(c.last_message.text).slice(0, 40)
-            : '';
           const isActive = activeDmPeer === u.username;
+          const pendingTrades = Number(c.pending_trades || 0);
+          const preview = c.last_message
+            ? (c.last_message.sender_id === currentUser.id ? 'You: ' : '') + escapeHtml(c.last_message.text).slice(0, 40)
+            : (pendingTrades ? 'Incoming trade offer' : '');
+          const unreadTotal = Number(c.unread || 0) + pendingTrades;
           return `
             <div class="dc-convo-row${isActive ? ' active' : ''}" data-dm-open="${escapeHtml(u.username)}">
               <div class="dc-avatar dc-avatar-sm" ${av}>${initials}</div>
@@ -1397,7 +1399,7 @@
                 <div class="dc-convo-name">${escapeHtml(u.username)}${verifiedBadge(u.is_verified)}</div>
                 ${preview ? `<div class="dc-convo-preview">${preview}</div>` : ''}
               </div>
-              ${c.unread > 0 ? `<span class="dc-convo-unread">${c.unread}</span>` : ''}
+              ${unreadTotal > 0 ? `<span class="dc-convo-unread">${unreadTotal}</span>` : ''}
             </div>`;
         }).join('');
         listEl.querySelectorAll('[data-dm-open]').forEach(row =>

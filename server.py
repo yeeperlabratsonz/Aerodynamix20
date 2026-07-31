@@ -1940,24 +1940,52 @@ def list_dm_conversations():
         seen = {}
         for m in messages:
             other_id = m.recipient_id if m.sender_id == uid else m.sender_id
-            if other_id not in seen:
-                seen[other_id] = m
+            entry = seen.setdefault(other_id, {
+                'last_message': None,
+                'activity_at': m.created_at,
+                'pending_trades': 0,
+            })
+            if entry['last_message'] is None:
+                entry['last_message'] = m
+            if m.created_at and (not entry['activity_at'] or m.created_at > entry['activity_at']):
+                entry['activity_at'] = m.created_at
+
+        pending_trades = db.query(TradeOffer).filter(
+            TradeOffer.status == 'pending',
+            (TradeOffer.initiator_id == uid) | (TradeOffer.recipient_id == uid)
+        ).all()
+        for trade in pending_trades:
+            other_id = trade.recipient_id if trade.initiator_id == uid else trade.initiator_id
+            entry = seen.setdefault(other_id, {
+                'last_message': None,
+                'activity_at': trade.created_at,
+                'pending_trades': 0,
+            })
+            entry['pending_trades'] += 1
+            if trade.created_at and (not entry['activity_at'] or trade.created_at > entry['activity_at']):
+                entry['activity_at'] = trade.created_at
         convos = []
-        for other_id, last_msg in seen.items():
+        for other_id, entry in sorted(
+            seen.items(),
+            key=lambda item: item[1]['activity_at'] or datetime.datetime.min,
+            reverse=True,
+        ):
             other = db.query(User).filter_by(id=other_id).first()
             if not other:
                 continue
             unread = db.query(DirectMessage).filter_by(
                 sender_id=other_id, recipient_id=uid, is_read=False
             ).count()
+            last_msg = entry['last_message']
             convos.append({
                 'user':         _user_mini(other),
                 'last_message': {
                     'text':       last_msg.text,
                     'sender_id':  last_msg.sender_id,
                     'created_at': last_msg.created_at.strftime('%Y-%m-%d %H:%M:%S') if last_msg.created_at else None,
-                },
+                } if last_msg else None,
                 'unread': unread,
+                'pending_trades': entry['pending_trades'],
             })
         return jsonify({'conversations': convos})
     finally:
