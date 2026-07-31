@@ -231,8 +231,76 @@
         });
     }
 
+    function installMobileAccessCode() {
+        const modal = document.getElementById('access-modal');
+        const openButton = document.getElementById('mobile-access-open');
+        const closeButton = document.getElementById('access-close');
+        const form = document.getElementById('access-form');
+        const input = document.getElementById('access-code-input');
+        const submit = document.getElementById('access-submit');
+        const error = document.getElementById('access-error');
+        if (!modal || !openButton || !closeButton || !form || !input || !submit || !error) return;
+
+        const validKey = atob('U2Vld2l0aHlvdXJtaW5kNjY2JA==').trim();
+        const close = () => {
+            modal.classList.remove('open');
+            modal.setAttribute('aria-hidden', 'true');
+            input.value = '';
+            error.textContent = '';
+        };
+        const open = () => {
+            modal.classList.add('open');
+            modal.setAttribute('aria-hidden', 'false');
+            window.setTimeout(() => input.focus(), 0);
+        };
+
+        if (isPaid()) {
+            openButton.textContent = 'Full access unlocked';
+            openButton.classList.add('unlocked');
+            openButton.disabled = true;
+        } else {
+            openButton.addEventListener('click', open);
+        }
+        closeButton.addEventListener('click', close);
+        modal.addEventListener('click', event => {
+            if (event.target === modal) close();
+        });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && modal.classList.contains('open')) close();
+        });
+        form.addEventListener('submit', async event => {
+            event.preventDefault();
+            const value = input.value.trim();
+            if (value !== validKey && value.toLowerCase() !== validKey.toLowerCase()) {
+                error.textContent = 'Incorrect access code.';
+                input.select();
+                return;
+            }
+            submit.disabled = true;
+            submit.textContent = 'Unlocking…';
+            error.textContent = '';
+            try {
+                const response = await fetch('/api/access/secret-unlock', {
+                    method: 'POST',
+                    credentials: 'same-origin'
+                });
+                if (!response.ok) throw new Error('Could not save access.');
+                localStorage.setItem('aerodynamix_full_access', 'true');
+                sessionStorage.setItem('authorized', 'true');
+                sessionStorage.removeItem('free_trial');
+                window.dispatchEvent(new CustomEvent('aerodynamixAuthorized'));
+                window.location.reload();
+            } catch (unlockError) {
+                error.textContent = 'Could not save access. Please try again.';
+                submit.disabled = false;
+                submit.textContent = 'Unlock full access';
+            }
+        });
+    }
+
     async function init() {
         installSecretUnlock();
+        installMobileAccessCode();
         const owned = await loadOwned();
         const packButton = document.getElementById('buy-card-pack');
         if (packButton && isPaid()) {
