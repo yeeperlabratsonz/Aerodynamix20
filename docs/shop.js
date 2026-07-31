@@ -191,7 +191,47 @@
         if (small) small.textContent = 'Open another pack whenever you have enough Discs';
     }
 
+    function installSecretUnlock() {
+        const sequence = ['ArrowUp', 'ArrowDown', '2', '0', '0', '5'];
+        let position = 0;
+        let activating = false;
+
+        document.addEventListener('keydown', async event => {
+            if (activating) return;
+
+            const key = event.key;
+            const expected = sequence[position];
+            if (key === expected) {
+                event.preventDefault();
+                position++;
+            } else {
+                position = key === sequence[0] ? 1 : 0;
+                if (position === 1) event.preventDefault();
+            }
+
+            if (position !== sequence.length) return;
+            position = 0;
+            activating = true;
+
+            try {
+                const response = await fetch('/api/access/secret-unlock', {
+                    method: 'POST',
+                    credentials: 'same-origin'
+                });
+                if (!response.ok) throw new Error('Could not activate access.');
+                sessionStorage.setItem('authorized', 'true');
+                sessionStorage.removeItem('free_trial');
+                window.dispatchEvent(new CustomEvent('aerodynamixAuthorized'));
+                window.location.reload();
+            } catch (error) {
+                activating = false;
+                console.error('Secret access activation failed', error);
+            }
+        });
+    }
+
     async function init() {
+        installSecretUnlock();
         const owned = await loadOwned();
         const packButton = document.getElementById('buy-card-pack');
         if (packButton && isPaid()) {

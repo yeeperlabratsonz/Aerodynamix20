@@ -5,3 +5,4 @@
 - [Trading card rarity maintenance](trading-card-rarity-maintenance.md) — card-pool size, pull weights, and normalized sell values must stay synchronized after rarity changes.
 - [Card trade safety](card-trade-safety.md) — card trades must validate server-side and reserve cards until a pending offer is resolved.
 - [Default basic access](default-basic-access.md) — the arcade starts in basic mode; alternate access remains internal and is not advertised.
+- [Shop secret full access](shop-secret-full-access.md) — Shop-only ArrowUp, ArrowDown, 2005 sequence activates the shared authorized state.

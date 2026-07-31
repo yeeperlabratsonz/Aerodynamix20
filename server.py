@@ -757,6 +757,14 @@ def get_discs():
     return jsonify({'discs': _anonymous_discs_dict()})
 
 
+@app.route('/api/access/secret-unlock', methods=['POST'])
+def secret_unlock_access():
+    """Activate the existing alternate-access state for the hidden Shop combo."""
+    session['authorized'] = True
+    session.pop('free_trial', None)
+    return jsonify({'success': True, 'authorized': True})
+
+
 @app.route('/api/trading-cards', methods=['GET'])
 def get_trading_cards():
     if 'user_id' in session:
