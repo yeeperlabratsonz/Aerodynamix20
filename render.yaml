@@ -12,6 +12,26 @@ services:
         fromDatabase:
           name: aerodynamix-db
           property: connectionString
+      - key: DEMUCS_MODEL
+        value: htdemucs_6s
+      - key: DEMUCS_DEVICE
+        value: cpu
+      - key: DEMUCS_JOBS
+        value: "0"
+      - key: DEMUCS_SEGMENT
+        value: "1"
+      - key: DEMUCS_OVERLAP
+        value: "0"
+      - key: DEMUCS_SHIFTS
+        value: "0"
+      - key: OMP_NUM_THREADS
+        value: "1"
+      - key: MKL_NUM_THREADS
+        value: "1"
+      - key: OPENBLAS_NUM_THREADS
+        value: "1"
+      - key: NUMEXPR_NUM_THREADS
+        value: "1"
 
 databases:
   - name: aerodynamix-db

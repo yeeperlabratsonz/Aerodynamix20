@@ -1493,8 +1493,10 @@ def uploaded_file(filename):
 def _run_beat_separation(job_id, job_dir, input_path, output_dir):
     model_name = os.environ.get('DEMUCS_MODEL', 'htdemucs_6s')
     device = os.environ.get('DEMUCS_DEVICE', 'cpu')
-    demucs_jobs = os.environ.get('DEMUCS_JOBS', '1')
-    demucs_segment = os.environ.get('DEMUCS_SEGMENT', '4')
+    demucs_jobs = os.environ.get('DEMUCS_JOBS', '0')
+    demucs_segment = os.environ.get('DEMUCS_SEGMENT', '1')
+    demucs_overlap = os.environ.get('DEMUCS_OVERLAP', '0')
+    demucs_shifts = os.environ.get('DEMUCS_SHIFTS', '0')
     _write_beat_job_status(job_dir, 'processing', message='AI separation is running')
     try:
         command = [
@@ -1503,13 +1505,25 @@ def _run_beat_separation(job_id, job_dir, input_path, output_dir):
             '-d', device,
             '-j', demucs_jobs,
             '--segment', demucs_segment,
+            '--overlap', demucs_overlap,
+            '--shifts', demucs_shifts,
             '-o', output_dir,
             '--int24',
             '--clip-mode', 'rescale',
             input_path,
         ]
+        demucs_env = os.environ.copy()
+        for variable in (
+            'OMP_NUM_THREADS',
+            'MKL_NUM_THREADS',
+            'OPENBLAS_NUM_THREADS',
+            'VECLIB_MAXIMUM_THREADS',
+            'NUMEXPR_NUM_THREADS',
+        ):
+            demucs_env.setdefault(variable, '1')
         result = subprocess.run(
             command,
+            env=demucs_env,
             capture_output=True,
             text=True,
             timeout=int(os.environ.get('DEMUCS_TIMEOUT_SECONDS', '1800')),
