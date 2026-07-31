@@ -134,6 +134,10 @@
             touch-action: manipulation;
         }
         .virtual-keyboard.open { display: block; }
+        .game-container.keyboard-reserved {
+            height: calc(100vh - var(--game-header-height, 7vw) - var(--virtual-keyboard-height, 0px));
+            min-height: calc(100vh - var(--game-header-height, 7vw) - var(--virtual-keyboard-height, 0px));
+        }
         .virtual-keyboard-title {
             display: flex;
             align-items: center;
@@ -338,6 +342,10 @@
                 min-height: calc(100svh - 58px - env(safe-area-inset-top));
                 border-width: 2px;
             }
+            .game-container.keyboard-reserved {
+                height: calc(100svh - 58px - env(safe-area-inset-top) - var(--virtual-keyboard-height, 0px));
+                min-height: calc(100svh - 58px - env(safe-area-inset-top) - var(--virtual-keyboard-height, 0px));
+            }
         }
 
         @media (max-width: 900px) and (orientation: landscape) and (max-height: 600px) {
@@ -370,6 +378,10 @@
                 margin-top: calc(46px + env(safe-area-inset-top));
                 height: calc(100svh - 46px - env(safe-area-inset-top));
                 min-height: calc(100svh - 46px - env(safe-area-inset-top));
+            }
+            .game-container.keyboard-reserved {
+                height: calc(100svh - 46px - env(safe-area-inset-top) - var(--virtual-keyboard-height, 0px));
+                min-height: calc(100svh - 46px - env(safe-area-inset-top) - var(--virtual-keyboard-height, 0px));
             }
             .virtual-keyboard {
                 max-height: min(72vh, 330px);
@@ -749,10 +761,25 @@
             }
         }
 
+        function syncKeyboardLayout() {
+            const gameContainer = document.querySelector('.game-container');
+            if (!gameContainer) return;
+            const isOpen = virtualKeyboard.classList.contains('open');
+            if (!isOpen || document.fullscreenElement) {
+                gameContainer.classList.remove('keyboard-reserved');
+                gameContainer.style.removeProperty('--virtual-keyboard-height');
+                return;
+            }
+            const keyboardHeight = Math.ceil(virtualKeyboard.getBoundingClientRect().height);
+            gameContainer.style.setProperty('--virtual-keyboard-height', `${keyboardHeight}px`);
+            gameContainer.classList.add('keyboard-reserved');
+        }
+
         function closeVirtualKeyboard() {
             releaseAllVirtualKeys(true);
             virtualKeyboard.classList.remove('open');
             keyboardToggle.setAttribute('aria-expanded', 'false');
+            syncKeyboardLayout();
         }
 
         keyboardToggle.addEventListener('click', () => {
@@ -760,10 +787,17 @@
             if (opening) {
                 virtualKeyboard.classList.add('open');
                 keyboardToggle.setAttribute('aria-expanded', 'true');
+                requestAnimationFrame(syncKeyboardLayout);
             } else {
                 closeVirtualKeyboard();
             }
         });
+
+        if (window.ResizeObserver) {
+            new ResizeObserver(syncKeyboardLayout).observe(virtualKeyboard);
+        }
+        window.addEventListener('resize', syncKeyboardLayout);
+        window.addEventListener('orientationchange', () => requestAnimationFrame(syncKeyboardLayout));
 
         virtualKeys.forEach(button => {
             button.addEventListener('pointerdown', event => {
@@ -856,11 +890,13 @@
             if (document.fullscreenElement) {
                 document.exitFullscreen();
             } else {
+                if (virtualKeyboard.classList.contains('open')) closeVirtualKeyboard();
                 container.requestFullscreen();
             }
         }
         document.addEventListener('fullscreenchange', () => {
             const fsActive = !!document.fullscreenElement;
+            if (fsActive && virtualKeyboard.classList.contains('open')) closeVirtualKeyboard();
             const footerIcon = document.getElementById('gf-fullscreen').querySelector('i');
             const headerIcon = document.getElementById('fs-icon-header');
             if (footerIcon) footerIcon.className = fsActive ? 'fa-solid fa-compress' : 'fa-solid fa-expand';
