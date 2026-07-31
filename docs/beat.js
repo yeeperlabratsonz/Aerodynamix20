@@ -36,6 +36,29 @@
         return `${separatorApiBase}${path.startsWith('/') ? path : `/${path}`}`;
     }
 
+    async function readApiResponse(response, fallbackMessage) {
+        const contentType = response.headers.get('content-type') || '';
+        const raw = await response.text();
+        let data = null;
+        if (raw) {
+            try {
+                data = JSON.parse(raw);
+            } catch (error) {
+                if (!response.ok) {
+                    throw new Error(`${fallbackMessage} (HTTP ${response.status})`);
+                }
+                throw new Error('The separator returned an invalid response. Please try again.');
+            }
+        }
+        if (!response.ok) {
+            throw new Error(data?.error || `${fallbackMessage} (HTTP ${response.status})`);
+        }
+        if (!data || typeof data !== 'object') {
+            throw new Error('The separator returned an empty response. Please try again.');
+        }
+        return data;
+    }
+
     const state = {
         file: null,
         context: null,
@@ -201,8 +224,8 @@
                 method: 'POST',
                 body
             });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error || 'Could not start stem separation.');
+            const result = await readApiResponse(response, 'Could not start stem separation.');
+            if (!result.job_id) throw new Error('The separator did not return a job ID. Please try again.');
             const job = await waitForSeparation(result.job_id);
             await ensureAudio();
             const decoded = await Promise.all(Object.entries(job.stems).map(async ([stem, url]) => {
@@ -237,8 +260,7 @@
             const response = await fetch(separatorApiUrl(`/api/beat-separate/${encodeURIComponent(jobId)}`), {
                 cache: 'no-store'
             });
-            const status = await response.json();
-            if (!response.ok) throw new Error(status.error || 'Could not check separation status.');
+            const status = await readApiResponse(response, 'Could not check separation status.');
             if (status.status === 'complete') return status;
             if (status.status === 'error') throw new Error(status.error || 'Stem separation failed.');
             setStatus(

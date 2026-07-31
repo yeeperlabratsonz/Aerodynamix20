@@ -13,6 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 from threading import Lock
 from io import BytesIO
 from flask import Flask, request, jsonify, session, send_from_directory, abort, Response, g
+from werkzeug.exceptions import RequestEntityTooLarge
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from sqlalchemy import create_engine, Column, String, Integer, DateTime, LargeBinary, Text, Float, Boolean, ForeignKey, text
@@ -578,6 +579,15 @@ def add_no_cache_headers(response):
             samesite='Lax'
         )
     return response
+
+
+@app.errorhandler(RequestEntityTooLarge)
+def handle_oversized_request(error):
+    if request.path.startswith('/api/'):
+        return jsonify({
+            'error': 'That audio file is larger than the 30 MB upload limit.'
+        }), 413
+    return error
 
 
 @app.route('/')
