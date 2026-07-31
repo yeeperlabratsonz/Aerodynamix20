@@ -21,6 +21,7 @@
     let undoStack = [];
     let redoStack = [];
     const maxHistory = 30;
+    const defaultCanvasSize = { width: 1200, height: 700 };
 
     function fillBlank() {
         context.save();
@@ -30,12 +31,24 @@
         context.restore();
     }
 
-    function snapshot() {
-        return context.getImageData(0, 0, canvas.width, canvas.height);
+    function resizeCanvas(width, height) {
+        canvas.width = Math.max(1, Math.round(width));
+        canvas.height = Math.max(1, Math.round(height));
     }
 
-    function restore(imageData) {
-        context.putImageData(imageData, 0, 0);
+    function snapshot() {
+        return {
+            width: canvas.width,
+            height: canvas.height,
+            imageData: context.getImageData(0, 0, canvas.width, canvas.height)
+        };
+    }
+
+    function restore(state) {
+        if (canvas.width !== state.width || canvas.height !== state.height) {
+            resizeCanvas(state.width, state.height);
+        }
+        context.putImageData(state.imageData, 0, 0);
     }
 
     function updateHistoryButtons() {
@@ -105,6 +118,7 @@
 
     function resetToBlank() {
         saveHistory();
+        resizeCanvas(defaultCanvasSize.width, defaultCanvasSize.height);
         fillBlank();
     }
 
@@ -124,7 +138,8 @@
 
     function clearCanvas() {
         if (!window.confirm('Clear the canvas? This can be undone.')) return;
-        resetToBlank();
+        saveHistory();
+        fillBlank();
     }
 
     function loadImage(file) {
@@ -134,11 +149,8 @@
             const image = new Image();
             image.onload = () => {
                 saveHistory();
-                fillBlank();
-                const scale = Math.min(canvas.width / image.width, canvas.height / image.height);
-                const width = image.width * scale;
-                const height = image.height * scale;
-                context.drawImage(image, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
+                resizeCanvas(image.naturalWidth || image.width, image.naturalHeight || image.height);
+                context.drawImage(image, 0, 0, canvas.width, canvas.height);
             };
             image.src = reader.result;
         };

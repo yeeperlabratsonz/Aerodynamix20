@@ -69,7 +69,7 @@
 .primary-button:hover { filter: brightness(1.12); }
 .upload-button { cursor: pointer; }
 .canvas-stage { padding: clamp(.75rem, 2vw, 1.5rem); background: #070b15; }
-#drawing-canvas { display: block; width: 100%; height: auto; aspect-ratio: 12 / 7; border: 1px solid rgba(125,184,255,.22); border-radius: 10px; background: #fff; box-shadow: 0 12px 35px rgba(0,0,0,.35); cursor: crosshair; touch-action: none; }
+#drawing-canvas { display: block; width: 100%; height: auto; border: 1px solid rgba(125,184,255,.22); border-radius: 10px; background: #fff; box-shadow: 0 12px 35px rgba(0,0,0,.35); cursor: crosshair; touch-action: none; }
 .drawing-hint { margin: 0; padding: .75rem 1rem 1rem; color: rgba(255,255,255,.42); font-size: .68rem; text-align: center; }
 .drawing-hint i { margin-right: .3rem; color: #8ec5ff; }
 
