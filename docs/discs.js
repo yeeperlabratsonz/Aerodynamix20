@@ -10,6 +10,22 @@
     };
 
     const VISUAL_THEMES = ['frutiger-aero', 'purple', 'blue', 'christmas', 'bubble-gum-pink'];
+    const GAME_ID_GROUPS = [
+        ['games/run-3/', 'attached_assets/clrun3_1785269152832.html', 'attached_assets/clrun3_1784864951393.html'],
+        ['games/drive-mad/', 'attached_assets/cldrivemad_1785269192927.html'],
+        ['games/retro-bowl/', 'attached_assets/clretrobowl_1785269280952.html'],
+        ['games/minecraft/', 'attached_assets/Eaglercraft1.12_1785377874032.html'],
+        ['attached_assets/Hobo_1_1784866297260.html', 'attached_assets/hobo-fixed-1.html'],
+        ['attached_assets/Hobo_2_1784866273340.html', 'attached_assets/hobo-fixed-2.html'],
+        ['attached_assets/Hobo_3_1784866253185.html', 'attached_assets/hobo-fixed-3.html'],
+        ['attached_assets/Hobo_4_1784866216457.html', 'attached_assets/hobo-fixed-4.html'],
+        ['attached_assets/Hobo_5_1784866218574.html', 'attached_assets/hobo-fixed-5.html'],
+        ['attached_assets/Hobo_6_1784866220679.html', 'attached_assets/hobo-fixed-6.html'],
+        ['attached_assets/Hobo_7_1784866222995.html', 'attached_assets/hobo-fixed-7.html']
+    ];
+    const GAME_ID_LOOKUP = new Map(
+        GAME_ID_GROUPS.flatMap(group => group.map(id => [id, group[0]]))
+    );
 
     function isPaid()    { return sessionStorage.getItem('authorized') === 'true'; }
     function isFreeTrial(){ return sessionStorage.getItem('free_trial') === 'true'; }
@@ -144,6 +160,14 @@
         }
     }
 
+    function normalizeGameId(game) {
+        return GAME_ID_LOOKUP.get(String(game || '')) || String(game || '');
+    }
+
+    function gameIdsMatch(first, second) {
+        return normalizeGameId(first) === normalizeGameId(second);
+    }
+
     function addPurchasedGame(game) {
         const games = getPurchasedGames();
         if (!games.includes(game)) {
@@ -242,6 +266,8 @@
         purchaseTheme,
         unlockMedia,
         hasVisualTheme,
+        normalizeGameId,
+        gameIdsMatch,
         tryLaunchGame,
         tryUnlockMedia,
         tryUseTheme,

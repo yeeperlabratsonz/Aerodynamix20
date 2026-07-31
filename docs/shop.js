@@ -17,6 +17,13 @@
         localStorage.setItem('aerodynamixPurchasedGames', JSON.stringify(games));
     }
 
+    function ownsGame(owned, game) {
+        return owned.some(purchased => window.AeroDiscs &&
+            window.AeroDiscs.gameIdsMatch
+                ? window.AeroDiscs.gameIdsMatch(purchased, game)
+                : purchased === game);
+    }
+
     function gameBuyLabel(label = 'Buy for 100') {
         return `${label} ${window.AeroDiscs && window.AeroDiscs.discIconHTML
             ? window.AeroDiscs.discIconHTML('sm')
@@ -315,7 +322,7 @@
             if (card.classList.contains('theme-shop-card')) return;
             const button = card.querySelector('.shop-buy');
             if (!button) return;
-            if (isPaid() || owned.includes(card.dataset.game)) {
+            if (isPaid() || ownsGame(owned, card.dataset.game)) {
                 card.classList.add('owned');
                 button.textContent = isPaid() ? 'Included' : 'Owned';
                 button.disabled = true;

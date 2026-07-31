@@ -36,7 +36,8 @@
         let visible = 0;
         gameLinks.forEach(link => {
             const game = new URL(link.href, window.location.href).searchParams.get('game');
-            const show = !trial || owned.includes(game);
+            const show = !trial || owned.some(purchased => window.AeroDiscs &&
+                window.AeroDiscs.gameIdsMatch(purchased, game));
             link.hidden = !show;
             if (show) visible++;
         });

@@ -460,7 +460,8 @@
 
         function isGamePurchased() {
             if (!window.AeroDiscs || !window.AeroDiscs.getPurchasedGames) return false;
-            return window.AeroDiscs.getPurchasedGames().includes(gamePath);
+            const purchased = window.AeroDiscs.getPurchasedGames();
+            return purchased.some(game => window.AeroDiscs.gameIdsMatch(game, gamePath));
         }
 
         async function syncPurchasedGames() {
