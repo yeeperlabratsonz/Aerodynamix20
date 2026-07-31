@@ -25,6 +25,7 @@
     const songEmpty = document.getElementById('song-empty');
     const songLoaded = document.getElementById('song-loaded');
     const songToggle = document.getElementById('song-toggle');
+    const songSeparate = document.getElementById('song-separate');
     const songRemove = document.getElementById('song-remove');
     const songName = document.getElementById('song-name');
     const songDuration = document.getElementById('song-duration');
@@ -38,6 +39,10 @@
     const songVolumeValue = document.getElementById('song-volume-value');
     const songTone = document.getElementById('song-tone');
     const songLoop = document.getElementById('song-loop');
+    const songNote = document.getElementById('song-note');
+    const stemMixer = document.getElementById('stem-mixer');
+    const stemGrid = document.getElementById('stem-grid');
+    const stemMode = document.getElementById('stem-mode');
     const audio = {
         context: null,
         master: null,
@@ -55,7 +60,12 @@
         startedAt: 0,
         playing: false,
         stopping: false,
-        raf: null
+        raf: null,
+        file: null,
+        stems: {},
+        stemSources: {},
+        stemGains: {},
+        stemMuted: {}
     };
 
     const pattern = Object.fromEntries(TRACKS.map(track => [track.id, new Set(track.defaultSteps)]));
@@ -157,6 +167,50 @@
         if (song.gain) song.gain.gain.value = Number(songVolume.value) / 100;
     }
 
+    function stopStemSources() {
+        Object.values(song.stemSources).forEach(source => {
+            try { source.stop(); } catch (error) { /* already stopped */ }
+            try { source.disconnect(); } catch (error) { /* already disconnected */ }
+        });
+        song.stemSources = {};
+        song.stemGains = {};
+    }
+
+    function updateStemGain(stem) {
+        const gain = song.stemGains[stem];
+        const volume = document.querySelector(`[data-stem-volume="${stem}"]`);
+        if (gain) gain.gain.value = song.stemMuted[stem] ? 0 : (Number(volume?.value || 80) / 100) * (Number(songVolume.value) / 100);
+    }
+
+    function createStemSources(offset) {
+        const stems = Object.keys(song.stems);
+        stems.forEach(stem => {
+            const source = audio.context.createBufferSource();
+            const gain = audio.context.createGain();
+            source.buffer = song.stems[stem];
+            source.loop = songLoop.checked;
+            source.playbackRate.value = Number(songSpeed.value) / 100;
+            source.detune.value = Number(songPitch.value) * 100;
+            source.connect(gain).connect(audio.master);
+            song.stemSources[stem] = source;
+            song.stemGains[stem] = gain;
+            updateStemGain(stem);
+            source.start(audio.context.currentTime, Math.max(0, Math.min(offset, source.buffer.duration - .001)));
+        });
+        const firstStem = song.stemSources[stems[0]];
+        if (firstStem) {
+            firstStem.onended = () => {
+                if (song.stopping || songLoop.checked) return;
+                song.playing = false;
+                song.offset = 0;
+                songProgress.value = 0;
+                songTime.textContent = '0:00';
+                song.stemSources = {};
+                updateSongButton();
+            };
+        }
+    }
+
     function connectSongSource(source) {
         if (!song.filter) {
             song.filter = audio.context.createBiquadFilter();
@@ -204,12 +258,22 @@
         await ensureAudio();
         song.stopping = false;
         song.startedAt = audio.context.currentTime;
-        song.source = createSongSource(song.offset);
+        if (stemMode.checked && Object.keys(song.stems).length) {
+            createStemSources(song.offset);
+        } else {
+            song.source = createSongSource(song.offset);
+        }
         song.playing = true;
         updateSongButton();
     }
 
     function stopSong(resetPosition) {
+        if (song.playing && Object.keys(song.stemSources).length) {
+            song.offset = songPosition();
+            if (songLoop.checked) song.offset %= song.buffer.duration;
+            song.stopping = true;
+            stopStemSources();
+        }
         if (song.playing && song.source) {
             song.offset = songPosition();
             if (songLoop.checked) song.offset %= song.buffer.duration;
@@ -241,6 +305,13 @@
             await ensureAudio();
             const data = await file.arrayBuffer();
             song.buffer = await audio.context.decodeAudioData(data);
+            song.file = file;
+            song.stems = {};
+            song.stemSources = {};
+            song.stemGains = {};
+            song.stemMuted = {};
+            stemMixer.hidden = true;
+            stemMode.checked = false;
             song.offset = 0;
             songName.textContent = file.name;
             songDuration.textContent = formatTime(song.buffer.duration);
@@ -249,6 +320,9 @@
             songTime.textContent = '0:00';
             songEmpty.hidden = true;
             songLoaded.hidden = false;
+            songSeparate.disabled = false;
+            songSeparate.innerHTML = '<i class="fas fa-scissors"></i><span>Separate stems</span>';
+            songNote.innerHTML = '<i class="fas fa-circle-info"></i> Separate this song into real vocals, drums, bass, and other stems. Separation runs on the server and may take a few minutes.';
             setStatus('Song loaded — press Play to layer your beat');
         } catch (error) {
             song.buffer = null;
@@ -261,10 +335,65 @@
     function removeSong() {
         stopSong(true);
         song.buffer = null;
-        song.name = '';
+        song.file = null;
+        song.stems = {};
+        song.stemSources = {};
+        song.stemGains = {};
+        song.stemMuted = {};
         songEmpty.hidden = false;
         songLoaded.hidden = true;
+        stemMixer.hidden = true;
         setStatus('Ready to make a loop');
+    }
+
+    async function separateSong() {
+        if (!song.file || songSeparate.disabled) return;
+        stopSong(false);
+        songSeparate.disabled = true;
+        songSeparate.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Separating…</span>';
+        songNote.innerHTML = '<i class="fas fa-hourglass-half"></i> Separating vocals, drums, bass, and other. This can take a few minutes for longer songs.';
+        try {
+            const body = new FormData();
+            body.append('file', song.file);
+            const response = await fetch('/api/beat-separate', { method: 'POST', body });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || 'Stem separation failed');
+            const decoded = await Promise.all(Object.entries(result.stems).map(async ([stem, url]) => {
+                const stemResponse = await fetch(url);
+                if (!stemResponse.ok) throw new Error(`Could not load ${stem} stem`);
+                return [stem, await audio.context.decodeAudioData(await stemResponse.arrayBuffer())];
+            }));
+            song.stems = Object.fromEntries(decoded);
+            song.stemMuted = Object.fromEntries(Object.keys(song.stems).map(stem => [stem, false]));
+            renderStemMixer();
+            stemMixer.hidden = false;
+            songNote.innerHTML = '<i class="fas fa-circle-check"></i> Real stems ready. Toggle “Play separated stems” to edit the mix.';
+            songSeparate.innerHTML = '<i class="fas fa-check"></i><span>Stems ready</span>';
+        } catch (error) {
+            songNote.innerHTML = `<i class="fas fa-triangle-exclamation"></i> ${error.message}`;
+            songSeparate.innerHTML = '<i class="fas fa-scissors"></i><span>Try again</span>';
+            songSeparate.disabled = false;
+        }
+    }
+
+    function renderStemMixer() {
+        const colors = { vocals: '#d994f4', drums: '#ef6f8f', bass: '#73a8ff', other: '#67ddc0' };
+        const icons = { vocals: 'microphone', drums: 'drum', bass: 'music', other: 'wave-square' };
+        stemGrid.innerHTML = '';
+        Object.keys(song.stems).forEach(stem => {
+            const channel = document.createElement('div');
+            channel.className = 'stem-channel';
+            channel.style.setProperty('--stem-color', colors[stem] || '#83e6d1');
+            channel.innerHTML = `<div class="stem-channel-top"><span><i class="fas fa-${icons[stem] || 'wave-square'}"></i>${stem[0].toUpperCase() + stem.slice(1)}</span><button class="stem-mute" type="button" data-stem-mute="${stem}" aria-label="Mute ${stem}"><i class="fas fa-volume-high"></i></button></div><input type="range" min="0" max="100" value="80" data-stem-volume="${stem}" aria-label="${stem} volume">`;
+            channel.querySelector('[data-stem-volume]').addEventListener('input', () => updateStemGain(stem));
+            channel.querySelector('[data-stem-mute]').addEventListener('click', event => {
+                song.stemMuted[stem] = !song.stemMuted[stem];
+                event.currentTarget.classList.toggle('is-muted', song.stemMuted[stem]);
+                event.currentTarget.innerHTML = `<i class="fas fa-volume-${song.stemMuted[stem] ? 'xmark' : 'high'}"></i>`;
+                updateStemGain(stem);
+            });
+            stemGrid.appendChild(channel);
+        });
     }
 
     function noiseBuffer() {
@@ -450,6 +579,10 @@
         else startSong();
     });
     songRemove.addEventListener('click', removeSong);
+    songSeparate.addEventListener('click', separateSong);
+    stemMode.addEventListener('change', () => {
+        if (song.playing) restartSongAtPosition();
+    });
     songProgress.addEventListener('input', () => {
         song.offset = Number(songProgress.value);
         songTime.textContent = formatTime(song.offset);
@@ -467,6 +600,7 @@
     songVolume.addEventListener('input', () => {
         songVolumeValue.textContent = `${songVolume.value}%`;
         updateSongGain();
+        Object.keys(song.stems).forEach(updateStemGain);
     });
     songTone.addEventListener('change', updateSongFilter);
     songLoop.addEventListener('change', () => {

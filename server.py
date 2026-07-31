@@ -5,6 +5,10 @@ import re
 import uuid
 import random
 import mimetypes
+import shutil
+import subprocess
+import sys
+import time
 from io import BytesIO
 from flask import Flask, request, jsonify, session, send_from_directory, abort, Response, g
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -22,11 +26,13 @@ if DATABASE_URL.startswith('postgres://'):
     DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
 
 UPLOAD_FOLDER = 'docs/uploads'
+BEAT_STEMS_FOLDER = 'docs/beat-stems'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'}
+ALLOWED_AUDIO_EXTENSIONS = {'mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac', 'webm'}
 
 app = Flask(__name__, static_folder='docs', static_url_path='')
 app.secret_key = os.environ.get('SESSION_SECRET', 'dev-secret-key')
-app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB max upload
+app.config['MAX_CONTENT_LENGTH'] = 30 * 1024 * 1024  # 30 MB max upload
 
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 Base = declarative_base()
@@ -178,10 +184,29 @@ for _col, _typedef in _new_user_cols:
         pass
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(BEAT_STEMS_FOLDER, exist_ok=True)
 
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def allowed_audio_file(filename):
+    return (
+        bool(filename)
+        and '.' in filename
+        and filename.rsplit('.', 1)[1].lower() in ALLOWED_AUDIO_EXTENSIONS
+    )
+
+
+def _cleanup_old_beat_stems(max_age_seconds=3600):
+    cutoff = time.time() - max_age_seconds
+    try:
+        for entry in os.scandir(BEAT_STEMS_FOLDER):
+            if entry.is_dir() and entry.stat().st_mtime < cutoff:
+                shutil.rmtree(entry.path, ignore_errors=True)
+    except OSError:
+        pass
 
 
 def user_to_dict(user):
@@ -1410,6 +1435,77 @@ def uploaded_file(filename):
             mimetype=post.image_mimetype or mimetypes.guess_type(filename)[0] or 'application/octet-stream'
         )
     abort(404)
+
+
+@app.route('/api/beat-separate', methods=['POST'])
+def separate_beat_song():
+    file = request.files.get('file')
+    if not file or not file.filename:
+        return jsonify({'error': 'Choose an audio file first'}), 400
+    if not allowed_audio_file(file.filename):
+        return jsonify({'error': 'Unsupported audio format'}), 400
+
+    _cleanup_old_beat_stems()
+    job_id = uuid.uuid4().hex
+    job_dir = os.path.join(BEAT_STEMS_FOLDER, job_id)
+    input_dir = os.path.join(job_dir, 'input')
+    output_dir = os.path.join(job_dir, 'output')
+    os.makedirs(input_dir, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
+    input_path = os.path.join(input_dir, 'song.' + secure_filename(file.filename).rsplit('.', 1)[1].lower())
+
+    try:
+        file.save(input_path)
+        command = [
+            sys.executable, '-m', 'demucs.separate',
+            '-n', os.environ.get('DEMUCS_MODEL', 'htdemucs'),
+            '-o', output_dir,
+            '--float32',
+            '--clip-mode', 'rescale',
+            input_path,
+        ]
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=int(os.environ.get('DEMUCS_TIMEOUT_SECONDS', '900')),
+            check=False,
+        )
+        if result.returncode != 0:
+            app.logger.error('Demucs separation failed: %s', result.stderr[-4000:])
+            shutil.rmtree(job_dir, ignore_errors=True)
+            return jsonify({'error': 'Stem separation failed. Try a shorter audio file.'}), 500
+
+        model_dir = os.path.join(output_dir, os.environ.get('DEMUCS_MODEL', 'htdemucs'), 'song')
+        stems = {}
+        for stem in ('vocals', 'drums', 'bass', 'other'):
+            stem_path = os.path.join(model_dir, stem + '.wav')
+            if not os.path.isfile(stem_path):
+                shutil.rmtree(job_dir, ignore_errors=True)
+                return jsonify({'error': 'The separator did not produce all expected stems'}), 500
+            stems[stem] = f'/api/beat-stems/{job_id}/{stem}.wav'
+
+        return jsonify({
+            'job_id': job_id,
+            'model': os.environ.get('DEMUCS_MODEL', 'htdemucs'),
+            'stems': stems,
+        })
+    except subprocess.TimeoutExpired:
+        app.logger.warning('Demucs separation timed out for job %s', job_id)
+        shutil.rmtree(job_dir, ignore_errors=True)
+        return jsonify({'error': 'Stem separation timed out. Try a shorter audio file.'}), 504
+    except Exception:
+        app.logger.exception('Unexpected stem separation failure')
+        shutil.rmtree(job_dir, ignore_errors=True)
+        return jsonify({'error': 'Stem separation is temporarily unavailable'}), 500
+
+
+@app.route('/api/beat-stems/<job_id>/<stem>.wav')
+def beat_stem_file(job_id, stem):
+    if not re.fullmatch(r'[a-f0-9]{32}', job_id) or stem not in {'vocals', 'drums', 'bass', 'other'}:
+        abort(404)
+    job_dir = os.path.join(BEAT_STEMS_FOLDER, job_id, 'output', os.environ.get('DEMUCS_MODEL', 'htdemucs'), 'song')
+    return send_from_directory(job_dir, stem + '.wav', mimetype='audio/wav', max_age=3600)
 
 
 # ── Comments ──────────────────────────────────────────────────────────────────

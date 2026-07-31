@@ -7,3 +7,4 @@
 - [Default basic access](default-basic-access.md) — the arcade starts in basic mode; alternate access remains internal and is not advertised.
 - [Shop secret full access](shop-secret-full-access.md) — Shop-only ArrowUp, ArrowDown, 2005 sequence activates the shared authorized state.
 - [Imported song editing](imported-song-editing.md) — Beat Lab treats imported songs as full mixes and layers editable generated tracks over them.
+- [Beat Lab stem separation](beat-lab-stem-separation.md) — real Demucs separation runs server-side and returns temporary vocals, drums, bass, and other WAV stems.
