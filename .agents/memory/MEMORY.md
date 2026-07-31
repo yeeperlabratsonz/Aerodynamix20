@@ -6,7 +6,4 @@
 - [Card trade safety](card-trade-safety.md) — card trades must validate server-side and reserve cards until a pending offer is resolved.
 - [Default basic access](default-basic-access.md) — the arcade starts in basic mode; alternate access remains internal and is not advertised.
 - [Shop secret full access](shop-secret-full-access.md) — Shop-only ArrowUp, ArrowDown, 2005 sequence activates the shared authorized state.
-- [Imported song editing](imported-song-editing.md) — Stem Studio focuses exclusively on separating imported songs into editable stems.
-- [Beat Lab stem separation](beat-lab-stem-separation.md) — real Demucs separation runs server-side and returns temporary vocals, drums, bass, and other WAV stems.
 - [Render deployment sync](render-deployment-sync.md) — the connected Render service may not auto-deploy GitHub main; verify the live build before debugging stale production behavior.
-- [Render Demucs resource ceiling](render-demucs-resource-ceiling.md) — even htdemucs_6s with strict CPU limits is killed by Render free during inference; actual separation needs a larger worker.

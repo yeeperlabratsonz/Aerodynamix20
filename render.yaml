@@ -2,9 +2,9 @@ services:
   - type: web
     name: aerodynamix
     env: python
-    plan: standard
+    plan: starter
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "DEMUCS_MODEL=83fc094f gunicorn --workers 1 --threads 1 --timeout 2100 -b 0.0.0.0:$PORT server:app"
+    startCommand: "gunicorn --workers 1 --threads 2 --timeout 120 -b 0.0.0.0:$PORT server:app"
     envVars:
       - key: SESSION_SECRET
         generateValue: true
@@ -12,26 +12,6 @@ services:
         fromDatabase:
           name: aerodynamix-db
           property: connectionString
-      - key: DEMUCS_MODEL
-        value: 83fc094f
-      - key: DEMUCS_DEVICE
-        value: cpu
-      - key: DEMUCS_JOBS
-        value: "0"
-      - key: DEMUCS_SEGMENT
-        value: "1"
-      - key: DEMUCS_OVERLAP
-        value: "0"
-      - key: DEMUCS_SHIFTS
-        value: "0"
-      - key: OMP_NUM_THREADS
-        value: "1"
-      - key: MKL_NUM_THREADS
-        value: "1"
-      - key: OPENBLAS_NUM_THREADS
-        value: "1"
-      - key: NUMEXPR_NUM_THREADS
-        value: "1"
 
 databases:
   - name: aerodynamix-db
