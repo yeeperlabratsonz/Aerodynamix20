@@ -426,6 +426,42 @@ def _set_session_trading_cards(cards):
     session['trading_cards'] = cards
 
 
+def _merge_session_trading_cards(user, db):
+    """Move cards collected before login into the authenticated inventory."""
+    pending = _get_session_trading_cards()
+    if not isinstance(pending, list) or not pending:
+        return False
+
+    try:
+        owned = json.loads(user.trading_cards or '[]') if user.trading_cards else []
+    except (TypeError, ValueError):
+        owned = []
+    if not isinstance(owned, list):
+        owned = []
+
+    existing_ids = {
+        str(card.get('id'))
+        for card in owned
+        if isinstance(card, dict) and card.get('id')
+    }
+    merged = owned + [
+        card for card in pending
+        if isinstance(card, dict)
+        and card.get('id')
+        and str(card['id']) not in existing_ids
+    ]
+    if len(merged) == len(owned):
+        session.pop('trading_cards', None)
+        return False
+
+    user.trading_cards = json.dumps(merged)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    session.pop('trading_cards', None)
+    return True
+
+
 def _get_session_purchased_themes():
     try:
         return json.loads(session.get('purchased_themes', '[]') or '[]')
@@ -565,6 +601,7 @@ def register():
         db.add(user)
         db.commit()
         db.refresh(user)
+        _merge_session_trading_cards(user, db)
         _maybe_award_first_login_bonus(user, db)
         session['user_id']  = user.id
         session['username'] = user.username
@@ -585,16 +622,18 @@ def login():
     username = (data.get('username') or '').strip()
     password = (data.get('password') or '').strip()
 
-    db   = DBSession()
-    user = db.query(User).filter_by(username=username).first()
-    db.close()
-
-    if user and check_password_hash(user.password_hash, password):
-        _maybe_award_first_login_bonus(user, db)
-        session['user_id']  = user.id
-        session['username'] = user.username
-        return jsonify({'success': True, 'user': user_to_dict(user)})
-    return jsonify({'error': 'Invalid username or password'}), 401
+    db = DBSession()
+    try:
+        user = db.query(User).filter_by(username=username).first()
+        if user and check_password_hash(user.password_hash, password):
+            _merge_session_trading_cards(user, db)
+            _maybe_award_first_login_bonus(user, db)
+            session['user_id'] = user.id
+            session['username'] = user.username
+            return jsonify({'success': True, 'user': user_to_dict(user)})
+        return jsonify({'error': 'Invalid username or password'}), 401
+    finally:
+        db.close()
 
 
 @app.route('/api/logout', methods=['POST'])
@@ -1576,7 +1615,12 @@ def _card_map(cards):
 
 
 def _locked_card_ids(db):
-    return {str(row.card_id) for row in db.query(TradeCardLock).all()}
+    return {
+        str(row.card_id)
+        for row in db.query(TradeCardLock).join(
+            TradeOffer, TradeOffer.id == TradeCardLock.trade_id
+        ).filter(TradeOffer.status == 'pending').all()
+    }
 
 
 def _is_accepted_friend(db, uid, other_id):
