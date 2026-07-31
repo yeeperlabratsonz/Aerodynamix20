@@ -1497,7 +1497,12 @@ def _run_beat_separation(job_id, job_dir, input_path, output_dir):
     demucs_segment = os.environ.get('DEMUCS_SEGMENT', '1')
     demucs_overlap = os.environ.get('DEMUCS_OVERLAP', '0')
     demucs_shifts = os.environ.get('DEMUCS_SHIFTS', '0')
-    _write_beat_job_status(job_dir, 'processing', message='AI separation is running')
+    _write_beat_job_status(
+        job_dir,
+        'processing',
+        message=f'AI separation is running with {model_name}',
+        model=model_name,
+    )
     try:
         command = [
             sys.executable, '-m', 'demucs.separate',
