@@ -1492,13 +1492,19 @@ def uploaded_file(filename):
 
 def _run_beat_separation(job_id, job_dir, input_path, output_dir):
     model_name = os.environ.get('DEMUCS_MODEL', 'htdemucs')
+    device = os.environ.get('DEMUCS_DEVICE', 'cpu')
+    demucs_jobs = os.environ.get('DEMUCS_JOBS', '1')
+    demucs_segment = os.environ.get('DEMUCS_SEGMENT', '4')
     _write_beat_job_status(job_dir, 'processing', message='AI separation is running')
     try:
         command = [
             sys.executable, '-m', 'demucs.separate',
             '-n', model_name,
+            '-d', device,
+            '-j', demucs_jobs,
+            '--segment', demucs_segment,
             '-o', output_dir,
-            '--float32',
+            '--int24',
             '--clip-mode', 'rescale',
             input_path,
         ]

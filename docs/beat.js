@@ -37,7 +37,6 @@
     }
 
     async function readApiResponse(response, fallbackMessage) {
-        const contentType = response.headers.get('content-type') || '';
         const raw = await response.text();
         let data = null;
         if (raw) {
@@ -45,13 +44,17 @@
                 data = JSON.parse(raw);
             } catch (error) {
                 if (!response.ok) {
-                    throw new Error(`${fallbackMessage} (HTTP ${response.status})`);
+                    const responseError = new Error(`${fallbackMessage} (HTTP ${response.status})`);
+                    responseError.httpStatus = response.status;
+                    throw responseError;
                 }
                 throw new Error('The separator returned an invalid response. Please try again.');
             }
         }
         if (!response.ok) {
-            throw new Error(data?.error || `${fallbackMessage} (HTTP ${response.status})`);
+            const responseError = new Error(data?.error || `${fallbackMessage} (HTTP ${response.status})`);
+            responseError.httpStatus = response.status;
+            throw responseError;
         }
         if (!data || typeof data !== 'object') {
             throw new Error('The separator returned an empty response. Please try again.');
@@ -256,19 +259,31 @@
     async function waitForSeparation(jobId) {
         const startedAt = Date.now();
         const maxWaitMs = 30 * 60 * 1000;
+        let transientFailures = 0;
         while (Date.now() - startedAt < maxWaitMs) {
-            const response = await fetch(separatorApiUrl(`/api/beat-separate/${encodeURIComponent(jobId)}`), {
-                cache: 'no-store'
-            });
-            const status = await readApiResponse(response, 'Could not check separation status.');
-            if (status.status === 'complete') return status;
-            if (status.status === 'error') throw new Error(status.error || 'Stem separation failed.');
-            setStatus(
-                status.status === 'queued'
-                    ? 'Your song is queued for the AI separator.'
-                    : 'AI separation is still processing. You can keep this page open.',
-                status.status === 'queued' ? 'clock' : 'hourglass-half'
-            );
+            try {
+                const response = await fetch(separatorApiUrl(`/api/beat-separate/${encodeURIComponent(jobId)}`), {
+                    cache: 'no-store'
+                });
+                const status = await readApiResponse(response, 'Could not check separation status.');
+                transientFailures = 0;
+                if (status.status === 'complete') return status;
+                if (status.status === 'error') throw new Error(status.error || 'Stem separation failed.');
+                setStatus(
+                    status.status === 'queued'
+                        ? 'Your song is queued for the AI separator.'
+                        : 'AI separation is still processing. You can keep this page open.',
+                    status.status === 'queued' ? 'clock' : 'hourglass-half'
+                );
+            } catch (error) {
+                const isTransient = !error.httpStatus || error.httpStatus >= 500;
+                if (!isTransient || transientFailures >= 8) throw error;
+                transientFailures += 1;
+                setStatus(
+                    'The AI server is briefly reconnecting. Waiting for the separation job…',
+                    'rotate'
+                );
+            }
             await new Promise(resolve => window.setTimeout(resolve, 2000));
         }
         throw new Error('Stem separation took too long. Try a shorter song.');
