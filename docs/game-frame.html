@@ -150,6 +150,29 @@
             letter-spacing: .08em;
             text-transform: uppercase;
         }
+        .virtual-keyboard-more {
+            flex: 0 0 auto;
+            padding: .28rem .5rem;
+            border: 1px solid rgba(130, 183, 255, .28);
+            border-radius: 6px;
+            color: #cfe3ff;
+            background: rgba(44, 127, 252, .14);
+            font: 800 .57rem 'Montserrat', sans-serif;
+            letter-spacing: .02em;
+            cursor: pointer;
+            text-transform: none;
+        }
+        .virtual-keyboard-more:hover {
+            background: rgba(44, 127, 252, .3);
+            border-color: rgba(130, 183, 255, .55);
+        }
+        .virtual-keyboard:not(.expanded) .full-keyboard-layout,
+        .virtual-keyboard.expanded .compact-keyboard-layout {
+            display: none;
+        }
+        .compact-keyboard-layout .virtual-keyboard-row {
+            margin-top: .3rem;
+        }
         .virtual-keyboard-title span:last-child {
             color: rgba(255, 255, 255, .46);
             font-size: .58rem;
@@ -390,6 +413,7 @@
             .virtual-keyboard-title { margin-bottom: .25rem; }
             .virtual-keyboard-row { gap: .2rem; margin-top: .2rem; }
             .virtual-key { min-height: 30px; padding: .2rem .12rem; font-size: .55rem; }
+            .virtual-keyboard-more { padding: .2rem .35rem; font-size: .5rem; }
         }
         .game-footer.visible { display: flex; }
 
@@ -523,83 +547,106 @@
     <section class="virtual-keyboard" id="virtual-keyboard" aria-label="On-screen keyboard">
         <div class="virtual-keyboard-title">
             <span><i class="fa-solid fa-keyboard"></i> On-screen keyboard</span>
-            <span>Hold keys for movement and controls</span>
+            <button class="virtual-keyboard-more" id="virtual-keyboard-more" type="button" aria-expanded="false">More keys</button>
+        </div>
+        <div class="compact-keyboard-layout">
+            <div class="virtual-keyboard-row">
+                <button class="virtual-key small-label wide" type="button" data-key="Escape" data-code="Escape">Esc</button>
+                <button class="virtual-key" type="button" data-key="w" data-code="KeyW">W</button>
+                <button class="virtual-key arrow-key" type="button" data-key="ArrowUp" data-code="ArrowUp">↑</button>
+                <button class="virtual-key small-label wide" type="button" data-key="Enter" data-code="Enter">Enter</button>
+            </div>
+            <div class="virtual-keyboard-row">
+                <button class="virtual-key small-label wide" type="button" data-key="Control" data-code="ControlLeft" data-latch="true">Ctrl</button>
+                <button class="virtual-key" type="button" data-key="a" data-code="KeyA">A</button>
+                <button class="virtual-key" type="button" data-key="s" data-code="KeyS">S</button>
+                <button class="virtual-key" type="button" data-key="d" data-code="KeyD">D</button>
+                <button class="virtual-key small-label wide" type="button" data-key="Shift" data-code="ShiftLeft" data-latch="true">Shift</button>
+            </div>
+            <div class="virtual-keyboard-row">
+                <button class="virtual-key extra-wide" type="button" data-key=" " data-code="Space">Space</button>
+                <button class="virtual-key arrow-key" type="button" data-key="ArrowLeft" data-code="ArrowLeft">←</button>
+                <button class="virtual-key arrow-key" type="button" data-key="ArrowDown" data-code="ArrowDown">↓</button>
+                <button class="virtual-key arrow-key" type="button" data-key="ArrowRight" data-code="ArrowRight">→</button>
+            </div>
+        </div>
+        <div class="full-keyboard-layout">
+        <div class="virtual-keyboard-row">
+            <button class="virtual-key small-label wide advanced-key" type="button" data-key="Escape" data-code="Escape">Esc</button>
+            <button class="virtual-key advanced-key" type="button" data-key="F1" data-code="F1">F1</button>
+            <button class="virtual-key advanced-key" type="button" data-key="F2" data-code="F2">F2</button>
+            <button class="virtual-key advanced-key" type="button" data-key="F3" data-code="F3">F3</button>
+            <button class="virtual-key advanced-key" type="button" data-key="F4" data-code="F4">F4</button>
+            <button class="virtual-key advanced-key" type="button" data-key="F5" data-code="F5">F5</button>
+            <button class="virtual-key advanced-key" type="button" data-key="F6" data-code="F6">F6</button>
+            <button class="virtual-key advanced-key" type="button" data-key="F7" data-code="F7">F7</button>
+            <button class="virtual-key advanced-key" type="button" data-key="F8" data-code="F8">F8</button>
+            <button class="virtual-key advanced-key" type="button" data-key="F9" data-code="F9">F9</button>
+            <button class="virtual-key advanced-key" type="button" data-key="F10" data-code="F10">F10</button>
+        </div>
+        <div class="virtual-keyboard-row advanced-keyboard-row">
+            <button class="virtual-key advanced-key" type="button" data-key="1" data-code="Digit1">1</button>
+            <button class="virtual-key advanced-key" type="button" data-key="2" data-code="Digit2">2</button>
+            <button class="virtual-key advanced-key" type="button" data-key="3" data-code="Digit3">3</button>
+            <button class="virtual-key advanced-key" type="button" data-key="4" data-code="Digit4">4</button>
+            <button class="virtual-key advanced-key" type="button" data-key="5" data-code="Digit5">5</button>
+            <button class="virtual-key advanced-key" type="button" data-key="6" data-code="Digit6">6</button>
+            <button class="virtual-key advanced-key" type="button" data-key="7" data-code="Digit7">7</button>
+            <button class="virtual-key advanced-key" type="button" data-key="8" data-code="Digit8">8</button>
+            <button class="virtual-key advanced-key" type="button" data-key="9" data-code="Digit9">9</button>
+            <button class="virtual-key advanced-key" type="button" data-key="0" data-code="Digit0">0</button>
+            <button class="virtual-key small-label wide advanced-key" type="button" data-key="Backspace" data-code="Backspace">Delete</button>
         </div>
         <div class="virtual-keyboard-row">
-            <button class="virtual-key small-label wide" type="button" data-key="Escape" data-code="Escape">Esc</button>
-            <button class="virtual-key" type="button" data-key="F1" data-code="F1">F1</button>
-            <button class="virtual-key" type="button" data-key="F2" data-code="F2">F2</button>
-            <button class="virtual-key" type="button" data-key="F3" data-code="F3">F3</button>
-            <button class="virtual-key" type="button" data-key="F4" data-code="F4">F4</button>
-            <button class="virtual-key" type="button" data-key="F5" data-code="F5">F5</button>
-            <button class="virtual-key" type="button" data-key="F6" data-code="F6">F6</button>
-            <button class="virtual-key" type="button" data-key="F7" data-code="F7">F7</button>
-            <button class="virtual-key" type="button" data-key="F8" data-code="F8">F8</button>
-            <button class="virtual-key" type="button" data-key="F9" data-code="F9">F9</button>
-            <button class="virtual-key" type="button" data-key="F10" data-code="F10">F10</button>
-        </div>
-        <div class="virtual-keyboard-row">
-            <button class="virtual-key" type="button" data-key="1" data-code="Digit1">1</button>
-            <button class="virtual-key" type="button" data-key="2" data-code="Digit2">2</button>
-            <button class="virtual-key" type="button" data-key="3" data-code="Digit3">3</button>
-            <button class="virtual-key" type="button" data-key="4" data-code="Digit4">4</button>
-            <button class="virtual-key" type="button" data-key="5" data-code="Digit5">5</button>
-            <button class="virtual-key" type="button" data-key="6" data-code="Digit6">6</button>
-            <button class="virtual-key" type="button" data-key="7" data-code="Digit7">7</button>
-            <button class="virtual-key" type="button" data-key="8" data-code="Digit8">8</button>
-            <button class="virtual-key" type="button" data-key="9" data-code="Digit9">9</button>
-            <button class="virtual-key" type="button" data-key="0" data-code="Digit0">0</button>
-            <button class="virtual-key small-label wide" type="button" data-key="Backspace" data-code="Backspace">Delete</button>
-        </div>
-        <div class="virtual-keyboard-row">
-            <button class="virtual-key small-label wide" type="button" data-key="Tab" data-code="Tab">Tab</button>
+            <button class="virtual-key small-label wide advanced-key" type="button" data-key="Tab" data-code="Tab">Tab</button>
             <button class="virtual-key" type="button" data-key="q" data-code="KeyQ">Q</button>
             <button class="virtual-key" type="button" data-key="w" data-code="KeyW">W</button>
             <button class="virtual-key" type="button" data-key="e" data-code="KeyE">E</button>
-            <button class="virtual-key" type="button" data-key="r" data-code="KeyR">R</button>
-            <button class="virtual-key" type="button" data-key="t" data-code="KeyT">T</button>
-            <button class="virtual-key" type="button" data-key="y" data-code="KeyY">Y</button>
-            <button class="virtual-key" type="button" data-key="u" data-code="KeyU">U</button>
-            <button class="virtual-key" type="button" data-key="i" data-code="KeyI">I</button>
-            <button class="virtual-key" type="button" data-key="o" data-code="KeyO">O</button>
-            <button class="virtual-key" type="button" data-key="p" data-code="KeyP">P</button>
+            <button class="virtual-key advanced-key" type="button" data-key="r" data-code="KeyR">R</button>
+            <button class="virtual-key advanced-key" type="button" data-key="t" data-code="KeyT">T</button>
+            <button class="virtual-key advanced-key" type="button" data-key="y" data-code="KeyY">Y</button>
+            <button class="virtual-key advanced-key" type="button" data-key="u" data-code="KeyU">U</button>
+            <button class="virtual-key advanced-key" type="button" data-key="i" data-code="KeyI">I</button>
+            <button class="virtual-key advanced-key" type="button" data-key="o" data-code="KeyO">O</button>
+            <button class="virtual-key advanced-key" type="button" data-key="p" data-code="KeyP">P</button>
             <button class="virtual-key small-label wide" type="button" data-key="Enter" data-code="Enter">Enter</button>
         </div>
         <div class="virtual-keyboard-row">
-            <button class="virtual-key small-label wide" type="button" data-key="CapsLock" data-code="CapsLock">Caps</button>
+            <button class="virtual-key small-label wide advanced-key" type="button" data-key="CapsLock" data-code="CapsLock">Caps</button>
             <button class="virtual-key" type="button" data-key="a" data-code="KeyA">A</button>
             <button class="virtual-key" type="button" data-key="s" data-code="KeyS">S</button>
             <button class="virtual-key" type="button" data-key="d" data-code="KeyD">D</button>
-            <button class="virtual-key" type="button" data-key="f" data-code="KeyF">F</button>
-            <button class="virtual-key" type="button" data-key="g" data-code="KeyG">G</button>
-            <button class="virtual-key" type="button" data-key="h" data-code="KeyH">H</button>
-            <button class="virtual-key" type="button" data-key="j" data-code="KeyJ">J</button>
-            <button class="virtual-key" type="button" data-key="k" data-code="KeyK">K</button>
-            <button class="virtual-key" type="button" data-key="l" data-code="KeyL">L</button>
-            <button class="virtual-key small-label wide" type="button" data-key="'" data-code="Quote">'</button>
+            <button class="virtual-key advanced-key" type="button" data-key="f" data-code="KeyF">F</button>
+            <button class="virtual-key advanced-key" type="button" data-key="g" data-code="KeyG">G</button>
+            <button class="virtual-key advanced-key" type="button" data-key="h" data-code="KeyH">H</button>
+            <button class="virtual-key advanced-key" type="button" data-key="j" data-code="KeyJ">J</button>
+            <button class="virtual-key advanced-key" type="button" data-key="k" data-code="KeyK">K</button>
+            <button class="virtual-key advanced-key" type="button" data-key="l" data-code="KeyL">L</button>
+            <button class="virtual-key small-label wide advanced-key" type="button" data-key="'" data-code="Quote">'</button>
         </div>
         <div class="virtual-keyboard-row">
             <button class="virtual-key small-label wide" type="button" data-key="Shift" data-code="ShiftLeft" data-latch="true">Shift</button>
-            <button class="virtual-key" type="button" data-key="z" data-code="KeyZ">Z</button>
-            <button class="virtual-key" type="button" data-key="x" data-code="KeyX">X</button>
-            <button class="virtual-key" type="button" data-key="c" data-code="KeyC">C</button>
-            <button class="virtual-key" type="button" data-key="v" data-code="KeyV">V</button>
-            <button class="virtual-key" type="button" data-key="b" data-code="KeyB">B</button>
-            <button class="virtual-key" type="button" data-key="n" data-code="KeyN">N</button>
-            <button class="virtual-key" type="button" data-key="m" data-code="KeyM">M</button>
-            <button class="virtual-key" type="button" data-key="," data-code="Comma">,</button>
-            <button class="virtual-key" type="button" data-key="." data-code="Period">.</button>
+            <button class="virtual-key advanced-key" type="button" data-key="z" data-code="KeyZ">Z</button>
+            <button class="virtual-key advanced-key" type="button" data-key="x" data-code="KeyX">X</button>
+            <button class="virtual-key advanced-key" type="button" data-key="c" data-code="KeyC">C</button>
+            <button class="virtual-key advanced-key" type="button" data-key="v" data-code="KeyV">V</button>
+            <button class="virtual-key advanced-key" type="button" data-key="b" data-code="KeyB">B</button>
+            <button class="virtual-key advanced-key" type="button" data-key="n" data-code="KeyN">N</button>
+            <button class="virtual-key advanced-key" type="button" data-key="m" data-code="KeyM">M</button>
+            <button class="virtual-key advanced-key" type="button" data-key="," data-code="Comma">,</button>
+            <button class="virtual-key advanced-key" type="button" data-key="." data-code="Period">.</button>
             <button class="virtual-key small-label wide" type="button" data-key="Shift" data-code="ShiftRight" data-latch="true">Shift</button>
         </div>
         <div class="virtual-keyboard-row">
             <button class="virtual-key small-label wide" type="button" data-key="Control" data-code="ControlLeft" data-latch="true">Ctrl</button>
-            <button class="virtual-key small-label wide" type="button" data-key="Alt" data-code="AltLeft" data-latch="true">Alt</button>
+            <button class="virtual-key small-label wide advanced-key" type="button" data-key="Alt" data-code="AltLeft" data-latch="true">Alt</button>
             <button class="virtual-key extra-wide" type="button" data-key=" " data-code="Space">Space</button>
-            <button class="virtual-key small-label wide" type="button" data-key="Alt" data-code="AltRight" data-latch="true">Alt</button>
+            <button class="virtual-key small-label wide advanced-key" type="button" data-key="Alt" data-code="AltRight" data-latch="true">Alt</button>
             <button class="virtual-key arrow-key" type="button" data-key="ArrowLeft" data-code="ArrowLeft">←</button>
             <button class="virtual-key arrow-key" type="button" data-key="ArrowDown" data-code="ArrowDown">↓</button>
             <button class="virtual-key arrow-key" type="button" data-key="ArrowUp" data-code="ArrowUp">↑</button>
             <button class="virtual-key arrow-key" type="button" data-key="ArrowRight" data-code="ArrowRight">→</button>
+        </div>
         </div>
         <p class="virtual-keyboard-hint">Tap the keyboard button again to close it. Keys are sent directly to the game.</p>
     </section>
@@ -671,6 +718,7 @@
         // a physical keyboard would produce.
         const keyboardToggle = document.getElementById('keyboard-toggle');
         const virtualKeyboard = document.getElementById('virtual-keyboard');
+        const keyboardMore = document.getElementById('virtual-keyboard-more');
         const virtualKeys = [...document.querySelectorAll('.virtual-key')];
         const heldVirtualKeys = new Map();
         const latchedVirtualKeys = new Set();
@@ -778,7 +826,10 @@
         function closeVirtualKeyboard() {
             releaseAllVirtualKeys(true);
             virtualKeyboard.classList.remove('open');
+            virtualKeyboard.classList.remove('expanded');
             keyboardToggle.setAttribute('aria-expanded', 'false');
+            keyboardMore.setAttribute('aria-expanded', 'false');
+            keyboardMore.textContent = 'More keys';
             syncKeyboardLayout();
         }
 
@@ -791,6 +842,16 @@
             } else {
                 closeVirtualKeyboard();
             }
+        });
+
+        keyboardMore.addEventListener('click', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            const expanded = !virtualKeyboard.classList.contains('expanded');
+            virtualKeyboard.classList.toggle('expanded', expanded);
+            keyboardMore.setAttribute('aria-expanded', String(expanded));
+            keyboardMore.textContent = expanded ? 'Fewer keys' : 'More keys';
+            requestAnimationFrame(syncKeyboardLayout);
         });
 
         if (window.ResizeObserver) {
