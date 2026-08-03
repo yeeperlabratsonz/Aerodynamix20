@@ -624,7 +624,7 @@
         }
 
         // ── Add files (flat, no folder) ──────────────────
-        function addFiles(files, autoPlay = true) {
+        function addFiles(files, autoPlay = true, bundled = false) {
             const media = Array.from(files).filter(f => isAudio(f) || isVideo(f));
             if (!media.length) return;
 
@@ -637,7 +637,7 @@
 
             const startQueueIdx = queue.length;
             media.forEach(f => {
-                const item = { file: f, name: f.name.replace(/\.[^.]+$/, ''), type: isAudio(f) ? 'audio' : 'video', artUrl: null, tags: null };
+                const item = { file: f, name: f.name.replace(/\.[^.]+$/, ''), type: isAudio(f) ? 'audio' : 'video', artUrl: null, tags: null, bundled };
                 looseGroup.items.push(item);
                 queue.push(item);
             });
@@ -688,6 +688,7 @@
                             const t = tag.tags;
                             const item = queue[qIdx];
                             if (!item) return;
+                            if (item.bundled) return;
                             item.tags = { title: t.title||null, artist: t.artist||null, album: t.album||null };
                             if (t.picture) {
                                 const blob = new Blob([new Uint8Array(t.picture.data)], { type: t.picture.format });
@@ -815,10 +816,15 @@
                 const response = await fetch('attached_assets/new-body.mp3');
                 if (!response.ok) throw new Error(`Bundled track request failed (${response.status})`);
                 const blob = await response.blob();
-                const file = new File([blob], 'New Body - Add KW Tag Line.mp3', { type: 'audio/mpeg' });
+                const file = new File([blob], 'New Body.mp3', { type: 'audio/mpeg' });
                 file.bundled = true;
-                addFiles([file], false);
-                queue[queue.length - 1].bundled = true;
+                addFiles([file], false, true);
+                const item = queue[queue.length - 1];
+                item.bundled = true;
+                item.tags = { title: 'New Body', artist: 'Kanye West', album: '' };
+                item.artUrl = 'attached_assets/new-body-cover.jpg';
+                renderPlaylist();
+                applyAudioMeta(queue.length - 1);
                 bundledTrackLoaded = true;
             } catch (error) {
                 console.warn('Could not load bundled media track:', error);
