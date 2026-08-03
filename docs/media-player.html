@@ -810,8 +810,10 @@
         // The player ships with one track so it is useful immediately after
         // unlocking, without requiring the user to choose a local file first.
         let bundledTrackLoaded = false;
+        let bundledTrackLoading = false;
         async function addBundledTrack() {
-            if (bundledTrackLoaded || queue.some(item => item.bundled)) return;
+            if (bundledTrackLoaded || bundledTrackLoading || queue.some(item => item.bundled)) return;
+            bundledTrackLoading = true;
             try {
                 const response = await fetch('attached_assets/new-body.mp3');
                 if (!response.ok) throw new Error(`Bundled track request failed (${response.status})`);
@@ -828,6 +830,8 @@
                 bundledTrackLoaded = true;
             } catch (error) {
                 console.warn('Could not load bundled media track:', error);
+            } finally {
+                bundledTrackLoading = false;
             }
         }
 
