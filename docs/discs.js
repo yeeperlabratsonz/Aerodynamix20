@@ -5,7 +5,7 @@
     const COSTS = {
         GAME: 100,
         THEME: 200,
-        MEDIA: 1000,
+        MEDIA: 500,
         DAILY_BONUS: 100
     };
 

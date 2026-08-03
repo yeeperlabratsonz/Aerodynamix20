@@ -1234,7 +1234,7 @@ def purchase_theme():
 
 @app.route('/api/discs/unlock-media', methods=['POST'])
 def unlock_media_player():
-    cost = 1000
+    cost = 500
 
     if _has_full_access():
         return jsonify({'success': True, 'unlocked': True, 'included': True,

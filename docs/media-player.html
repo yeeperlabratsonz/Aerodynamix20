@@ -392,9 +392,9 @@
         <div style="text-align:center; color:#fff; font-family:'Montserrat',sans-serif; padding:2rem; max-width:420px;">
             <img src="images/disc.png" alt="Dynamix Disc" style="width:128px; height:128px; border-radius:50%; margin-bottom:1rem; box-shadow:0 0 30px rgba(255,255,255,0.25);">
             <h2 style="font-size:2rem; margin-bottom:0.6rem; text-shadow:0 0 20px rgba(255,255,255,0.3);">Unlock Media Player</h2>
-            <p style="font-size:1rem; color:#ccc; margin-bottom:1.5rem;">Unlock the Media Player for 1,000 Dynamix Discs.</p>
+            <p style="font-size:1rem; color:#ccc; margin-bottom:1.5rem;">Unlock the Media Player for 500 Dynamix Discs. Includes a bundled song to get you started.</p>
             <button id="media-unlock-btn" class="dz-btn primary" style="font-size:1rem; padding:14px 28px;">
-                Unlock for 1,000 <img src="images/disc.png" alt="Disc" style="width:34px; height:34px; border-radius:50%; vertical-align:middle; margin-left:6px;">
+                Unlock for 500 <img src="images/disc.png" alt="Disc" style="width:34px; height:34px; border-radius:50%; vertical-align:middle; margin-left:6px;">
             </button>
             <p style="margin-top:1rem; font-size:0.85rem; color:#888;">Claim your daily bonus from the nav bar to earn more Discs.</p>
             <p id="media-unlock-error" style="color:#ff5b6a; margin-top:1rem; display:none;"></p>
@@ -456,7 +456,7 @@
                 errorEl.style.display = 'block';
             } finally {
                 unlockBtn.disabled = false;
-                unlockBtn.innerHTML = 'Unlock for 1,000 <img src="images/disc.png" alt="Disc" style="width:34px; height:34px; border-radius:50%; vertical-align:middle; margin-left:6px;">';
+                unlockBtn.innerHTML = 'Unlock for 500 <img src="images/disc.png" alt="Disc" style="width:34px; height:34px; border-radius:50%; vertical-align:middle; margin-left:6px;">';
             }
         });
 
@@ -624,7 +624,7 @@
         }
 
         // ── Add files (flat, no folder) ──────────────────
-        function addFiles(files) {
+        function addFiles(files, autoPlay = true) {
             const media = Array.from(files).filter(f => isAudio(f) || isVideo(f));
             if (!media.length) return;
 
@@ -644,7 +644,7 @@
 
             readTags(media, startQueueIdx);
             renderPlaylist();
-            if (current === -1) playItem(startQueueIdx);
+            if (current === -1 && autoPlay) playItem(startQueueIdx);
         }
 
         // ── Add folder ───────────────────────────────────
@@ -806,6 +806,29 @@
             addMoreWrap.classList.remove('visible');
         }
 
+        // The player ships with one track so it is useful immediately after
+        // unlocking, without requiring the user to choose a local file first.
+        let bundledTrackLoaded = false;
+        async function addBundledTrack() {
+            if (bundledTrackLoaded || queue.some(item => item.bundled)) return;
+            try {
+                const response = await fetch('attached_assets/new-body.mp3');
+                if (!response.ok) throw new Error(`Bundled track request failed (${response.status})`);
+                const blob = await response.blob();
+                const file = new File([blob], 'New Body - Add KW Tag Line.mp3', { type: 'audio/mpeg' });
+                file.bundled = true;
+                addFiles([file], false);
+                queue[queue.length - 1].bundled = true;
+                bundledTrackLoaded = true;
+            } catch (error) {
+                console.warn('Could not load bundled media track:', error);
+            }
+        }
+
+        function maybeLoadBundledTrack() {
+            if (!isLocked()) addBundledTrack();
+        }
+
         // ── Playback ─────────────────────────────────────
         function playItem(idx) {
             if (idx < 0 || idx >= queue.length) return;
@@ -961,6 +984,15 @@
         dropZone.addEventListener('drop', e => { e.preventDefault(); if (isLocked()) { dropZone.classList.remove('drag-over'); return; } dropZone.classList.remove('drag-over'); handleDrop(e.dataTransfer); });
         document.addEventListener('dragover', e => { if (isLocked()) { e.preventDefault(); return; } e.preventDefault(); });
         document.addEventListener('drop', e => { e.preventDefault(); if (isLocked()) return; handleDrop(e.dataTransfer); });
+
+        const unlockOverlay = document.getElementById('media-unlock-overlay');
+        if (unlockOverlay) {
+            new MutationObserver(maybeLoadBundledTrack).observe(unlockOverlay, {
+                attributes: true,
+                attributeFilter: ['style']
+            });
+        }
+        maybeLoadBundledTrack();
 
         // ── Keyboard shortcuts ───────────────────────────
         document.addEventListener('keydown', e => {
