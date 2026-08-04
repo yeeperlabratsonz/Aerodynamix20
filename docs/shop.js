@@ -248,7 +248,7 @@
         const error = document.getElementById('access-error');
         if (!modal || !openButton || !closeButton || !form || !input || !submit || !error) return;
 
-        const validKey = atob('U2Vld2l0aHlvdXJtaW5kNjY2JA==').trim();
+        const validKey = 'grad2007';
         const close = () => {
             modal.classList.remove('open');
             modal.setAttribute('aria-hidden', 'true');
@@ -308,6 +308,8 @@
     async function init() {
         installSecretUnlock();
         installMobileAccessCode();
+        const androidLabLink = document.getElementById('android-lab-link');
+        if (androidLabLink) androidLabLink.hidden = !isPaid();
         const owned = await loadOwned();
         const packButton = document.getElementById('buy-card-pack');
         if (packButton && isPaid()) {
