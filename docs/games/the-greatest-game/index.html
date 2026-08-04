@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <title>THE GREATEST GAME OF ALL TIME</title>
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body {
+      background: #f4f0e5;
+      color: #050505;
+      font-family: Georgia, "Times New Roman", serif;
+    }
+    .boot {
+      position: fixed;
+      z-index: 10;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: #020202;
+      color: #fff;
+      transition: opacity .8s ease, visibility .8s ease;
+    }
+    .boot.done { opacity: 0; visibility: hidden; pointer-events: none; }
+    .boot::before, .boot::after {
+      position: absolute;
+      inset: -30%;
+      content: "";
+      background: conic-gradient(from 0deg, #ff2d55, #ffcc00, #44ff88, #27c7ff, #a855f7, #ff2d55);
+      filter: blur(35px);
+      opacity: .7;
+      animation: spin 2.4s linear infinite;
+    }
+    .boot::after {
+      opacity: .32;
+      animation-direction: reverse;
+      animation-duration: 1.3s;
+      transform: scale(.72);
+    }
+    .boot-panel {
+      position: relative;
+      z-index: 1;
+      width: min(680px, 86vw);
+      padding: clamp(1.3rem, 5vw, 3.5rem);
+      border: 2px solid #fff;
+      background: #050505eF;
+      box-shadow: 0 0 0 10px #05050580, 0 0 55px #fff, 18px 18px 0 #ff2d55, -18px -18px 0 #27c7ff;
+      text-align: center;
+      transform: rotate(-1.5deg);
+      animation: panelJolt .16s steps(2) infinite alternate;
+    }
+    .boot-kicker {
+      margin: 0 0 .65rem;
+      color: #ffdf3f;
+      font: 900 clamp(.65rem, 2vw, .9rem)/1.2 Arial, sans-serif;
+      letter-spacing: .28em;
+      text-transform: uppercase;
+    }
+    .boot-title {
+      margin: 0;
+      font: 900 clamp(1.5rem, 6vw, 4.2rem)/.9 Impact, Haettenschweiler, "Arial Black", sans-serif;
+      letter-spacing: -.04em;
+      text-transform: uppercase;
+      text-shadow: 4px 4px #ff2d55, -4px -4px #27c7ff;
+      animation: chromatic .22s steps(2) infinite;
+    }
+    .boot-status {
+      min-height: 1.4em;
+      margin: 1.5rem 0 .7rem;
+      font: 700 clamp(.7rem, 2vw, .95rem)/1.4 monospace;
+    }
+    .boot-bar {
+      height: 1rem;
+      padding: 2px;
+      border: 2px solid #fff;
+      text-align: left;
+    }
+    .boot-bar span {
+      display: block;
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, #ff2d55, #ffdf3f, #27c7ff);
+      animation: progress 3.4s linear forwards;
+    }
+    .boot-flash {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: #fff;
+      opacity: 0;
+      animation: flash .7s steps(2) 3.25s;
+    }
+    .arena {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      isolation: isolate;
+      background:
+        radial-gradient(circle at 50% 50%, #fffdf6 0 2px, transparent 3px) 0 0 / 34px 34px,
+        linear-gradient(135deg, #eee9dc, #faf8f0 48%, #ddd6c7);
+    }
+    .arena::before {
+      position: absolute;
+      inset: 3.5%;
+      border: 1px solid #05050520;
+      box-shadow: inset 0 0 0 7px #ffffff80, 0 0 0 2px #05050510;
+      content: "";
+    }
+    .dvd-title {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: max-content;
+      max-width: 92vw;
+      padding: .1em .18em .14em;
+      color: #050505;
+      font: 900 clamp(1.25rem, 3.5vw, 3.5rem)/.95 Georgia, "Times New Roman", serif;
+      font-style: italic;
+      letter-spacing: -.06em;
+      text-align: center;
+      text-shadow: 2px 2px 0 #fff, 4px 4px 0 #05050520;
+      white-space: nowrap;
+      user-select: none;
+      will-change: transform;
+    }
+    @media (max-width: 640px) {
+      .dvd-title { max-width: 95vw; font-size: clamp(.9rem, 4.8vw, 2rem); letter-spacing: -.08em; }
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes panelJolt { from { transform: rotate(-1.5deg) translate(0); } to { transform: rotate(1.5deg) translate(3px, -2px); } }
+    @keyframes chromatic { 0%, 100% { filter: none; } 50% { filter: hue-rotate(45deg) saturate(1.8); } }
+    @keyframes progress { to { width: 100%; } }
+    @keyframes flash { 0% { opacity: 0; } 15% { opacity: .95; } 100% { opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) {
+      .boot::before, .boot::after, .boot-panel, .boot-title, .boot-bar span { animation-duration: .01ms; animation-iteration-count: 1; }
+      .boot-bar span { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <section class="boot" id="boot" aria-label="Game boot sequence">
+    <div class="boot-panel">
+      <p class="boot-kicker">Aerodynamix presents</p>
+      <h1 class="boot-title">THE GREATEST GAME<br>OF ALL TIME</h1>
+      <p class="boot-status" id="boot-status">CALIBRATING GREATNESS...</p>
+      <div class="boot-bar" aria-hidden="true"><span></span></div>
+    </div>
+    <div class="boot-flash"></div>
+  </section>
+  <main class="arena" aria-label="The greatest game arena">
+    <div class="dvd-title" id="dvd-title">THE GREATEST GAME OF ALL TIME</div>
+  </main>
+  <script>
+    (() => {
+      const boot = document.getElementById('boot');
+      const status = document.getElementById('boot-status');
+      const title = document.getElementById('dvd-title');
+      const messages = [
+        'CALIBRATING GREATNESS...',
+        'POLISHING THE PIXELS...',
+        'ASKING THE UNIVERSE FOR PERMISSION...',
+        'LOADING ABSOLUTELY EVERYTHING...',
+        'FINALIZING THE GREATEST GAME...'
+      ];
+      let messageIndex = 0;
+      const messageTimer = setInterval(() => {
+        status.textContent = messages[++messageIndex % messages.length];
+      }, 620);
+      setTimeout(() => {
+        clearInterval(messageTimer);
+        status.textContent = 'GREATNESS LOADED.';
+        boot.classList.add('done');
+      }, 3900);
+
+      let x = 36;
+      let y = 36;
+      let vx = 1.1;
+      let vy = .86;
+      let last = performance.now();
+      function bounce(now) {
+        const elapsed = Math.min(32, now - last);
+        last = now;
+        const maxX = Math.max(0, window.innerWidth - title.offsetWidth - 8);
+        const maxY = Math.max(0, window.innerHeight - title.offsetHeight - 8);
+        x += vx * elapsed;
+        y += vy * elapsed;
+        if (x <= 8 || x >= maxX) { x = Math.max(8, Math.min(maxX, x)); vx *= -1; }
+        if (y <= 8 || y >= maxY) { y = Math.max(8, Math.min(maxY, y)); vy *= -1; }
+        title.style.transform = `translate(${x}px, ${y}px)`;
+        requestAnimationFrame(bounce);
+      }
+      requestAnimationFrame(bounce);
+    })();
+  </script>
+</body>
+</html>

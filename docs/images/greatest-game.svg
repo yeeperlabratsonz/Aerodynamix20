@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-labelledby="title desc">
+  <title id="title">THE GREATEST GAME OF ALL TIME</title>
+  <desc id="desc">Black serif lettering on a dramatic cream background.</desc>
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="75%">
+      <stop offset="0" stop-color="#fffdf5"/>
+      <stop offset=".7" stop-color="#e8e2d3"/>
+      <stop offset="1" stop-color="#bdb4a1"/>
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="9" stdDeviation="7" flood-color="#000" flood-opacity=".28"/>
+    </filter>
+  </defs>
+  <rect width="800" height="500" fill="url(#bg)"/>
+  <circle cx="400" cy="250" r="175" fill="none" stroke="#111" stroke-opacity=".14" stroke-width="2"/>
+  <circle cx="400" cy="250" r="151" fill="none" stroke="#111" stroke-opacity=".08" stroke-width="1"/>
+  <g fill="#050505" filter="url(#shadow)" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-weight="900">
+    <text x="400" y="188" font-size="43">THE GREATEST</text>
+    <text x="400" y="247" font-size="48">GAME</text>
+    <text x="400" y="306" font-size="40">OF ALL TIME</text>
+  </g>
+  <path d="M205 351h390" stroke="#050505" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="190" cy="351" r="6" fill="#050505"/>
+  <circle cx="610" cy="351" r="6" fill="#050505"/>
+</svg>

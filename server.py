@@ -24,6 +24,9 @@ if DATABASE_URL.startswith('postgres://'):
 
 UPLOAD_FOLDER = 'docs/uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'}
+GAME_COSTS = {
+    'games/the-greatest-game/index.html': 1000,
+}
 ALLOWED_CORS_ORIGINS = {
     origin.strip().rstrip('/')
     for origin in os.environ.get(
@@ -1287,7 +1290,7 @@ def get_purchased_games():
 def purchase_game():
     data = request.get_json() or {}
     game = (data.get('game') or '').strip()
-    cost = 100
+    cost = GAME_COSTS.get(game, 100)
 
     if not game:
         return jsonify({'error': 'Game name required'}), 400

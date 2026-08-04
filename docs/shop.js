@@ -24,7 +24,8 @@
                 : purchased === game);
     }
 
-    function gameBuyLabel(label = 'Buy for 100') {
+    function gameBuyLabel(cost = 100) {
+        const label = `Buy for ${Number(cost) || 100}`;
         return `${label} ${window.AeroDiscs && window.AeroDiscs.discIconHTML
             ? window.AeroDiscs.discIconHTML('sm')
             : '<img src="images/disc.png" alt="Dynamix Disc" class="disc-icon sm">'} `;
@@ -65,7 +66,7 @@
         } catch (e) {
             alert(e.message);
             button.disabled = false;
-            button.innerHTML = gameBuyLabel();
+            button.innerHTML = gameBuyLabel(card.dataset.cost);
         }
     }
 
@@ -327,7 +328,7 @@
                 button.textContent = isPaid() ? 'Included' : 'Owned';
                 button.disabled = true;
             } else {
-                button.innerHTML = gameBuyLabel();
+                button.innerHTML = gameBuyLabel(card.dataset.cost);
                 button.addEventListener('click', () => purchase(card));
             }
         });
