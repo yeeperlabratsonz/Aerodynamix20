@@ -497,6 +497,7 @@ RARITY_STYLES = {
     'Legendary': {'accent': '#ffd447', 'glow': 2},
     'Mythic': {'accent': '#d94b62', 'glow': 3},
     'GODLY': {'accent': '#ff4bd8', 'glow': 4},
+    'Secret': {'accent': '#ffffff', 'glow': 5},
 }
 CARD_SELL_VALUES = {
     'COMMON': 10,
@@ -506,6 +507,7 @@ CARD_SELL_VALUES = {
     'LEGENDARY': 50,
     'MYTHIC': 100,
     'GODLY': 500,
+    'SECRET': 3000,
 }
 
 # Cards are built from the same game art shown in the Games shop.
@@ -552,6 +554,8 @@ AERODYNAMIX_CARD_POOL = [
     # ── GODLY ───────────────────────────────────────────────────────────────
     {'name': 'Doki Doki Literature Club', 'image': 'images/doki-doki-literature-club.jpg', 'rarity': 'GODLY', 'number': '026'},
     {'name': 'DOOM',               'image': 'images/doom.png',               'rarity': 'GODLY',    'number': '032'},
+    # ── SECRET ──────────────────────────────────────────────────────────────
+    {'name': 'THE GREATEST GAME OF ALL TIME', 'image': 'images/greatest-game-square.svg', 'rarity': 'Secret', 'number': '033'},
 ]
 for _card in AERODYNAMIX_CARD_POOL:
     _card.update(RARITY_STYLES[_card['rarity']])
@@ -559,7 +563,9 @@ for _card in AERODYNAMIX_CARD_POOL:
 # Weights keep per-rarity drop-rate percentages constant; each card within a
 # rarity shares that rarity's total weight equally.
 # Common 50% (11 cards), Uncommon 20% (7), Rare 12% (4), Epic 7% (4),
-# Legendary 5% (2), Mythic 4% (2), GODLY 2% (2)
+# Legendary 5% (2), Mythic 4% (2), GODLY 2% (2). Secret is intentionally
+# omitted from the public odds and has a hidden 0.0000000001% pull chance.
+SECRET_CARD_WEIGHT = 0.0000000001
 AERODYNAMIX_CARD_WEIGHTS = [
     *([50 / 11] * 11),  # Common
     *([20 / 7]  * 7),   # Uncommon
@@ -568,6 +574,7 @@ AERODYNAMIX_CARD_WEIGHTS = [
     *([5  / 2]  * 2),   # Legendary
     *([4  / 2]  * 2),   # Mythic
     *([2  / 2]  * 2),   # GODLY
+    SECRET_CARD_WEIGHT,  # Secret (hidden)
 ]
 
 

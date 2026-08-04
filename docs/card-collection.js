@@ -1,5 +1,5 @@
 (function () {
-  const sellValues = { COMMON:10, UNCOMMON:15, RARE:20, EPIC:25, LEGENDARY:50, MYTHIC:100, GODLY:500 };
+  const sellValues = { COMMON:10, UNCOMMON:15, RARE:20, EPIC:25, LEGENDARY:50, MYTHIC:100, GODLY:500, SECRET:3000 };
   const esc = value => String(value ?? '').replace(/[<>&"]/g, '');
   const safeImage = value => String(value || '').replace(/[^a-zA-Z0-9_./'-]/g, '');
   const grid = document.getElementById('collection-grid');
@@ -19,8 +19,9 @@
     }
     grid.innerHTML = cards.map((card, index) => {
       const rarity = String(card.rarity || 'Common').toUpperCase();
-      const value = sellValues[rarity] || 10;
-      return `<article class="collection-card" style="--accent:${card.accent || '#fff'}">
+      const value = Number(card.sell_value) || sellValues[rarity] || 10;
+      const rarityClass = rarity.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      return `<article class="collection-card rarity-${rarityClass}" style="--accent:${card.accent || '#fff'}">
         <div class="collection-card-art"><img src="${safeImage(card.image)}" alt="${esc(card.name)}"></div>
         <div class="collection-card-body"><h3>${esc(card.name || 'Mystery Card')}</h3>
         <div class="collection-rarity">${esc(rarity)}</div><small>#${esc(card.number || index + 1)} · Sell for ${value} Dynamix Discs</small>
