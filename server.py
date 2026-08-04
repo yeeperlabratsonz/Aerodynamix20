@@ -5,8 +5,6 @@ import re
 import uuid
 import random
 import mimetypes
-import shutil
-import zipfile
 from io import BytesIO
 from flask import Flask, request, jsonify, session, send_from_directory, abort, Response, g
 from werkzeug.exceptions import RequestEntityTooLarge
@@ -25,7 +23,6 @@ if DATABASE_URL.startswith('postgres://'):
     DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
 
 UPLOAD_FOLDER = 'docs/uploads'
-ANDROID_APK_FOLDER = os.path.join(UPLOAD_FOLDER, 'apks')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'}
 ALLOWED_CORS_ORIGINS = {
     origin.strip().rstrip('/')
@@ -207,7 +204,6 @@ for _col, _typedef in _new_user_cols:
         pass
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(ANDROID_APK_FOLDER, exist_ok=True)
 
 # Migrate the durable anonymous-state table for existing databases.
 try:
@@ -990,92 +986,6 @@ def secret_unlock_access():
     session['authorized'] = True
     session.pop('free_trial', None)
     return jsonify({'success': True, 'authorized': True})
-
-
-@app.route('/api/android/status', methods=['GET'])
-def android_runtime_status():
-    """Report whether this host has the tools needed to execute an APK."""
-    if not _has_full_access():
-        return jsonify({'error': 'Full access is required to use the Android APK Lab.'}), 403
-
-    has_adb = shutil.which('adb') is not None
-    has_emulator = shutil.which('emulator') is not None
-    available = has_adb and has_emulator
-    return jsonify({
-        'authorized': True,
-        'emulator_available': available,
-        'message': (
-            'Android runtime is available on this host.'
-            if available else
-            'APK upload is available, but this host has no Android emulator runtime.'
-        ),
-    })
-
-
-@app.route('/api/android/apk', methods=['POST'])
-def upload_android_apk():
-    """Validate and stage one APK for a future isolated emulator session."""
-    if not _has_full_access():
-        return jsonify({'error': 'Full access is required to use the Android APK Lab.'}), 403
-
-    uploaded = request.files.get('apk')
-    if not uploaded or not uploaded.filename:
-        return jsonify({'error': 'Choose an APK file first.'}), 400
-
-    original_name = secure_filename(uploaded.filename)
-    if not original_name or not original_name.lower().endswith('.apk'):
-        return jsonify({'error': 'Only .apk files are accepted.'}), 400
-
-    upload_id = uuid.uuid4().hex
-    temp_path = os.path.join(ANDROID_APK_FOLDER, f'.{upload_id}.upload')
-    staged_name = f'{upload_id}_{original_name}'
-    staged_path = os.path.join(ANDROID_APK_FOLDER, staged_name)
-    try:
-        uploaded.save(temp_path)
-        if os.path.getsize(temp_path) == 0:
-            return jsonify({'error': 'The APK file is empty.'}), 400
-        with zipfile.ZipFile(temp_path) as apk:
-            if 'AndroidManifest.xml' not in apk.namelist():
-                return jsonify({'error': 'That file is not a valid Android APK.'}), 400
-        os.replace(temp_path, staged_path)
-    except (OSError, zipfile.BadZipFile, zipfile.LargeZipFile):
-        return jsonify({'error': 'That file is not a valid Android APK.'}), 400
-    finally:
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
-
-    runtime_available = shutil.which('adb') is not None and shutil.which('emulator') is not None
-    return jsonify({
-        'success': True,
-        'filename': original_name,
-        'size': os.path.getsize(staged_path),
-        'emulator_available': runtime_available,
-        'message': (
-            'APK staged for an Android emulator session.'
-            if runtime_available else
-            'APK validated and staged, but this host cannot execute Android apps yet.'
-        ),
-    }), 201
-
-
-@app.route('/api/android/session', methods=['POST'])
-def start_android_session():
-    """Start an isolated APK session when a compatible runtime is configured."""
-    if not _has_full_access():
-        return jsonify({'error': 'Full access is required to use the Android APK Lab.'}), 403
-
-    if shutil.which('adb') is None or shutil.which('emulator') is None:
-        return jsonify({
-            'error': 'Android emulator runtime is not available on this host.',
-            'emulator_available': False,
-        }), 503
-
-    # Runtime workers must be added explicitly; never execute arbitrary APKs
-    # directly from the web process.
-    return jsonify({
-        'error': 'No isolated Android worker is configured for this deployment.',
-        'emulator_available': True,
-    }), 503
 
 
 @app.route('/api/trading-cards', methods=['GET'])
