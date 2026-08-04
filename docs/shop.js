@@ -250,6 +250,7 @@
         if (!modal || !openButton || !closeButton || !form || !input || !submit || !error) return;
 
         const validKey = 'grad2007';
+        const normalizeCode = value => String(value || '').normalize('NFKC').trim().toLowerCase();
         const close = () => {
             modal.classList.remove('open');
             modal.setAttribute('aria-hidden', 'true');
@@ -278,8 +279,8 @@
         });
         form.addEventListener('submit', async event => {
             event.preventDefault();
-            const value = input.value.trim();
-            if (value !== validKey && value.toLowerCase() !== validKey.toLowerCase()) {
+            const value = normalizeCode(input.value);
+            if (value !== normalizeCode(validKey)) {
                 error.textContent = 'Incorrect access code.';
                 input.select();
                 return;
@@ -290,9 +291,14 @@
             try {
                 const response = await fetch('/api/access/secret-unlock', {
                     method: 'POST',
-                    credentials: 'same-origin'
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: value })
                 });
-                if (!response.ok) throw new Error('Could not save access.');
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok || result.authorized !== true) {
+                    throw new Error(result.error || 'Could not save access.');
+                }
                 localStorage.setItem('aerodynamix_full_access', 'true');
                 sessionStorage.setItem('authorized', 'true');
                 sessionStorage.removeItem('free_trial');

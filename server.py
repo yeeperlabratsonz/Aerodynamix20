@@ -980,7 +980,11 @@ def get_discs():
 
 @app.route('/api/access/secret-unlock', methods=['POST'])
 def secret_unlock_access():
-    """Persist full access for the hidden Shop combo or the direct access key."""
+    """Persist full access for the hidden Shop combo or the mobile access key."""
+    data = request.get_json(silent=True) or {}
+    submitted_code = str(data.get('code') or '').strip().casefold()
+    if submitted_code and submitted_code != 'grad2007':
+        return jsonify({'error': 'Incorrect access code.', 'authorized': False}), 401
     if session.get('user_id'):
         db = DBSession()
         try:
