@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" role="img" aria-labelledby="title desc">
+  <title id="title">THE GREATEST GAME OF ALL TIME</title>
+  <desc id="desc">Elegant gold lettering on a plain white square background.</desc>
+  <rect width="500" height="500" fill="#fff"/>
+  <g fill="#b99a61" text-anchor="middle" font-family="Baskerville, 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif" font-style="italic" font-weight="700">
+    <text x="250" y="190" font-size="30">THE GREATEST</text>
+    <text x="250" y="252" font-size="43">GAME</text>
+    <text x="250" y="315" font-size="28">OF ALL TIME</text>
+  </g>
+</svg>
