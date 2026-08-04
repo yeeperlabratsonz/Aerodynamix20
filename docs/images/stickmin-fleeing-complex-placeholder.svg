@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" role="img" aria-labelledby="title">
+  <title id="title">Fleeing the Complex</title>
+  <rect width="500" height="500" fill="#4b282b"/>
+  <rect x="22" y="22" width="456" height="456" rx="22" fill="none" stroke="#ff8a75" stroke-width="5"/>
+  <path d="M103 150h294v120H103z" fill="#26252c" stroke="#ff8a75" stroke-width="7"/>
+  <path d="M145 270v55M355 270v55" stroke="#ff8a75" stroke-width="12"/>
+  <circle cx="250" cy="195" r="54" fill="#f2c18b"/>
+  <path d="M202 194h96M250 148v94" stroke="#222" stroke-width="7"/>
+  <text x="250" y="390" fill="#fff" font-family="Arial,Helvetica,sans-serif" font-size="31" font-weight="900" text-anchor="middle">FLEEING THE</text>
+  <text x="250" y="428" fill="#ff8a75" font-family="Arial,Helvetica,sans-serif" font-size="35" font-weight="900" text-anchor="middle">COMPLEX</text>
+</svg>

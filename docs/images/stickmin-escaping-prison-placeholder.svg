@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" role="img" aria-labelledby="title">
+  <title id="title">Escaping the Prison</title>
+  <rect width="500" height="500" fill="#3a244e"/>
+  <rect x="22" y="22" width="456" height="456" rx="22" fill="none" stroke="#f39ad7" stroke-width="5"/>
+  <path d="M115 110v245M195 110v245M275 110v245M355 110v245" stroke="#f39ad7" stroke-width="16" opacity=".65"/>
+  <circle cx="250" cy="175" r="62" fill="#f2c18b"/>
+  <path d="M198 174h104M250 112v126" stroke="#222" stroke-width="8"/>
+  <text x="250" y="395" fill="#fff" font-family="Arial,Helvetica,sans-serif" font-size="31" font-weight="900" text-anchor="middle">ESCAPING THE</text>
+  <text x="250" y="432" fill="#f39ad7" font-family="Arial,Helvetica,sans-serif" font-size="35" font-weight="900" text-anchor="middle">PRISON</text>
+</svg>

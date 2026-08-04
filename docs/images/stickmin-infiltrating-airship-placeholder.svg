@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" role="img" aria-labelledby="title">
+  <title id="title">Infiltrating the Airship</title>
+  <rect width="500" height="500" fill="#263b3e"/>
+  <rect x="22" y="22" width="456" height="456" rx="22" fill="none" stroke="#f6c85f" stroke-width="5"/>
+  <path d="M88 175h324l-44 60H132z" fill="#d5e2e4" stroke="#f6c85f" stroke-width="7"/>
+  <path d="M165 175v-38h170v38" fill="none" stroke="#f6c85f" stroke-width="8"/>
+  <circle cx="250" cy="305" r="54" fill="#f2c18b"/>
+  <text x="250" y="397" fill="#fff" font-family="Arial,Helvetica,sans-serif" font-size="28" font-weight="900" text-anchor="middle">INFILTRATING</text>
+  <text x="250" y="431" fill="#f6c85f" font-family="Arial,Helvetica,sans-serif" font-size="32" font-weight="900" text-anchor="middle">THE AIRSHIP</text>
+</svg>

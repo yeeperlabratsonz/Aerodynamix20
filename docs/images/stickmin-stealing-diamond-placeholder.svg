@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" role="img" aria-labelledby="title">
+  <title id="title">Stealing the Diamond</title>
+  <rect width="500" height="500" fill="#173f3b"/>
+  <rect x="22" y="22" width="456" height="456" rx="22" fill="none" stroke="#61e6bd" stroke-width="5"/>
+  <path d="M250 82 336 190 250 285 164 190z" fill="#b9fff1" stroke="#61e6bd" stroke-width="8"/>
+  <circle cx="250" cy="350" r="48" fill="#f2c18b"/>
+  <path d="M195 350h110M250 300v100" stroke="#222" stroke-width="7"/>
+  <text x="250" y="425" fill="#fff" font-family="Arial,Helvetica,sans-serif" font-size="29" font-weight="900" text-anchor="middle">STEALING THE DIAMOND</text>
+</svg>
