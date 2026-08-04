@@ -101,6 +101,79 @@
       isolation: isolate;
       background: #fff;
     }
+    .customizer {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 5;
+      width: min(240px, calc(100vw - 2rem));
+      padding: .85rem;
+      border: 1px solid #0002;
+      border-radius: 12px;
+      background: #fffffff2;
+      box-shadow: 0 8px 24px #00000014;
+      color: #111;
+      font: 600 .72rem/1.35 Arial, sans-serif;
+    }
+    .customizer h2 {
+      margin: 0 0 .6rem;
+      font: 800 .72rem/1 Arial, sans-serif;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .customizer label {
+      display: block;
+      margin: .55rem 0 .25rem;
+      color: #444;
+      font-size: .68rem;
+    }
+    .customizer select,
+    .customizer input[type="color"] {
+      width: 100%;
+      height: 2rem;
+      border: 1px solid #0003;
+      border-radius: 6px;
+      color: #111;
+      background: #fff;
+      font: 600 .75rem Arial, sans-serif;
+    }
+    .customizer input[type="color"] {
+      padding: .18rem;
+      cursor: pointer;
+    }
+    .color-presets {
+      display: flex;
+      gap: .4rem;
+      margin-top: .4rem;
+    }
+    .color-preset {
+      width: 1.35rem;
+      height: 1.35rem;
+      padding: 0;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      box-shadow: 0 0 0 1px #0004;
+      cursor: pointer;
+    }
+    .color-preset:focus-visible,
+    .customizer select:focus-visible,
+    .customizer input:focus-visible,
+    .customizer-reset:focus-visible {
+      outline: 2px solid #2474d8;
+      outline-offset: 2px;
+    }
+    .customizer-reset {
+      width: 100%;
+      margin-top: .7rem;
+      padding: .45rem;
+      border: 1px solid #0003;
+      border-radius: 6px;
+      color: #111;
+      background: #fff;
+      font: 700 .68rem Arial, sans-serif;
+      cursor: pointer;
+    }
+    .customizer-reset:hover { background: #f1f1f1; }
     .dvd-title {
       position: absolute;
       left: 0;
@@ -108,8 +181,11 @@
       width: max-content;
       max-width: 92vw;
       padding: .1em .18em .14em;
-      color: #050505;
-      font: 900 clamp(1.25rem, 3.5vw, 3.5rem)/.95 Georgia, "Times New Roman", serif;
+      color: var(--title-color, #050505);
+      font-family: var(--title-font, Georgia, "Times New Roman", serif);
+      font-size: clamp(1.25rem, 3.5vw, 3.5rem);
+      font-weight: 900;
+      line-height: .95;
       font-style: italic;
       letter-spacing: -.06em;
       text-align: center;
@@ -120,6 +196,7 @@
     }
     @media (max-width: 640px) {
       .dvd-title { max-width: 95vw; font-size: clamp(.9rem, 4.8vw, 2rem); letter-spacing: -.08em; }
+      .customizer { top: .65rem; right: .65rem; padding: .7rem; }
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes panelJolt { from { transform: rotate(-1.5deg) translate(0); } to { transform: rotate(1.5deg) translate(3px, -2px); } }
@@ -143,6 +220,28 @@
     <div class="boot-flash"></div>
   </section>
   <main class="arena" aria-label="The greatest game arena">
+    <aside class="customizer" aria-label="Title customization">
+      <h2>Customize greatness</h2>
+      <label for="font-choice">Font</label>
+      <select id="font-choice">
+        <option value="Georgia, 'Times New Roman', serif">Elegant Serif</option>
+        <option value="Baskerville, 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif">Classic Baskerville</option>
+        <option value="'Courier New', Courier, monospace">Retro Typewriter</option>
+        <option value="Arial, Helvetica, sans-serif">Clean Sans</option>
+        <option value="Impact, Haettenschweiler, 'Arial Black', sans-serif">Maximum Impact</option>
+        <option value="'Comic Sans MS', 'Comic Sans', cursive">Questionable Comic</option>
+      </select>
+      <label for="color-choice">Color</label>
+      <input id="color-choice" type="color" value="#050505" aria-label="Choose title color">
+      <div class="color-presets" aria-label="Color presets">
+        <button class="color-preset" type="button" data-color="#050505" aria-label="Black" style="background:#050505"></button>
+        <button class="color-preset" type="button" data-color="#d62828" aria-label="Red" style="background:#d62828"></button>
+        <button class="color-preset" type="button" data-color="#1464c0" aria-label="Blue" style="background:#1464c0"></button>
+        <button class="color-preset" type="button" data-color="#6a35a8" aria-label="Purple" style="background:#6a35a8"></button>
+        <button class="color-preset" type="button" data-color="#17824b" aria-label="Green" style="background:#17824b"></button>
+      </div>
+      <button class="customizer-reset" id="customizer-reset" type="button">Reset greatness</button>
+    </aside>
     <div class="dvd-title" id="dvd-title">THE GREATEST GAME OF ALL TIME</div>
   </main>
   <script>
@@ -150,6 +249,43 @@
       const boot = document.getElementById('boot');
       const status = document.getElementById('boot-status');
       const title = document.getElementById('dvd-title');
+      const fontChoice = document.getElementById('font-choice');
+      const colorChoice = document.getElementById('color-choice');
+      const resetButton = document.getElementById('customizer-reset');
+      const presets = [...document.querySelectorAll('.color-preset')];
+      const storageKey = 'greatestGameCustomization';
+      const defaults = { font: fontChoice.value, color: '#050505' };
+      const saved = (() => {
+        try { return JSON.parse(localStorage.getItem(storageKey) || '{}'); }
+        catch (error) { return {}; }
+      })();
+      const validFonts = [...fontChoice.options].map(option => option.value);
+      const validColors = /^#[0-9a-f]{6}$/i;
+      function saveCustomization() {
+        localStorage.setItem(storageKey, JSON.stringify({
+          font: fontChoice.value,
+          color: colorChoice.value
+        }));
+      }
+      function applyCustomization() {
+        title.style.setProperty('--title-font', fontChoice.value);
+        title.style.setProperty('--title-color', colorChoice.value);
+        saveCustomization();
+      }
+      if (validFonts.includes(saved.font)) fontChoice.value = saved.font;
+      if (validColors.test(saved.color || '')) colorChoice.value = saved.color;
+      fontChoice.addEventListener('change', applyCustomization);
+      colorChoice.addEventListener('input', applyCustomization);
+      presets.forEach(preset => preset.addEventListener('click', () => {
+        colorChoice.value = preset.dataset.color;
+        applyCustomization();
+      }));
+      resetButton.addEventListener('click', () => {
+        fontChoice.value = defaults.font;
+        colorChoice.value = defaults.color;
+        applyCustomization();
+      });
+      applyCustomization();
       const messages = [
         'CALIBRATING GREATNESS...',
         'POLISHING THE PIXELS...',

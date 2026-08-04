@@ -2,7 +2,7 @@
   <title id="title">THE GREATEST GAME OF ALL TIME</title>
   <desc id="desc">Elegant black lettering on a plain white background.</desc>
   <rect width="740" height="500" fill="#fff"/>
-  <g fill="#b99a61" text-anchor="middle" font-family="Baskerville, 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif" font-style="italic" font-weight="700">
+  <g fill="#050505" text-anchor="middle" font-family="Baskerville, 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif" font-style="italic" font-weight="700">
     <text x="370" y="195" font-size="43">THE GREATEST</text>
     <text x="370" y="260" font-size="54">GAME</text>
     <text x="370" y="325" font-size="40">OF ALL TIME</text>
