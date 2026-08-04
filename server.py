@@ -1058,6 +1058,26 @@ def upload_android_apk():
     }), 201
 
 
+@app.route('/api/android/session', methods=['POST'])
+def start_android_session():
+    """Start an isolated APK session when a compatible runtime is configured."""
+    if not _has_full_access():
+        return jsonify({'error': 'Full access is required to use the Android APK Lab.'}), 403
+
+    if shutil.which('adb') is None or shutil.which('emulator') is None:
+        return jsonify({
+            'error': 'Android emulator runtime is not available on this host.',
+            'emulator_available': False,
+        }), 503
+
+    # Runtime workers must be added explicitly; never execute arbitrary APKs
+    # directly from the web process.
+    return jsonify({
+        'error': 'No isolated Android worker is configured for this deployment.',
+        'emulator_available': True,
+    }), 503
+
+
 @app.route('/api/trading-cards', methods=['GET'])
 def get_trading_cards():
     if 'user_id' in session:
