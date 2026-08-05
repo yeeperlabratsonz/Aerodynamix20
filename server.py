@@ -882,22 +882,22 @@ def register():
     username = (data.get('username') or '').strip()
     password = (data.get('password') or '').strip()
 
-    if not username or not password:
-        return jsonify({'error': 'Username and password are required'}), 400
-    if len(username) < 3 or len(username) > 20:
-        return jsonify({'error': 'Username must be 3–20 characters'}), 400
-    if len(password) < 4:
-        return jsonify({'error': 'Password must be at least 4 characters'}), 400
-    if not re.match(r'^[a-zA-Z0-9_]+$', username):
-        return jsonify({'error': 'Username can only contain letters, numbers, and underscores'}), 400
-
-    password_hash = generate_password_hash(password)
     db = DBSession()
     try:
         if _is_banned_username(db, username):
             _ban_device(db, g.device_id, username, 'Attempted registration of banned account')
             db.commit()
             return _banned_response()
+        if not username or not password:
+            return jsonify({'error': 'Username and password are required'}), 400
+        if len(username) < 3 or len(username) > 20:
+            return jsonify({'error': 'Username must be 3–20 characters'}), 400
+        if len(password) < 4:
+            return jsonify({'error': 'Password must be at least 4 characters'}), 400
+        if not re.match(r'^[a-zA-Z0-9_]+$', username):
+            return jsonify({'error': 'Username can only contain letters, numbers, and underscores'}), 400
+
+        password_hash = generate_password_hash(password)
         user = User(username=username, password_hash=password_hash)
         db.add(user)
         db.commit()
