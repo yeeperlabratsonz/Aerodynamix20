@@ -51,3 +51,10 @@ uri = "file://screenshots/ban-screen-piracy-preview-final.jpg"
 type = "image"
 title = "Unauthorized copy ban screen preview"
 description = "Final black-and-red fake video game piracy warning style ban screen."
+
+[[outputs]]
+id = "tgZhhhFElJ3Q3P2fB4osa"
+uri = "file://screenshots/ban-screen-system-warning-preview.jpg"
+type = "image"
+title = "Aerodynamix system warning ban screen"
+description = "Reference-inspired black scanline warning screen for a permanent Dynamix ban."
