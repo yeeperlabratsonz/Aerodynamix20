@@ -37,3 +37,10 @@ uri = "file://screenshots/ban-screen-preview.jpg"
 type = "image"
 title = "Aerodynamix ban screen preview"
 description = "Screenshot of the permanent device-ban screen."
+
+[[outputs]]
+id = "EAfXcbe32ced1wSdE8Hic"
+uri = "file://screenshots/ban-screen-disturbing-preview.jpg"
+type = "image"
+title = "Disturbing Aerodynamix ban screen preview"
+description = "Screenshot of the darker glitch-style permanent ban screen."
