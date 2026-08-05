@@ -785,51 +785,11 @@ def _banned_response():
         return jsonify({
             'error': 'This device is permanently banned from Dynamix.'
         }), 403
-    return Response(
-        '''<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Access denied · Aerodynamix</title>
-  <style>
-    :root { color-scheme: dark; font-family: "Courier New", ui-monospace, monospace; }
-    * { box-sizing: border-box; }
-    body { min-height:100vh; margin:0; display:grid; place-items:center; padding:24px; overflow:hidden; color:#f2e9e9; background:radial-gradient(ellipse at 50% 42%, #570b1680 0, transparent 42%), repeating-linear-gradient(115deg, #090506 0 3px, #13070a 3px 6px), #050304; }
-    body::before { content:""; position:fixed; inset:0; pointer-events:none; opacity:.18; background:repeating-linear-gradient(0deg, transparent 0 3px, #ff233d 4px, transparent 5px 8px); mix-blend-mode:screen; animation:scan 7s linear infinite; }
-    body::after { content:"SIGNAL LOST // ACCESS REVOKED"; position:fixed; left:18px; bottom:14px; color:#a7192d; font-size:.6rem; letter-spacing:.16em; opacity:.65; }
-    .ban-card { position:relative; isolation:isolate; width:min(100%, 590px); padding:clamp(30px, 6vw, 58px); border:1px solid #9f1c31; border-radius:2px; background:linear-gradient(160deg, #190b10f5, #090607f7 58%, #16070bf5); box-shadow:0 30px 100px #000, 0 0 0 7px #18070b, 0 0 42px #e5163533, inset 0 0 55px #000; text-align:center; }
-    .ban-card::before { content:""; position:absolute; z-index:-1; inset:10px; border:1px solid #611321; background:repeating-linear-gradient(135deg, transparent 0 17px, #e4163020 18px 20px); pointer-events:none; }
-    .ban-card::after { content:"//"; position:absolute; top:14px; right:18px; color:#ad1c32; font-size:1.25rem; font-weight:900; letter-spacing:-.2em; transform:skew(-16deg); animation:blink .8s steps(2,end) infinite; }
-    .mark { width:82px; height:82px; margin:0 auto 26px; display:grid; place-items:center; border:2px solid #ef2543; border-radius:3px; color:#ff2746; background:#27070d; font-size:2.6rem; font-weight:900; transform:rotate(45deg); box-shadow:0 0 24px #ef163c88, inset 0 0 20px #000; animation:warning .9s steps(2,end) infinite; font-size:0; }
-    .mark::before { content:"!"; transform:rotate(-45deg); font-size:2.6rem; }
-    .eyebrow { margin:0 0 14px; color:#ff2948; font-size:.68rem; font-weight:900; letter-spacing:.2em; text-transform:uppercase; animation:blink 1.4s steps(2,end) infinite; }
-    h1 { position:relative; margin:0; color:#f5eded; font-size:clamp(2.2rem, 8vw, 4.1rem); letter-spacing:-.07em; text-transform:uppercase; text-shadow:3px 0 #c71532, -3px 0 #41101a; animation:glitch 3.3s infinite; }
-    h1::before,h1::after { content:attr(data-text); position:absolute; inset:0; opacity:.7; pointer-events:none; }
-    h1::before { color:#ff2948; transform:translate(3px,-1px); clip-path:inset(0 0 58% 0); animation:glitchTop 2.4s infinite steps(2,end); }
-    h1::after { color:#7a9aa0; transform:translate(-3px,1px); clip-path:inset(61% 0 0 0); animation:glitchBottom 1.8s infinite steps(2,end); }
-    .message { margin:20px auto 0; max-width:450px; color:#d1aeb4; font-size:.94rem; line-height:1.7; }
-    .rule { height:8px; margin:30px 0 22px; background:repeating-linear-gradient(135deg, #ed1b3b 0 10px, #26070c 10px 20px); box-shadow:0 0 12px #e51a3844; }
-    .notice { margin:0; color:#8f5d67; font-size:.74rem; line-height:1.7; letter-spacing:.04em; text-transform:uppercase; }
-    .brand { margin-top:30px; color:#bd1c37; font-size:.68rem; font-weight:900; letter-spacing:.2em; text-transform:uppercase; }
-    @keyframes scan { from { transform:translateY(-8px); } to { transform:translateY(8px); } } @keyframes blink { 50% { opacity:.25; } } @keyframes warning { 50% { opacity:.66; filter:contrast(1.8); } } @keyframes glitch { 0%,91%,100% { transform:none; } 92% { transform:skew(7deg); } 94% { transform:translate(-3px,1px); } 96% { transform:skew(-4deg); } } @keyframes glitchTop { 0%,87%,100% { clip-path:inset(0 0 58% 0); } 89% { clip-path:inset(12% 0 42% 0); transform:translate(8px,-2px); } } @keyframes glitchBottom { 0%,81%,100% { clip-path:inset(61% 0 0 0); } 83% { clip-path:inset(72% 0 7% 0); transform:translate(-7px,2px); } } @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; } }
-  </style>
-</head>
-<body>
-  <main class="ban-card" role="alert">
-    <div class="mark" aria-hidden="true">!</div>
-    <p class="eyebrow">Permanent access restriction</p>
-    <h1 data-text="Access denied">Access denied</h1>
-    <p class="message">This device is permanently banned from Dynamix.</p>
-    <div class="rule"></div>
-    <p class="notice">Logging out, creating another account, or trying again will not restore access.</p>
-    <div class="brand">Aerodynamix</div>
-  </main>
-</body>
-</html>''',
-        status=403,
+    return send_from_directory(
+        os.path.join(BASE_DIR, 'docs'),
+        'ban-preview.html',
         mimetype='text/html',
-    )
+    ), 403
 
 
 @app.teardown_appcontext

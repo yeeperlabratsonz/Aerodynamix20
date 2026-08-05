@@ -44,3 +44,10 @@ uri = "file://screenshots/ban-screen-disturbing-preview.jpg"
 type = "image"
 title = "Disturbing Aerodynamix ban screen preview"
 description = "Screenshot of the darker glitch-style permanent ban screen."
+
+[[outputs]]
+id = "U-69xyrAVVQTtkoIj-2FM"
+uri = "file://screenshots/ban-screen-piracy-preview-final.jpg"
+type = "image"
+title = "Unauthorized copy ban screen preview"
+description = "Final black-and-red fake video game piracy warning style ban screen."
