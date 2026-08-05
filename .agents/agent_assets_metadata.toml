@@ -30,3 +30,10 @@ id = "yx8CPTkw9EMQPV_VAcZQ9"
 uri = "file://attached_assets/generated_images/sky-whale-orbit.png"
 type = "image"
 title = "Sky Whale — Orbit Buddy"
+
+[[outputs]]
+id = "c26pTedLSbTzVbs1VQEx2"
+uri = "file://screenshots/ban-screen-preview.jpg"
+type = "image"
+title = "Aerodynamix ban screen preview"
+description = "Screenshot of the permanent device-ban screen."
