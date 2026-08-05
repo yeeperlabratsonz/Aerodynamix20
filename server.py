@@ -786,9 +786,56 @@ def _banned_response():
             'error': 'This device is permanently banned from Dynamix.'
         }), 403
     return Response(
-        'This device is permanently banned from Dynamix.',
+        '''<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Access denied · Aerodynamix</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh; margin: 0; display: grid; place-items: center; padding: 24px;
+      color: #edf4ff; background:
+        radial-gradient(circle at 50% 0%, #17366d 0, transparent 48%),
+        linear-gradient(145deg, #050914, #0b1020 58%, #080b14);
+    }
+    .ban-card {
+      width: min(100%, 560px); padding: clamp(28px, 6vw, 54px);
+      border: 1px solid rgba(255, 92, 116, .34); border-radius: 24px;
+      background: linear-gradient(155deg, rgba(20, 29, 54, .96), rgba(10, 15, 30, .96));
+      box-shadow: 0 24px 80px rgba(0, 0, 0, .46), 0 0 55px rgba(255, 64, 94, .08);
+      text-align: center;
+    }
+    .mark {
+      width: 78px; height: 78px; margin: 0 auto 24px; display: grid; place-items: center;
+      border: 1px solid rgba(255, 112, 132, .5); border-radius: 50%;
+      color: #ff8397; background: rgba(255, 64, 94, .12);
+      font-size: 2rem; font-weight: 900;
+    }
+    .eyebrow { margin: 0 0 12px; color: #ff8397; font-size: .72rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(2rem, 7vw, 3.6rem); letter-spacing: -.045em; }
+    .message { margin: 18px auto 0; max-width: 410px; color: #acbad4; font-size: 1rem; line-height: 1.65; }
+    .rule { height: 1px; margin: 28px 0 22px; background: rgba(157, 181, 224, .15); }
+    .notice { margin: 0; color: #7182a5; font-size: .82rem; line-height: 1.6; }
+    .brand { margin-top: 30px; color: #7faeff; font-size: .74rem; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+  </style>
+</head>
+<body>
+  <main class="ban-card" role="alert">
+    <div class="mark" aria-hidden="true">!</div>
+    <p class="eyebrow">Permanent access restriction</p>
+    <h1>Access denied</h1>
+    <p class="message">This device is permanently banned from Dynamix.</p>
+    <div class="rule"></div>
+    <p class="notice">Logging out, creating another account, or trying again will not restore access.</p>
+    <div class="brand">Aerodynamix</div>
+  </main>
+</body>
+</html>''',
         status=403,
-        mimetype='text/plain',
+        mimetype='text/html',
     )
 
 
