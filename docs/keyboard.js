@@ -68,12 +68,12 @@
         button.addEventListener('pointerdown', event => {
             event.preventDefault();
             activePointers.add(event.pointerId);
-            noteOn(note, frequency, button);
+            noteOn(note, frequency, button, true);
         });
         button.addEventListener('pointerenter', event => {
             if (!activePointers.has(event.pointerId) || event.buttons !== 1) return;
             event.preventDefault();
-            noteOn(note, frequency, button);
+            noteOn(note, frequency, button, true);
         });
         button.addEventListener('pointerup', event => {
             activePointers.delete(event.pointerId);
@@ -92,11 +92,14 @@
     whiteNotes.forEach(([note, frequency], index) => keyboard.appendChild(makeKey(note, frequency, false, index, keyHints[index])));
     blackNotes.forEach(([note, frequency, index], position) => keyboard.appendChild(makeKey(note, frequency, true, index, blackHints[position])));
 
-    function noteOn(note, frequency, element) {
+    function noteOn(note, frequency, element, isPointer = false) {
         if (voices.has(note)) return;
         const context = ensureAudio();
         const profile = soundProfiles[selectedSound];
         const now = context.currentTime;
+        // Dragged pointers can leave a key before the pad's natural swell finishes.
+        // Keep the held-key attack intact, but make pointer notes audible immediately.
+        const attack = isPointer ? Math.min(profile.attack, .025) : profile.attack;
         const output = context.createGain();
         const oscillators = [];
 
@@ -164,10 +167,10 @@
         }
 
         output.gain.setValueAtTime(.0001, now);
-        output.gain.exponentialRampToValueAtTime(Math.max(.001, profile.gain * masterVolume), now + profile.attack);
+        output.gain.exponentialRampToValueAtTime(Math.max(.001, profile.gain * masterVolume), now + attack);
         output.gain.exponentialRampToValueAtTime(
             Math.max(.001, profile.gain * profile.sustain * masterVolume),
-            now + profile.attack + profile.decay
+            now + attack + profile.decay
         );
 
         voices.set(note, { oscillators, output, element, profile });
