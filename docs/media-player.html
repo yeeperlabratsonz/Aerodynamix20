@@ -388,7 +388,7 @@
     </nav>
 
     <!-- Media Player unlock overlay -->
-    <div id="media-unlock-overlay" style="display:flex; position:fixed; top:7vw; left:0; width:100%; height:calc(100% - 7vw); backdrop-filter:blur(12px) saturate(120%); background:rgba(0,0,0,0.65); z-index:9998; align-items:center; justify-content:center; pointer-events:auto;">
+    <div id="media-unlock-overlay" style="display:none; position:fixed; top:7vw; left:0; width:100%; height:calc(100% - 7vw); backdrop-filter:blur(12px) saturate(120%); background:rgba(0,0,0,0.65); z-index:9998; align-items:center; justify-content:center; pointer-events:auto;">
         <div style="text-align:center; color:#fff; font-family:'Montserrat',sans-serif; padding:2rem; max-width:420px;">
             <img src="images/disc.png" alt="Dynamix Disc" style="width:128px; height:128px; border-radius:50%; margin-bottom:1rem; box-shadow:0 0 30px rgba(255,255,255,0.25);">
             <h2 style="font-size:2rem; margin-bottom:0.6rem; text-shadow:0 0 20px rgba(255,255,255,0.3);">Unlock Media Player</h2>
@@ -403,6 +403,7 @@
 
     <script>
     (function() {
+        document.documentElement.dataset.mediaAccessPending = 'true';
         const overlay = document.getElementById('media-unlock-overlay');
         const unlockBtn = document.getElementById('media-unlock-btn');
         const errorEl = document.getElementById('media-unlock-error');
@@ -411,6 +412,7 @@
         function hideOverlay() {
             overlay.style.display = 'none';
             document.body.style.overflow = '';
+            document.documentElement.dataset.mediaAccessPending = 'false';
             unlocked = true;
         }
 
@@ -422,6 +424,7 @@
             if (!AeroDiscs.isFreeTrial()) {
                 overlay.style.display = 'flex';
                 document.body.style.overflow = 'hidden';
+                document.documentElement.dataset.mediaAccessPending = 'false';
                 return;
             }
             // Check server-side unlock status
@@ -429,6 +432,7 @@
                 if (!info) {
                     overlay.style.display = 'flex';
                     document.body.style.overflow = 'hidden';
+                    document.documentElement.dataset.mediaAccessPending = 'false';
                     unlockBtn.style.display = 'none';
                     errorEl.textContent = 'Could not load Discs. Please try again.';
                     errorEl.style.display = 'block';
@@ -439,6 +443,7 @@
                 } else {
                     overlay.style.display = 'flex';
                     document.body.style.overflow = 'hidden';
+                    document.documentElement.dataset.mediaAccessPending = 'false';
                     unlockBtn.style.display = 'inline-flex';
                     errorEl.style.display = 'none';
                 }
@@ -850,7 +855,7 @@
             return queue.some(item => item.bundledKey === key);
         }
 
-        async function addBundledTracks() {
+        function addBundledTracks() {
             if (bundledTracksLoaded || bundledTracksLoading) return;
             if (BUNDLED_TRACKS.every(track => hasBundledTrack(track.key))) {
                 bundledTracksLoaded = true;
@@ -858,24 +863,30 @@
             }
             bundledTracksLoading = true;
             try {
+                const group = {
+                    name: 'Music Starter Pack',
+                    items: [],
+                    collapsed: false,
+                    coverUrl: BUNDLED_TRACKS.find(track => track.artUrl)?.artUrl || null
+                };
                 for (const track of BUNDLED_TRACKS) {
                     if (hasBundledTrack(track.key)) continue;
-                    try {
-                        const response = await fetch(track.src);
-                        if (!response.ok) throw new Error(`Bundled track request failed (${response.status})`);
-                        const blob = await response.blob();
-                        const file = new File([blob], track.fileName, { type: track.mime });
-                        file.bundled = true;
-                        addFiles([file], false, true);
-                        const item = queue[queue.length - 1];
-                        item.bundled = true;
-                        item.bundledKey = track.key;
-                        item.tags = track.tags;
-                        item.artUrl = track.artUrl;
-                    } catch (error) {
-                        console.warn(`Could not load bundled track "${track.tags.title}":`, error);
-                    }
+                    // Keep bundled tracks as direct served URLs instead of
+                    // downloading every large FLAC into memory on page load.
+                    const item = {
+                        file: null,
+                        src: track.src,
+                        name: track.fileName.replace(/\.[^.]+$/, ''),
+                        type: 'audio',
+                        artUrl: track.artUrl,
+                        tags: track.tags,
+                        bundled: true,
+                        bundledKey: track.key
+                    };
+                    group.items.push(item);
+                    queue.push(item);
                 }
+                if (group.items.length) groups.push(group);
                 renderPlaylist();
                 bundledTracksLoaded = BUNDLED_TRACKS.every(track => hasBundledTrack(track.key));
             } finally {
@@ -900,7 +911,8 @@
                 videoPlayer.classList.remove('visible');
                 videoEl.pause(); videoEl.src = '';
                 audioPlayer.classList.add('visible');
-                audio.src = URL.createObjectURL(item.file);
+                audio.src = item.src || URL.createObjectURL(item.file);
+                audio.preload = 'metadata';
                 audio.play().catch(() => {});
                 applyAudioMeta(idx);
             } else {
@@ -969,7 +981,8 @@
 
         function isLocked() {
             const overlay = document.getElementById('media-unlock-overlay');
-            return overlay && overlay.style.display !== 'none';
+            return document.documentElement.dataset.mediaAccessPending === 'true' ||
+                (overlay && overlay.style.display !== 'none');
         }
 
         // ── File / folder pickers ────────────────────────
