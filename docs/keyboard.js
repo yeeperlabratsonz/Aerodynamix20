@@ -24,6 +24,7 @@
     const blackHints = ['w', 'e', 't', 'y', 'u', 'o', 'p', '[', ']', '-'];
     const voices = new Map();
     const heldKeys = new Set();
+    const activePointers = new Set();
     let audioContext = null;
     let selectedSound = 'wave-synth';
     let masterVolume = .68;
@@ -51,16 +52,27 @@
         button.setAttribute('aria-label', `${note} key`);
         if (isBlack) button.style.left = `calc(${((index + 1) / whiteNotes.length) * 100}% - 17px)`;
         button.innerHTML = `<span class="key-shortcut">${hint || ''}</span><span class="key-note">${note}</span>`;
-        ['pointerdown', 'pointerenter'].forEach(type => button.addEventListener(type, event => {
-            if (type === 'pointerenter' && event.buttons !== 1) return;
+        button.addEventListener('pointerdown', event => {
+            event.preventDefault();
+            activePointers.add(event.pointerId);
+            noteOn(note, frequency, button);
+        });
+        button.addEventListener('pointerenter', event => {
+            if (!activePointers.has(event.pointerId) || event.buttons !== 1) return;
             event.preventDefault();
             noteOn(note, frequency, button);
-        }));
-        ['pointerup', 'pointercancel', 'pointerleave'].forEach(type => button.addEventListener(type, event => {
-            if (type === 'pointerleave' && event.buttons === 1) return;
+        });
+        button.addEventListener('pointerup', event => {
+            activePointers.delete(event.pointerId);
             noteOff(note);
-        }));
-        button.addEventListener('click', () => noteOn(note, frequency, button));
+        });
+        button.addEventListener('pointercancel', event => {
+            activePointers.delete(event.pointerId);
+            noteOff(note);
+        });
+        button.addEventListener('pointerleave', event => {
+            if (activePointers.has(event.pointerId)) noteOff(note);
+        });
         return button;
     }
 
@@ -166,4 +178,8 @@
     volumeInput.addEventListener('input', () => { masterVolume = Number(volumeInput.value) / 100; });
     panicButton.addEventListener('click', stopAll);
     window.addEventListener('blur', stopAll);
+    window.addEventListener('pointerup', event => {
+        activePointers.delete(event.pointerId);
+        stopAll();
+    });
 })();
