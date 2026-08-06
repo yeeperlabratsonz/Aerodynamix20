@@ -215,14 +215,14 @@
     height: 178px;
     border: 1px solid #07101d;
     border-radius: 0 0 6px 6px;
-    color: #233b52;
-    background: linear-gradient(90deg, #f4f8fb, #fff 48%, #dce7ee);
-    box-shadow: inset 0 -8px 0 rgba(79,121,153,.1), 0 5px 0 #9aafbd, 0 8px 14px rgba(0,0,0,.22);
+    color: #b4d2e8;
+    background: linear-gradient(90deg, #07101d, #304966 48%, #050910);
+    box-shadow: inset 0 -8px 0 rgba(0,0,0,.25), 0 5px 0 #02050a, 0 8px 14px rgba(0,0,0,.45);
     cursor: pointer;
     touch-action: none;
     user-select: none;
 }
-.black-key:hover { background: linear-gradient(90deg, #fff, #fff 48%, #edf4f8); }
+.black-key:hover { background: linear-gradient(90deg, #10283d, #426480 48%, #08111e); }
 .black-key.active {
     transform: translateY(4px);
     color: #fff;
