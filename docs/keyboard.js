@@ -33,7 +33,14 @@
     let masterVolume = .68;
 
     const soundProfiles = {
-        piano: { wave: 'triangle', harmonic: 'sine', harmonicRatio: 2, harmonicGain: .12, attack: .006, decay: .38, sustain: .24, release: .58, gain: .28 },
+        piano: {
+            piano: true,
+            attack: .004, decay: .34, sustain: .48, release: 1.15, gain: .32,
+            partials: [
+                ['sine', 1, .58], ['triangle', 2, .2], ['sine', 3, .1],
+                ['triangle', 4, .055], ['sine', 5, .03], ['sine', 7, .018]
+            ]
+        },
         // Tight electro lead inspired by the intro: a smaller detuned stack, bright filter snap,
         // short pluck-like decay, and a little pitch movement instead of a sustained pad.
         'flashing-synth': {
@@ -113,7 +120,45 @@
         const output = context.createGain();
         const oscillators = [];
 
-        if (profile.supersaw) {
+        if (profile.piano) {
+            const pianoFilter = context.createBiquadFilter();
+            pianoFilter.type = 'lowpass';
+            pianoFilter.frequency.value = 5200;
+            pianoFilter.Q.value = .55;
+            output.connect(pianoFilter);
+            pianoFilter.connect(context.destination);
+
+            // Several quiet partials give the note a wooden, string-and-soundboard body.
+            profile.partials.forEach(([wave, ratio, level]) => {
+                const partial = context.createOscillator();
+                const partialGain = context.createGain();
+                partial.type = wave;
+                partial.frequency.value = frequency * ratio;
+                partialGain.gain.value = level;
+                partial.connect(partialGain).connect(output);
+                partial.start(now);
+                oscillators.push(partial);
+            });
+
+            // A very short filtered noise burst supplies the felt-hammer attack.
+            const hammerBuffer = context.createBuffer(1, Math.ceil(context.sampleRate * .055), context.sampleRate);
+            const hammerData = hammerBuffer.getChannelData(0);
+            for (let i = 0; i < hammerData.length; i += 1) {
+                const envelope = Math.pow(1 - i / hammerData.length, 5);
+                hammerData[i] = (Math.random() * 2 - 1) * envelope;
+            }
+            const hammer = context.createBufferSource();
+            const hammerFilter = context.createBiquadFilter();
+            const hammerGain = context.createGain();
+            hammer.buffer = hammerBuffer;
+            hammerFilter.type = 'bandpass';
+            hammerFilter.frequency.value = Math.min(3600, Math.max(1500, frequency * 4.5));
+            hammerFilter.Q.value = .8;
+            hammerGain.gain.value = .16;
+            hammer.connect(hammerFilter).connect(hammerGain).connect(output);
+            hammer.start(now);
+            oscillators.push(hammer);
+        } else if (profile.supersaw) {
             // Supersaw pad: multiple detuned sawtooths through a warm low-pass filter + LFO vibrato
             const lpf = context.createBiquadFilter();
             lpf.type = 'lowpass';
@@ -197,10 +242,21 @@
 
         output.gain.setValueAtTime(.0001, now);
         output.gain.exponentialRampToValueAtTime(Math.max(.001, profile.gain * masterVolume), now + attack);
-        output.gain.exponentialRampToValueAtTime(
-            Math.max(.001, profile.gain * profile.sustain * masterVolume),
-            now + attack + profile.decay
-        );
+        if (profile.piano) {
+            output.gain.exponentialRampToValueAtTime(
+                Math.max(.001, profile.gain * .58 * masterVolume),
+                now + .22
+            );
+            output.gain.exponentialRampToValueAtTime(
+                Math.max(.001, profile.gain * .2 * masterVolume),
+                now + 1.35
+            );
+        } else {
+            output.gain.exponentialRampToValueAtTime(
+                Math.max(.001, profile.gain * profile.sustain * masterVolume),
+                now + attack + profile.decay
+            );
+        }
 
         voices.set(note, { oscillators, output, element, profile });
         element.classList.add('active');
