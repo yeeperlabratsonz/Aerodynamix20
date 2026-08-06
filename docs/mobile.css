@@ -13,6 +13,14 @@ body {
     padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* The access-code button is intentionally a touch-only entry point.
+   Desktop users use the hidden Shop ArrowUp, ArrowDown, 2005 sequence. */
+@media (min-width: 701px) {
+    .mobile-access-button {
+        display: none !important;
+    }
+}
+
 .mobile-menu-toggle {
     display: none;
 }
