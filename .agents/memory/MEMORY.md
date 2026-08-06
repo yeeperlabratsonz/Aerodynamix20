@@ -17,3 +17,4 @@
 - [Mobile game keyboard](mobile-game-keyboard.md) — every catalog game receives touch keyboard controls through the shared game-frame wrapper.
 - [Game ordering preference](game-ordering-preference.md) — new games can be placed in any sensible catalog position; no chronological or alphabetical rule is required.
 - [Media Player starter pack loading](media-player-starter-pack-loading.md) — bundled tracks use direct served URLs and load inside one named starter-pack group after access is confirmed.
+- [Media Player folder playback](media-player-folder-playback.md) — double-clicking a folder plays only its items in order and uses the folder cover throughout that run.

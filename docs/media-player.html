@@ -624,6 +624,7 @@
         let current = -1;
         let shuffle = false;
         let repeat  = false;
+        let playbackGroup = null; // folder currently being played in order
 
         const isAudio = f => f.type.startsWith('audio/') || /\.(mp3|flac|aac|ogg|wav|m4a|opus|wma|aiff?)$/i.test(f.name);
         const isVideo = f => f.type.startsWith('video/') || /\.(mp4|webm|mkv|mov|avi|m4v)$/i.test(f.name);
@@ -727,6 +728,7 @@
                     // Folder header
                     const row = document.createElement('div');
                     row.className = 'folder-row' + (group.collapsed ? ' collapsed' : '');
+                    row.title = 'Double-click to play this folder in order';
                     row.innerHTML = `
                         ${group.coverUrl
                             ? `<img class="folder-cover" src="${group.coverUrl}" alt="">`
@@ -736,6 +738,10 @@
                         <span class="folder-remove" title="Remove folder"><i class="fas fa-xmark"></i></span>`;
                     row.querySelector('.folder-remove').addEventListener('click', e => { e.stopPropagation(); removeGroup(gIdx); });
                     row.addEventListener('click', () => { group.collapsed = !group.collapsed; renderPlaylist(); });
+                    row.addEventListener('dblclick', e => {
+                        e.stopPropagation();
+                        playGroup(group);
+                    });
                     playlistEl.appendChild(row);
 
                     const children = document.createElement('div');
@@ -794,6 +800,11 @@
         function removeItem(qIdx) {
             const item = queue[qIdx];
             if (!item) return;
+            if (playbackGroup) {
+                const playbackIndex = playbackGroup.items.indexOf(item);
+                if (playbackIndex !== -1) playbackGroup.items.splice(playbackIndex, 1);
+                if (!playbackGroup.items.length) playbackGroup = null;
+            }
             URL.revokeObjectURL(item.artUrl);
             // Remove from its group
             groups.forEach(g => { const i = g.items.indexOf(item); if (i !== -1) g.items.splice(i, 1); });
@@ -802,7 +813,7 @@
 
             if (current === qIdx) {
                 audio.pause(); videoEl.pause();
-                if (queue.length) playItem(Math.min(qIdx, queue.length - 1));
+                if (queue.length) playItem(Math.min(qIdx, queue.length - 1), playbackGroup);
                 else resetUI();
             } else if (current > qIdx) { current--; }
             renderPlaylist();
@@ -810,6 +821,7 @@
 
         function removeGroup(gIdx) {
             const group = groups[gIdx];
+            if (playbackGroup === group) playbackGroup = null;
             group.items.forEach(item => {
                 URL.revokeObjectURL(item.artUrl);
                 const qIdx = queue.indexOf(item);
@@ -826,6 +838,7 @@
 
         function resetUI() {
             current = -1;
+            playbackGroup = null;
             dropZone.style.display = '';
             audioPlayer.classList.remove('visible', 'playing');
             videoPlayer.classList.remove('visible');
@@ -930,9 +943,18 @@
         }
 
         // ── Playback ─────────────────────────────────────
-        function playItem(idx) {
+        function playGroup(group) {
+            if (isLocked() || !group?.items?.length) return;
+            const first = group.items.find(item => queue.includes(item));
+            if (!first) return;
+            playbackGroup = group;
+            playItem(queue.indexOf(first), group);
+        }
+
+        function playItem(idx, groupContext = null) {
             if (idx < 0 || idx >= queue.length) return;
             if (isLocked()) return;
+            playbackGroup = groupContext;
             current = idx;
             const item = queue[idx];
             item.loading = item.type === 'audio';
@@ -962,11 +984,12 @@
         function applyAudioMeta(idx) {
             const item = queue[idx];
             if (!item) return;
+            const groupCover = playbackGroup?.items.includes(item) ? playbackGroup.coverUrl : null;
             trackTitle.textContent  = item.tags?.title  || item.name;
             trackArtist.textContent = item.tags?.artist || 'Unknown Artist';
             trackAlbum.textContent  = item.tags?.album  || '';
-            if (item.artUrl) {
-                albumArt.src = item.artUrl;
+            if (groupCover || item.artUrl) {
+                albumArt.src = groupCover || item.artUrl;
                 albumArt.style.display = 'block';
                 albumArtPh.style.display = 'none';
             } else {
@@ -978,6 +1001,17 @@
         function playNext() {
             if (!queue.length) return;
             if (shuffle) { playItem(Math.floor(Math.random() * queue.length)); return; }
+            if (playbackGroup) {
+                const groupIndex = playbackGroup.items.indexOf(queue[current]);
+                const nextGroupIndex = groupIndex + 1;
+                if (groupIndex >= 0 && nextGroupIndex < playbackGroup.items.length) {
+                    const nextItem = playbackGroup.items[nextGroupIndex];
+                    playItem(queue.indexOf(nextItem), playbackGroup);
+                } else {
+                    audioPlayer.classList.remove('playing');
+                }
+                return;
+            }
             const next = (current + 1) % queue.length;
             if (next === 0 && !repeat) { audioPlayer.classList.remove('playing'); return; }
             playItem(next);
@@ -985,6 +1019,14 @@
         function playPrev() {
             if (!queue.length) return;
             if (audio.currentTime > 3) { audio.currentTime = 0; return; }
+            if (playbackGroup) {
+                const groupIndex = playbackGroup.items.indexOf(queue[current]);
+                if (groupIndex > 0) {
+                    const previousItem = playbackGroup.items[groupIndex - 1];
+                    playItem(queue.indexOf(previousItem), playbackGroup);
+                }
+                return;
+            }
             playItem((current - 1 + queue.length) % queue.length);
         }
 
