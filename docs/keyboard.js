@@ -52,6 +52,8 @@
         button.className = isBlack ? 'piano-key black-key' : 'piano-key';
         button.dataset.note = note;
         button.dataset.frequency = frequency;
+        const rainbowPosition = isBlack ? index + .5 : index;
+        button.style.setProperty('--rainbow-hue', `${Math.round((rainbowPosition / 14) * 280)}`);
         button.setAttribute('aria-label', `${note} key`);
         if (isBlack) button.style.left = `calc(${((index + 1) / whiteNotes.length) * 100}% - 17px)`;
         button.innerHTML = `<span class="key-shortcut">${hint || ''}</span><span class="key-note">${note}</span>`;
