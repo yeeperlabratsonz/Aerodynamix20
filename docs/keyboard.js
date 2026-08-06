@@ -44,6 +44,15 @@
             filterEnvelope: { start: 5200, end: 1700, duration: .22 },
             lfoRate: 5.1, lfoDepth: 2.2       // restrained vibrato, not a wide pad wobble
         },
+        'pop-synth': {
+            supersaw: true,
+            detunes: [-14, -6, 0, 6, 14],
+            attack: .012, decay: .28, sustain: .54, release: .58, gain: .13,
+            filter: 2550, filterQ: 1.05,
+            filterEnvelope: { start: 6200, end: 2550, duration: .16 },
+            lfoRate: 5.6, lfoDepth: 1.25,
+            octaveMix: .16
+        },
         organ: { wave: 'sine', harmonic: 'sine', harmonicRatio: 2, harmonicGain: .5, attack: .06, decay: .08, sustain: .75, release: .2, gain: .22 },
         bell: { wave: 'sine', harmonic: 'triangle', harmonicRatio: 3.01, harmonicGain: .32, attack: .002, decay: 1.1, sustain: .03, release: 1.25, gain: .25 },
         bass: { wave: 'sawtooth', harmonic: 'square', harmonicRatio: 2, harmonicGain: .08, attack: .012, decay: .3, sustain: .42, release: .4, gain: .27, filter: 850 }
@@ -136,6 +145,17 @@
                 osc.start(now);
                 oscillators.push(osc);
             });
+            if (profile.octaveMix) {
+                const octave = context.createOscillator();
+                const octaveGain = context.createGain();
+                octave.type = 'triangle';
+                octave.frequency.value = frequency * 2;
+                octaveGain.gain.value = profile.octaveMix;
+                lfoGain.connect(octave.detune);
+                octave.connect(octaveGain).connect(output);
+                octave.start(now);
+                oscillators.push(octave);
+            }
 
             output.connect(lpf);
             lpf.connect(context.destination);
@@ -233,10 +253,10 @@
     });
     function setMode(mode) {
         keyboardMode = mode;
-        selectedSound = mode === 'synth' ? 'flashing-synth' : 'piano';
+        selectedSound = mode === 'synth' ? 'flashing-synth' : mode === 'pop' ? 'pop-synth' : 'piano';
         modeButtons.forEach(button => button.classList.toggle('active', button.dataset.mode === mode));
-        workspace.classList.toggle('synth-mode', mode === 'synth');
-        soundStatus.textContent = mode === 'synth' ? 'Flashing Lights Synth' : 'Standard Piano';
+        workspace.classList.toggle('synth-mode', mode === 'synth' || mode === 'pop');
+        soundStatus.textContent = mode === 'synth' ? 'Flashing Lights Synth' : mode === 'pop' ? 'Pop Synth' : 'Standard Piano';
         stopAll();
     }
     modeButtons.forEach(button => button.addEventListener('click', () => setMode(button.dataset.mode)));
