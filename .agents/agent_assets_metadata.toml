@@ -65,3 +65,10 @@ uri = "file://screenshots/ban-screen-everything-preview.jpg"
 type = "image"
 title = "Dynamix everything-ban screen preview"
 description = "Updated system-warning ban screen stating that access to everything on Dynamix has been permanently revoked."
+
+[[outputs]]
+id = "prdxVcQq0AihevtNL450R"
+uri = "file://artifacts/aerodynamix-one-page.html"
+type = "unspecified"
+title = "Aerodynamix one-page prototype"
+description = "Standalone single-file prototype with Home, Games, Shop, Connect, Cards, and optional Flask server connection."
