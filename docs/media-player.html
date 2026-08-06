@@ -807,36 +807,68 @@
             addMoreWrap.classList.remove('visible');
         }
 
-        // The player ships with one track so it is useful immediately after
-        // unlocking, without requiring the user to choose a local file first.
-        let bundledTrackLoaded = false;
-        let bundledTrackLoading = false;
-        async function addBundledTrack() {
-            if (bundledTrackLoaded || bundledTrackLoading || queue.some(item => item.bundled)) return;
-            bundledTrackLoading = true;
+        // The player ships with bundled tracks so it is useful immediately
+        // after unlocking, without requiring the user to choose a local file.
+        const BUNDLED_TRACKS = [
+            {
+                key: 'new-body',
+                src: 'attached_assets/new-body.mp3',
+                fileName: 'New Body.mp3',
+                mime: 'audio/mpeg',
+                tags: { title: 'New Body', artist: 'Kanye West feat. Ty Dolla $ign & Nicki Minaj', album: '' },
+                artUrl: 'attached_assets/new-body-cover.jpg'
+            },
+            {
+                key: '20-min',
+                src: 'attached_assets/20-min.flac',
+                fileName: '20 Min.flac',
+                mime: 'audio/flac',
+                tags: { title: '20 Min', artist: 'Lil Uzi Vert', album: 'Luv Is Rage 2 (Deluxe)' },
+                artUrl: null
+            }
+        ];
+        let bundledTracksLoaded = false;
+        let bundledTracksLoading = false;
+
+        function hasBundledTrack(key) {
+            return queue.some(item => item.bundledKey === key);
+        }
+
+        async function addBundledTracks() {
+            if (bundledTracksLoaded || bundledTracksLoading) return;
+            if (BUNDLED_TRACKS.every(track => hasBundledTrack(track.key))) {
+                bundledTracksLoaded = true;
+                return;
+            }
+            bundledTracksLoading = true;
             try {
-                const response = await fetch('attached_assets/new-body.mp3');
-                if (!response.ok) throw new Error(`Bundled track request failed (${response.status})`);
-                const blob = await response.blob();
-                const file = new File([blob], 'New Body.mp3', { type: 'audio/mpeg' });
-                file.bundled = true;
-                addFiles([file], false, true);
-                const item = queue[queue.length - 1];
-                item.bundled = true;
-                item.tags = { title: 'New Body', artist: 'Kanye West feat. Ty Dolla $ign & Nicki Minaj', album: '' };
-                item.artUrl = 'attached_assets/new-body-cover.jpg';
+                for (const track of BUNDLED_TRACKS) {
+                    if (hasBundledTrack(track.key)) continue;
+                    try {
+                        const response = await fetch(track.src);
+                        if (!response.ok) throw new Error(`Bundled track request failed (${response.status})`);
+                        const blob = await response.blob();
+                        const file = new File([blob], track.fileName, { type: track.mime });
+                        file.bundled = true;
+                        addFiles([file], false, true);
+                        const item = queue[queue.length - 1];
+                        item.bundled = true;
+                        item.bundledKey = track.key;
+                        item.tags = track.tags;
+                        item.artUrl = track.artUrl;
+                    } catch (error) {
+                        console.warn(`Could not load bundled track "${track.tags.title}":`, error);
+                    }
+                }
                 renderPlaylist();
-                applyAudioMeta(queue.length - 1);
-                bundledTrackLoaded = true;
-            } catch (error) {
-                console.warn('Could not load bundled media track:', error);
+                bundledTracksLoaded = BUNDLED_TRACKS.every(track => hasBundledTrack(track.key));
             } finally {
-                bundledTrackLoading = false;
+                bundledTracksLoading = false;
             }
         }
 
-        function maybeLoadBundledTrack() {
-            if (!isLocked()) addBundledTrack();
+        function maybeLoadBundledTracks() {
+            if (!isLocked()) addBundledTracks();
         }
 
         // ── Playback ─────────────────────────────────────
@@ -997,12 +1029,12 @@
 
         const unlockOverlay = document.getElementById('media-unlock-overlay');
         if (unlockOverlay) {
-            new MutationObserver(maybeLoadBundledTrack).observe(unlockOverlay, {
+            new MutationObserver(maybeLoadBundledTracks).observe(unlockOverlay, {
                 attributes: true,
                 attributeFilter: ['style']
             });
         }
-        maybeLoadBundledTrack();
+        maybeLoadBundledTracks();
 
         // ── Keyboard shortcuts ───────────────────────────
         document.addEventListener('keydown', e => {
