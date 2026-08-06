@@ -10,6 +10,7 @@
     const modeButtons  = [...document.querySelectorAll('.mode-button')];
     const workspace    = document.querySelector('.keyboard-workspace');
     const panicButton  = document.getElementById('panic-button');
+    const melodyButton = document.getElementById('melody-button');
 
     /* ── Note tables ── */
     // [name, freq, semitone-index-from-C4]
@@ -50,6 +51,8 @@
     const voices         = new Map();
     const heldKeys       = new Set();
     const activePointers = new Set();
+    let melodyTimers = [];
+    let melodyRun = 0;
 
     /* ── Sound profiles ── */
     const soundProfiles = {
@@ -181,6 +184,32 @@
         keyboard.appendChild(makeKey(name, freq, semi, false, wi, whiteHints[wi])));
     blackNotes.forEach(([name, freq, semi, wi], bi) =>
         keyboard.appendChild(makeKey(name, freq, semi, true, wi, blackHints[bi])));
+
+    const keyByNote = new Map([...document.querySelectorAll('.piano-key')].map(key => [key.dataset.note, key]));
+
+    // Short keyboard-rendered arrangement shaped from the uploaded clip's repeating hit timing.
+    // It intentionally uses the current mode instead of playing the source recording.
+    const clipMelody = [
+        { at: 0.00, notes: ['C4', 'E4', 'G4'], length: .34 },
+        { at: 0.43, notes: ['C5'], length: .24 },
+        { at: 0.86, notes: ['G4'], length: .24 },
+        { at: 1.29, notes: ['A4', 'C5', 'E5'], length: .34 },
+        { at: 1.72, notes: ['E5'], length: .24 },
+        { at: 2.08, notes: ['D4', 'F4', 'A4'], length: .34 },
+        { at: 2.43, notes: ['A4'], length: .24 },
+        { at: 2.79, notes: ['G4', 'B4', 'D5'], length: .34 },
+        { at: 3.23, notes: ['G4'], length: .24 },
+        { at: 3.67, notes: ['C4', 'E4', 'G4'], length: .34 },
+        { at: 4.10, notes: ['C5'], length: .24 },
+        { at: 4.54, notes: ['A4', 'C5', 'E5'], length: .34 },
+        { at: 4.98, notes: ['E5'], length: .24 },
+        { at: 5.34, notes: ['G4', 'B4', 'D5'], length: .34 },
+        { at: 5.70, notes: ['D5'], length: .24 },
+        { at: 6.06, notes: ['C4', 'E4', 'G4'], length: .34 },
+        { at: 6.49, notes: ['C5'], length: .24 },
+        { at: 6.92, notes: ['A4', 'C5', 'E5'], length: .34 },
+        { at: 7.36, notes: ['C5'], length: .3 },
+    ];
 
     /* ── noteOn ── */
     function noteOn(note, frequency, element, isPointer = false) {
@@ -410,9 +439,56 @@
 
     /* ── stopAll ── */
     function stopAll() {
+        stopMelody();
         [...voices.keys()].forEach(noteOff);
         heldKeys.clear();
         noteStatus.textContent = 'Click a key or use your keyboard';
+    }
+
+    function stopMelody() {
+        melodyRun += 1;
+        melodyTimers.forEach(timer => clearTimeout(timer));
+        melodyTimers = [];
+        melodyButton.classList.remove('playing');
+        melodyButton.setAttribute('aria-pressed', 'false');
+        melodyButton.innerHTML = '<i class="fas fa-play"></i> Play clip melody';
+    }
+
+    function playMelody() {
+        if (melodyTimers.length) {
+            stopMelody();
+            noteStatus.textContent = 'Clip melody stopped';
+            return;
+        }
+        stopAll();
+        const run = ++melodyRun;
+        melodyButton.classList.add('playing');
+        melodyButton.setAttribute('aria-pressed', 'true');
+        melodyButton.innerHTML = '<i class="fas fa-stop"></i> Stop melody';
+        noteStatus.textContent = 'Playing clip melody · selected sound';
+        const timers = [];
+        clipMelody.forEach(event => {
+            const startTimer = setTimeout(() => {
+                if (run !== melodyRun) return;
+                event.notes.forEach(note => {
+                    const key = keyByNote.get(note);
+                    if (!key) return;
+                    noteOn(note, Number(key.dataset.frequency), key);
+                    timers.push(setTimeout(() => noteOff(note), event.length * 1000));
+                });
+            }, event.at * 1000);
+            timers.push(startTimer);
+        });
+        const endTimer = setTimeout(() => {
+            if (run !== melodyRun) return;
+            melodyTimers = [];
+            melodyButton.classList.remove('playing');
+            melodyButton.setAttribute('aria-pressed', 'false');
+            melodyButton.innerHTML = '<i class="fas fa-play"></i> Play clip melody';
+            noteStatus.textContent = 'Clip melody finished';
+        }, 7.36 * 1000 + 900);
+        timers.push(endTimer);
+        melodyTimers = timers;
     }
 
     /* ── Mode switcher ── */
@@ -477,6 +553,7 @@
 
     volumeInput.addEventListener('input', () => { masterVolume = Number(volumeInput.value) / 100; });
     panicButton.addEventListener('click', stopAll);
+    melodyButton.addEventListener('click', playMelody);
     window.addEventListener('blur', stopAll);
     window.addEventListener('pointerup', e => { activePointers.delete(e.pointerId); stopAll(); });
 })();

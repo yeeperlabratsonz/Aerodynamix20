@@ -167,6 +167,24 @@
     background: rgba(60,10,20,.5);
 }
 .keyboard-control:hover { background: rgba(160,30,60,.3); border-color: rgba(255,112,141,.5); }
+.melody-control {
+    padding: .48rem .72rem;
+    border: 1px solid rgba(102,242,190,.28);
+    border-radius: 8px;
+    color: #9fffd8;
+    background: rgba(5,62,58,.55);
+    font-size: .72rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .2s, border-color .2s, color .2s, box-shadow .2s;
+}
+.melody-control:hover,
+.melody-control.playing {
+    border-color: #66f2be;
+    color: #fff;
+    background: rgba(7,119,103,.75);
+    box-shadow: 0 0 16px rgba(102,242,190,.25);
+}
 
 /* ── Status bar ── */
 .keyboard-status {
@@ -429,6 +447,7 @@
     .mode-button, .sound-button { flex: 1; text-align: center; }
     .keyboard-status { flex-wrap: wrap; }
     .volume-control { width: 100%; }
+    .melody-control, .keyboard-control { flex: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
     .synth-mode .synth-lights,
