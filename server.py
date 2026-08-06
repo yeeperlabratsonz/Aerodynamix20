@@ -716,6 +716,7 @@ def add_no_cache_headers(response):
             g.device_id,
             max_age=365 * 24 * 60 * 60,
             httponly=True,
+            path='/',
             samesite='Lax'
         )
     return response
