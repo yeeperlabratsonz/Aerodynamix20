@@ -34,14 +34,15 @@
 
     const soundProfiles = {
         piano: { wave: 'triangle', harmonic: 'sine', harmonicRatio: 2, harmonicGain: .12, attack: .006, decay: .38, sustain: .24, release: .58, gain: .28 },
-        // Supersaw pad — five detuned saws through a warm low-pass filter with slow LFO vibrato,
-        // modelled on the Flashing Lights intro: stacked saws ~±18 cents, ~1800 Hz cutoff, slow attack
+        // Tight electro lead inspired by the intro: a smaller detuned stack, bright filter snap,
+        // short pluck-like decay, and a little pitch movement instead of a sustained pad.
         'flashing-synth': {
             supersaw: true,
-            detunes: [-18, -9, 0, 9, 18],   // cents spread across 5 oscillators
-            attack: .34, decay: .55, sustain: .78, release: 1.9, gain: .21,
-            filter: 1800, filterQ: 1.4,
-            lfoRate: 4.6, lfoDepth: 3.2      // gentle pitch vibrato
+            detunes: [-10, -3, 3, 10],       // tighter 2000s electro spread
+            attack: .012, decay: .3, sustain: .3, release: .34, gain: .16,
+            filter: 1700, filterQ: 2.2,
+            filterEnvelope: { start: 5200, end: 1700, duration: .22 },
+            lfoRate: 5.1, lfoDepth: 2.2       // restrained vibrato, not a wide pad wobble
         },
         organ: { wave: 'sine', harmonic: 'sine', harmonicRatio: 2, harmonicGain: .5, attack: .06, decay: .08, sustain: .75, release: .2, gain: .22 },
         bell: { wave: 'sine', harmonic: 'triangle', harmonicRatio: 3.01, harmonicGain: .32, attack: .002, decay: 1.1, sustain: .03, release: 1.25, gain: .25 },
@@ -107,7 +108,15 @@
             // Supersaw pad: multiple detuned sawtooths through a warm low-pass filter + LFO vibrato
             const lpf = context.createBiquadFilter();
             lpf.type = 'lowpass';
-            lpf.frequency.value = profile.filter;
+            if (profile.filterEnvelope) {
+                lpf.frequency.setValueAtTime(profile.filterEnvelope.start, now);
+                lpf.frequency.exponentialRampToValueAtTime(
+                    profile.filterEnvelope.end,
+                    now + profile.filterEnvelope.duration
+                );
+            } else {
+                lpf.frequency.value = profile.filter;
+            }
             lpf.Q.value = profile.filterQ;
 
             const lfo = context.createOscillator();
