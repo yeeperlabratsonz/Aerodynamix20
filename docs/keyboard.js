@@ -101,9 +101,9 @@
          */
         'lumi-synth': {
             lumi: true,
-            attack: .01, decay: .35, sustain: .22, release: .7, gain: .22,
-            filterStart: 3500, filterEnd: 1000, filterDuration: .35, filterQ: 4.2,
-            reverbWet: .36, delayTime: .21, delayFeedback: .28, delayWet: .22,
+            attack: .008, decay: .28, sustain: .3, release: .58, gain: .25,
+            filterStart: 5200, filterEnd: 2100, filterDuration: .18, filterQ: 3.8,
+            reverbWet: .22, delayTime: .17, delayFeedback: .2, delayWet: .14,
         },
 
         /* Simple extras */
@@ -288,8 +288,8 @@
             const sqrGain = ctx.createGain();
             sqr.type = 'square';
             sqr.frequency.value = frequency;
-            sqr.detune.value = -7;
-            sqrGain.gain.value = .48;
+            sqr.detune.value = -5;
+            sqrGain.gain.value = .34;
 
             saw.connect(output);
             sqr.connect(sqrGain).connect(output);
