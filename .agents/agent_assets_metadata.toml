@@ -60,15 +60,15 @@ title = "Aerodynamix system warning ban screen"
 description = "Reference-inspired black scanline warning screen for a permanent Dynamix ban."
 
 [[outputs]]
-id = "gsvc-emF9Sg8Tm0YbgL3c"
-uri = "file://screenshots/ban-screen-everything-preview.jpg"
-type = "image"
-title = "Dynamix everything-ban screen preview"
-description = "Updated system-warning ban screen stating that access to everything on Dynamix has been permanently revoked."
-
-[[outputs]]
 id = "prdxVcQq0AihevtNL450R"
 uri = "file://artifacts/aerodynamix-one-page.html"
 type = "unspecified"
 title = "Aerodynamix one-page prototype"
 description = "Standalone single-file prototype with Home, Games, Shop, Connect, Cards, and optional Flask server connection."
+
+[[outputs]]
+id = "NZdWgj8nSqgCr_UIKAZuP"
+uri = "file://artifacts/aerodynamix-complete-site.zip"
+type = "unspecified"
+title = "Aerodynamix complete site snapshot"
+description = "The real current Aerodynamix site preserved as-is: frontend pages, UI styles/scripts, images, audio, games, Flask server, dependencies, and setup guide."
