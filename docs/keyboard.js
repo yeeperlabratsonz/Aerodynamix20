@@ -39,7 +39,7 @@
         'flashing-synth': {
             supersaw: true,
             detunes: [-18, -9, 0, 9, 18],   // cents spread across 5 oscillators
-            attack: .34, decay: .55, sustain: .78, release: 1.9, gain: .062,
+            attack: .34, decay: .55, sustain: .78, release: 1.9, gain: .21,
             filter: 1800, filterQ: 1.4,
             lfoRate: 4.6, lfoDepth: 3.2      // gentle pitch vibrato
         },
