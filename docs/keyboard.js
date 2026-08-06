@@ -34,7 +34,15 @@
 
     const soundProfiles = {
         piano: { wave: 'triangle', harmonic: 'sine', harmonicRatio: 2, harmonicGain: .12, attack: .006, decay: .38, sustain: .24, release: .58, gain: .28 },
-        'flashing-synth': { wave: 'sawtooth', attack: .02, decay: .6, release: .12, gain: .24, filterEnvelope: { start: 3000, end: 800, duration: .3, q: 4 } },
+        // Supersaw pad — five detuned saws through a warm low-pass filter with slow LFO vibrato,
+        // modelled on the Flashing Lights intro: stacked saws ~±18 cents, ~1800 Hz cutoff, slow attack
+        'flashing-synth': {
+            supersaw: true,
+            detunes: [-18, -9, 0, 9, 18],   // cents spread across 5 oscillators
+            attack: .34, decay: .55, sustain: .78, release: 1.9, gain: .062,
+            filter: 1800, filterQ: 1.4,
+            lfoRate: 4.6, lfoDepth: 3.2      // gentle pitch vibrato
+        },
         organ: { wave: 'sine', harmonic: 'sine', harmonicRatio: 2, harmonicGain: .5, attack: .06, decay: .08, sustain: .75, release: .2, gain: .22 },
         bell: { wave: 'sine', harmonic: 'triangle', harmonicRatio: 3.01, harmonicGain: .32, attack: .002, decay: 1.1, sustain: .03, release: 1.25, gain: .25 },
         bass: { wave: 'sawtooth', harmonic: 'square', harmonicRatio: 2, harmonicGain: .08, attack: .012, decay: .3, sustain: .42, release: .4, gain: .27, filter: 850 }
@@ -90,48 +98,79 @@
         const profile = soundProfiles[selectedSound];
         const now = context.currentTime;
         const output = context.createGain();
-        const main = context.createOscillator();
-        main.type = profile.wave;
-        main.frequency.value = profile.filter ? frequency / (selectedSound === 'bass' ? 2 : 1) : frequency;
-        main.connect(output);
-        let filter = null;
-        let harmonic = null;
-        if (profile.filterEnvelope) {
-            filter = context.createBiquadFilter();
-            filter.type = 'lowpass';
-            filter.Q.value = profile.filterEnvelope.q;
-            filter.frequency.setValueAtTime(profile.filterEnvelope.start, now);
-            filter.frequency.exponentialRampToValueAtTime(profile.filterEnvelope.end, now + profile.filterEnvelope.duration);
-            output.connect(filter);
-            filter.connect(context.destination);
+        const oscillators = [];
+
+        if (profile.supersaw) {
+            // Supersaw pad: multiple detuned sawtooths through a warm low-pass filter + LFO vibrato
+            const lpf = context.createBiquadFilter();
+            lpf.type = 'lowpass';
+            lpf.frequency.value = profile.filter;
+            lpf.Q.value = profile.filterQ;
+
+            const lfo = context.createOscillator();
+            const lfoGain = context.createGain();
+            lfo.type = 'sine';
+            lfo.frequency.value = profile.lfoRate;
+            lfoGain.gain.value = profile.lfoDepth;
+            lfo.connect(lfoGain);
+
+            profile.detunes.forEach(detune => {
+                const osc = context.createOscillator();
+                osc.type = 'sawtooth';
+                osc.frequency.value = frequency;
+                osc.detune.value = detune;
+                lfoGain.connect(osc.detune);   // vibrato modulates each osc's detune
+                osc.connect(output);
+                osc.start(now);
+                oscillators.push(osc);
+            });
+
+            output.connect(lpf);
+            lpf.connect(context.destination);
+            lfo.start(now);
+            oscillators.push(lfo); // store lfo alongside oscs for cleanup
         } else if (profile.harmonicGain) {
-            harmonic = context.createOscillator();
+            const main = context.createOscillator();
+            const harmonic = context.createOscillator();
             const harmonicGain = context.createGain();
+            main.type = profile.wave;
+            main.frequency.value = frequency;
             harmonic.type = profile.harmonic;
-            harmonic.frequency.value = main.frequency.value * profile.harmonicRatio;
+            harmonic.frequency.value = frequency * profile.harmonicRatio;
             harmonicGain.gain.value = profile.harmonicGain;
+            main.connect(output);
             harmonic.connect(harmonicGain).connect(output);
-            output.connect(context.destination);
-        } else if (profile.filter) {
-            const filter = context.createBiquadFilter();
-            filter.type = 'lowpass';
-            filter.frequency.value = profile.filter;
-            filter.Q.value = .8;
-            output.connect(filter);
-            filter.connect(context.destination);
+            if (profile.filter) {
+                const lpf = context.createBiquadFilter();
+                lpf.type = 'lowpass';
+                lpf.frequency.value = profile.filter;
+                lpf.Q.value = .8;
+                output.connect(lpf);
+                lpf.connect(context.destination);
+            } else {
+                output.connect(context.destination);
+            }
+            main.start(now);
+            harmonic.start(now);
+            oscillators.push(main, harmonic);
         } else {
+            const main = context.createOscillator();
+            main.type = profile.wave;
+            main.frequency.value = selectedSound === 'bass' ? frequency / 2 : frequency;
+            main.connect(output);
             output.connect(context.destination);
+            main.start(now);
+            oscillators.push(main);
         }
+
         output.gain.setValueAtTime(.0001, now);
         output.gain.exponentialRampToValueAtTime(Math.max(.001, profile.gain * masterVolume), now + profile.attack);
-        if (profile.filterEnvelope) {
-            output.gain.exponentialRampToValueAtTime(.0001, now + profile.attack + profile.decay);
-        } else {
-            output.gain.exponentialRampToValueAtTime(Math.max(.001, profile.gain * profile.sustain * masterVolume), now + profile.attack + profile.decay);
-        }
-        main.start(now);
-        if (harmonic) harmonic.start(now);
-        voices.set(note, { main, harmonic, output, filter, element, profile });
+        output.gain.exponentialRampToValueAtTime(
+            Math.max(.001, profile.gain * profile.sustain * masterVolume),
+            now + profile.attack + profile.decay
+        );
+
+        voices.set(note, { oscillators, output, element, profile });
         element.classList.add('active');
         noteStatus.textContent = `${note} · ${selectedSound}`;
         if (keyboardMode === 'synth') {
@@ -145,11 +184,11 @@
         const voice = voices.get(note);
         if (!voice) return;
         const now = ensureAudio().currentTime;
+        const stopAt = now + voice.profile.release + .05;
         voice.output.gain.cancelScheduledValues(now);
         voice.output.gain.setValueAtTime(Math.max(.001, voice.output.gain.value), now);
         voice.output.gain.exponentialRampToValueAtTime(.0001, now + voice.profile.release);
-        voice.main.stop(now + voice.profile.release + .04);
-        if (voice.harmonic) voice.harmonic.stop(now + voice.profile.release + .04);
+        voice.oscillators.forEach(osc => osc.stop(stopAt));
         voice.element.classList.remove('active');
         voices.delete(note);
     }
