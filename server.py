@@ -10,7 +10,7 @@ from flask import Flask, request, jsonify, session, send_from_directory, abort, 
 from werkzeug.exceptions import RequestEntityTooLarge
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from sqlalchemy import create_engine, Column, String, Integer, DateTime, LargeBinary, Text, Float, Boolean, ForeignKey, UniqueConstraint, text
+from sqlalchemy import create_engine, Column, String, Integer, DateTime, LargeBinary, Text, Float, Boolean, ForeignKey, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import declarative_base, sessionmaker, scoped_session, relationship
 from sqlalchemy.sql import func
@@ -68,35 +68,6 @@ class User(Base):
     is_verified    = Column(Boolean, default=False, nullable=False)
     created_at     = Column(DateTime, default=datetime.datetime.utcnow)
     posts          = relationship('Post', back_populates='user', cascade='all, delete-orphan')
-
-
-class BannedAccount(Base):
-    """Permanent account-level bans, keyed by normalized username."""
-    __tablename__ = 'banned_accounts'
-    username    = Column(String(20), primary_key=True)
-    reason      = Column(Text, nullable=False, default='Permanent site ban')
-    created_at  = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
-
-
-class BannedDevice(Base):
-    """Devices permanently blocked after using a banned account."""
-    __tablename__ = 'banned_devices'
-    device_id         = Column(String(64), primary_key=True)
-    account_username  = Column(String(20), nullable=True)
-    reason            = Column(Text, nullable=False, default='Permanent site ban')
-    created_at        = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
-
-
-class AccountDevice(Base):
-    """Durable association between an account and a browser device cookie."""
-    __tablename__ = 'account_devices'
-    id          = Column(Integer, primary_key=True, autoincrement=True)
-    user_id     = Column(Integer, ForeignKey('users.id'), nullable=False)
-    device_id   = Column(String(64), nullable=False)
-    created_at  = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
-    __table_args__ = (
-        UniqueConstraint('user_id', 'device_id', name='uq_account_devices_user_device'),
-    )
 
 
 class DeviceBonusClaim(Base):
@@ -206,69 +177,6 @@ class TradeCardLock(Base):
 
 
 Base.metadata.create_all(engine)
-
-BUILTIN_BANNED_USERNAMES = {'trashvr'}
-
-
-def _normalize_username(username):
-    return str(username or '').strip().casefold()
-
-
-def _is_banned_username(db, username):
-    normalized = _normalize_username(username)
-    return normalized in BUILTIN_BANNED_USERNAMES or bool(
-        db.query(BannedAccount).filter_by(username=normalized).first()
-    )
-
-
-def _ban_device(db, device_id, account_username=None, reason='Permanent site ban'):
-    if not device_id:
-        return
-    existing = db.query(BannedDevice).filter_by(device_id=device_id).first()
-    if not existing:
-        db.add(BannedDevice(
-            device_id=device_id,
-            account_username=_normalize_username(account_username) or None,
-            reason=reason,
-        ))
-
-
-def _record_account_device(db, user):
-    device_id = getattr(g, 'device_id', None)
-    if not device_id:
-        return
-    existing = db.query(AccountDevice).filter_by(
-        user_id=user.id, device_id=device_id
-    ).first()
-    if not existing:
-        db.add(AccountDevice(user_id=user.id, device_id=device_id))
-
-
-def _seed_builtin_bans():
-    db = DBSession()
-    try:
-        for username in BUILTIN_BANNED_USERNAMES:
-            if not db.query(BannedAccount).filter_by(username=username).first():
-                db.add(BannedAccount(username=username))
-            existing_users = db.query(User).filter(
-                func.lower(User.username) == username
-            ).all()
-            for user in existing_users:
-                for association in db.query(AccountDevice).filter_by(
-                    user_id=user.id
-                ).all():
-                    _ban_device(
-                        db,
-                        association.device_id,
-                        user.username,
-                        'Permanent site ban for banned account',
-                    )
-        db.commit()
-    finally:
-        db.close()
-
-
-_seed_builtin_bans()
 
 # Migrate existing DB to add new User columns if they don't exist yet
 _is_pg = engine.dialect.name == 'postgresql'
@@ -779,19 +687,6 @@ def _maybe_award_first_login_bonus(user, db):
     return True
 
 
-def _banned_response():
-    session.clear()
-    if request.path.startswith('/api/'):
-        return jsonify({
-            'error': 'This device is permanently banned from Dynamix.'
-        }), 403
-    return send_from_directory(
-        os.path.join(BASE_DIR, 'docs'),
-        'ban-preview.html',
-        mimetype='text/html',
-    ), 403
-
-
 @app.teardown_appcontext
 def remove_session(exception=None):
     DBSession.remove()
@@ -802,40 +697,6 @@ def ensure_device_id():
     g.device_id = request.cookies.get('aerodynamix_device_id')
     if not g.device_id:
         g.device_id = uuid.uuid4().hex
-
-    db = DBSession()
-    try:
-        device_ban = db.query(BannedDevice).filter_by(device_id=g.device_id).first()
-        if device_ban:
-            return _banned_response()
-
-        associated = db.query(AccountDevice, User).join(
-            User, User.id == AccountDevice.user_id
-        ).filter(AccountDevice.device_id == g.device_id).first()
-        if associated and _is_banned_username(db, associated[1].username):
-            _ban_device(
-                db,
-                g.device_id,
-                associated[1].username,
-                'Permanent site ban for banned account',
-            )
-            db.commit()
-            return _banned_response()
-
-        user_id = session.get('user_id')
-        if user_id:
-            user = db.query(User).filter_by(id=user_id).first()
-            if not user or _is_banned_username(db, user.username):
-                _ban_device(
-                    db,
-                    g.device_id,
-                    user.username if user else session.get('username'),
-                    'Permanent site ban for banned account',
-                )
-                db.commit()
-                return _banned_response()
-    finally:
-        db.close()
 
 
 @app.after_request
@@ -884,10 +745,6 @@ def register():
 
     db = DBSession()
     try:
-        if _is_banned_username(db, username):
-            _ban_device(db, g.device_id, username, 'Attempted registration of banned account')
-            db.commit()
-            return _banned_response()
         if not username or not password:
             return jsonify({'error': 'Username and password are required'}), 400
         if len(username) < 3 or len(username) > 20:
@@ -904,7 +761,6 @@ def register():
         db.refresh(user)
         _merge_session_trading_cards(user, db)
         _maybe_award_first_login_bonus(user, db)
-        _record_account_device(db, user)
         db.commit()
         session['user_id']  = user.id
         session['username'] = user.username
@@ -927,15 +783,10 @@ def login():
 
     db = DBSession()
     try:
-        if _is_banned_username(db, username):
-            _ban_device(db, g.device_id, username, 'Attempted login to permanently banned account')
-            db.commit()
-            return _banned_response()
         user = db.query(User).filter_by(username=username).first()
         if user and check_password_hash(user.password_hash, password):
             _merge_session_trading_cards(user, db)
             _maybe_award_first_login_bonus(user, db)
-            _record_account_device(db, user)
             db.commit()
             session['user_id'] = user.id
             session['username'] = user.username

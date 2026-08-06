@@ -16,4 +16,3 @@
 - [Game purchase identifiers](game-purchase-identifiers.md) — Shop, library, and game-frame URLs must share canonical purchase keys or an explicit compatibility map.
 - [Mobile game keyboard](mobile-game-keyboard.md) — every catalog game receives touch keyboard controls through the shared game-frame wrapper.
 - [Game ordering preference](game-ordering-preference.md) — new games can be placed in any sensible catalog position; no chronological or alphabetical rule is required.
-- [Server-enforced bans](server-enforced-bans.md) — account bans block login and site requests; device associations are recorded from successful account use.
