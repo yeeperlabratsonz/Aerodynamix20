@@ -126,6 +126,12 @@
         .playlist-item.indented { padding-left: 28px; }
         .playlist-item:hover { background: rgba(255,255,255,0.05); }
         .playlist-item.active { background: rgba(44,127,252,0.12); border-left-color: #2c7ffc; }
+        .playlist-item.loading .pl-thumb { color: #2c7ffc; }
+        .playlist-item.loading .pl-thumb i { animation: playlist-spin 1s linear infinite; }
+        @keyframes playlist-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
 
         .pl-thumb {
             width: 34px; height: 34px;
@@ -751,17 +757,31 @@
 
         function makeItemEl(item, qIdx, indented) {
             const el = document.createElement('div');
-            el.className = 'playlist-item' + (indented ? ' indented' : '') + (qIdx === current ? ' active' : '');
+            el.className = 'playlist-item' +
+                (indented ? ' indented' : '') +
+                (qIdx === current ? ' active' : '') +
+                (item.loading ? ' loading' : '');
             el.innerHTML = `
                 <div class="pl-thumb">
-                    ${item.artUrl ? `<img src="${esc(item.artUrl)}" alt="">` : `<i class="fas fa-${item.type==='audio'?'music':'film'}"></i>`}
+                    ${item.loading
+                        ? `<i class="fas fa-spinner"></i>`
+                        : item.artUrl
+                            ? `<img src="${esc(item.artUrl)}" alt="">`
+                            : `<i class="fas fa-${item.type==='audio'?'music':'film'}"></i>`}
                 </div>
                 <div class="pl-info">
                     <div class="pl-name">${esc(item.tags?.title || item.name)}</div>
-                    <div class="pl-meta">${item.tags?.artist ? esc(item.tags.artist)+' · ' : ''}${item.type}</div>
+                    <div class="pl-meta">${item.loading
+                        ? 'Loading audio…'
+                        : item.tags?.artist
+                            ? esc(item.tags.artist)+' · '+item.type
+                            : item.type}</div>
                 </div>
                 <span class="pl-remove" title="Remove"><i class="fas fa-xmark"></i></span>`;
-            el.addEventListener('click', e => { if (!e.target.closest('.pl-remove')) playItem(qIdx); });
+            el.addEventListener('click', e => {
+                if (isLocked() || e.target.closest('.pl-remove')) return;
+                playItem(qIdx);
+            });
             el.querySelector('.pl-remove').addEventListener('click', e => { e.stopPropagation(); removeItem(qIdx); });
             return el;
         }
@@ -872,7 +892,7 @@
                 for (const track of BUNDLED_TRACKS) {
                     if (hasBundledTrack(track.key)) continue;
                     // Keep bundled tracks as direct served URLs instead of
-                    // downloading every large FLAC into memory on page load.
+                    // downloading audio into memory on page load.
                     const item = {
                         file: null,
                         src: track.src,
@@ -881,7 +901,8 @@
                         artUrl: track.artUrl,
                         tags: track.tags,
                         bundled: true,
-                        bundledKey: track.key
+                        bundledKey: track.key,
+                        loading: false
                     };
                     group.items.push(item);
                     queue.push(item);
@@ -895,14 +916,18 @@
         }
 
         function maybeLoadBundledTracks() {
-            if (!isLocked()) addBundledTracks();
+            // Add the metadata-only rows immediately. The access overlay
+            // still blocks interaction until the unlock check completes.
+            addBundledTracks();
         }
 
         // ── Playback ─────────────────────────────────────
         function playItem(idx) {
             if (idx < 0 || idx >= queue.length) return;
+            if (isLocked()) return;
             current = idx;
             const item = queue[idx];
+            item.loading = item.type === 'audio';
             renderPlaylist();
             dropZone.style.display = 'none';
             addMoreWrap.classList.add('visible');
@@ -912,7 +937,8 @@
                 videoEl.pause(); videoEl.src = '';
                 audioPlayer.classList.add('visible');
                 audio.src = item.src || URL.createObjectURL(item.file);
-                audio.preload = 'metadata';
+                audio.preload = 'auto';
+                audio.load();
                 audio.play().catch(() => {});
                 applyAudioMeta(idx);
             } else {
@@ -957,6 +983,26 @@
         // ── Audio events ─────────────────────────────────
         audio.addEventListener('play',  () => { playIcon.className = 'fas fa-pause';  audioPlayer.classList.add('playing'); });
         audio.addEventListener('pause', () => { playIcon.className = 'fas fa-play';   audioPlayer.classList.remove('playing'); });
+        audio.addEventListener('canplay', () => {
+            if (current < 0 || !queue[current]) return;
+            queue[current].loading = false;
+            renderPlaylist();
+        });
+        audio.addEventListener('playing', () => {
+            if (current < 0 || !queue[current]) return;
+            queue[current].loading = false;
+            renderPlaylist();
+        });
+        audio.addEventListener('waiting', () => {
+            if (current < 0 || !queue[current]) return;
+            queue[current].loading = true;
+            renderPlaylist();
+        });
+        audio.addEventListener('error', () => {
+            if (current < 0 || !queue[current]) return;
+            queue[current].loading = false;
+            renderPlaylist();
+        });
         audio.addEventListener('timeupdate', () => {
             if (!audio.duration) return;
             progressFill.style.width = (audio.currentTime / audio.duration * 100) + '%';
