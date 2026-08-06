@@ -25,12 +25,12 @@
     const voices = new Map();
     const heldKeys = new Set();
     let audioContext = null;
-    let selectedSound = 'piano';
+    let selectedSound = 'wave-synth';
     let masterVolume = .68;
 
     const soundProfiles = {
         piano: { wave: 'triangle', harmonic: 'sine', harmonicRatio: 2, harmonicGain: .12, attack: .006, decay: .38, sustain: .24, release: .58, gain: .28 },
-        synth: { wave: 'sawtooth', harmonic: 'square', harmonicRatio: 2, harmonicGain: .2, attack: .025, decay: .18, sustain: .52, release: .28, gain: .2, filter: 2100 },
+        'wave-synth': { wave: 'sawtooth', harmonic: 'triangle', harmonicRatio: 1, harmonicGain: .62, detune: 9, attack: .018, decay: .24, sustain: .64, release: .42, gain: .22, filter: 1850, lfoRate: 5.2, lfoDepth: 4.5 },
         organ: { wave: 'sine', harmonic: 'sine', harmonicRatio: 2, harmonicGain: .5, attack: .06, decay: .08, sustain: .75, release: .2, gain: .22 },
         bell: { wave: 'sine', harmonic: 'triangle', harmonicRatio: 3.01, harmonicGain: .32, attack: .002, decay: 1.1, sustain: .03, release: 1.25, gain: .25 },
         bass: { wave: 'sawtooth', harmonic: 'square', harmonicRatio: 2, harmonicGain: .08, attack: .012, decay: .3, sustain: .42, release: .4, gain: .27, filter: 850 }
@@ -77,8 +77,10 @@
         const harmonic = context.createOscillator();
         main.type = profile.wave;
         main.frequency.value = profile.filter ? frequency / (selectedSound === 'bass' ? 2 : 1) : frequency;
+        main.detune.value = profile.detune || 0;
         harmonic.type = profile.harmonic;
         harmonic.frequency.value = main.frequency.value * profile.harmonicRatio;
+        harmonic.detune.value = profile.detune ? -profile.detune : 0;
         const harmonicGain = context.createGain();
         harmonicGain.gain.value = profile.harmonicGain;
         main.connect(output);
@@ -93,12 +95,24 @@
         } else {
             output.connect(context.destination);
         }
+        let lfo = null;
+        let lfoGain = null;
+        if (profile.lfoRate) {
+            lfo = context.createOscillator();
+            lfoGain = context.createGain();
+            lfo.frequency.value = profile.lfoRate;
+            lfoGain.gain.value = profile.lfoDepth;
+            lfo.connect(lfoGain);
+            lfoGain.connect(main.detune);
+            lfoGain.connect(harmonic.detune);
+            lfo.start(now);
+        }
         output.gain.setValueAtTime(.0001, now);
         output.gain.exponentialRampToValueAtTime(Math.max(.001, profile.gain * masterVolume), now + profile.attack);
         output.gain.exponentialRampToValueAtTime(Math.max(.001, profile.gain * profile.sustain * masterVolume), now + profile.attack + profile.decay);
         main.start(now);
         harmonic.start(now);
-        voices.set(note, { main, harmonic, output, element, profile });
+        voices.set(note, { main, harmonic, lfo, output, element, profile });
         element.classList.add('active');
         noteStatus.textContent = `${note} · ${selectedSound}`;
     }
@@ -112,6 +126,7 @@
         voice.output.gain.exponentialRampToValueAtTime(.0001, now + voice.profile.release);
         voice.main.stop(now + voice.profile.release + .04);
         voice.harmonic.stop(now + voice.profile.release + .04);
+        if (voice.lfo) voice.lfo.stop(now + voice.profile.release + .04);
         voice.element.classList.remove('active');
         voices.delete(note);
     }
