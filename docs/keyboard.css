@@ -1,0 +1,218 @@
+.keyboard-nav-links {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4vw;
+}
+.keyboard-nav-links a,
+.keyboard-nav-settings {
+    color: #fff;
+    text-decoration: none;
+    padding: .55vw 1.3vw;
+    border-radius: .5vw;
+    font-weight: 600;
+    font-size: .95vw;
+    transition: all .3s ease;
+}
+.keyboard-nav-links a:hover,
+.keyboard-nav-links a.active,
+.keyboard-nav-settings:hover {
+    background-color: #2c7ffc;
+}
+.keyboard-nav-settings { margin-right: 1.5vw; }
+.keyboard-page {
+    min-height: calc(100vh - 7vw);
+    padding: 7vw 5vw 8rem;
+}
+.keyboard-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.4rem;
+    max-width: 1240px;
+    margin: 0 auto 1.6rem;
+}
+.keyboard-heading h2 {
+    margin: .15rem 0 .45rem;
+    color: #fff;
+    font-size: clamp(2rem, 4vw, 3.8rem);
+    letter-spacing: -.05em;
+}
+.keyboard-heading p:last-child {
+    margin: 0;
+    color: rgba(255,255,255,.62);
+    line-height: 1.6;
+}
+.keyboard-eyebrow {
+    margin: 0;
+    color: #8ec5ff !important;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+.keyboard-eyebrow i { margin-right: .25rem; }
+.keyboard-back {
+    flex: none;
+    margin-top: .4rem;
+    padding: .6rem .8rem;
+    border: 1px solid rgba(125,184,255,.3);
+    border-radius: 9px;
+    color: #a9cbff;
+    font-size: .72rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+.keyboard-back:hover { background: rgba(44,127,252,.15); color: #fff; }
+.keyboard-workspace {
+    max-width: 1240px;
+    margin: 0 auto;
+    overflow: hidden;
+    border: 1px solid rgba(125,184,255,.25);
+    border-radius: 20px;
+    background: rgba(9,15,29,.9);
+    box-shadow: 0 24px 70px rgba(0,0,0,.35);
+}
+.keyboard-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .8rem 1.2rem;
+    padding: .85rem;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+    background: rgba(20,31,55,.82);
+}
+.sound-picker { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
+.toolbar-label, .volume-control span {
+    color: rgba(255,255,255,.5);
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+.sound-button, .keyboard-control {
+    padding: .55rem .75rem;
+    border: 1px solid rgba(125,184,255,.2);
+    border-radius: 8px;
+    color: #a9cbff;
+    background: rgba(14,27,49,.7);
+    font-size: .74rem;
+    font-weight: 750;
+}
+.sound-button:hover, .sound-button.active {
+    border-color: #69c7ff;
+    color: #fff;
+    background: linear-gradient(135deg, #287de7, #5c4fca);
+}
+.volume-control {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    margin-left: auto;
+}
+.volume-control span { display: flex; gap: .35rem; align-items: center; }
+.volume-control input { width: 105px; accent-color: #65c9ff; }
+.keyboard-control { color: #ffb7c6; border-color: rgba(255,112,141,.25); }
+.keyboard-control:hover { background: rgba(184,42,78,.25); }
+.keyboard-status {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    min-height: 42px;
+    padding: .7rem 1rem;
+    color: rgba(255,255,255,.55);
+    font-size: .72rem;
+}
+#sound-status { color: #9bd9ff; font-weight: 800; }
+.status-dot { width: 5px; height: 5px; border-radius: 50%; background: #65f2d3; box-shadow: 0 0 9px #65f2d3; }
+.piano-shell {
+    overflow-x: auto;
+    padding: 1.2rem 1.2rem 1.45rem;
+    background:
+        radial-gradient(circle at 50% 0, rgba(61,134,209,.2), transparent 50%),
+        linear-gradient(180deg, #101c35, #07101e);
+}
+.piano-keyboard {
+    position: relative;
+    display: flex;
+    min-width: 760px;
+    height: 290px;
+    padding: 0 4px 4px;
+    border: 1px solid rgba(125,184,255,.22);
+    border-radius: 12px;
+    background: #07101d;
+    box-shadow: 0 18px 30px rgba(0,0,0,.35);
+}
+.piano-key {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    min-width: 48px;
+    border: 1px solid #adc5da;
+    border-top: 0;
+    border-radius: 0 0 8px 8px;
+    color: #233b52;
+    background: linear-gradient(90deg, #eaf6ff, #fff 48%, #b9d1e1);
+    box-shadow: inset 0 -10px 0 rgba(79,121,153,.16), 0 5px 0 #426078;
+    cursor: pointer;
+    touch-action: none;
+    user-select: none;
+}
+.piano-key:hover { background: linear-gradient(90deg, #effaff, #fff 48%, #cbe6f4); }
+.piano-key.active {
+    transform: translateY(4px);
+    color: #fff;
+    background: linear-gradient(90deg, #4db0e7, #8bceff 48%, #357dcc);
+    box-shadow: inset 0 -10px 0 rgba(26,70,129,.25), 0 1px 0 #25496b;
+}
+.key-note, .key-shortcut { position: absolute; left: 0; right: 0; text-align: center; pointer-events: none; }
+.key-note { bottom: 18px; font-size: .72rem; font-weight: 800; }
+.key-shortcut { bottom: 42px; color: #6c8ba4; font-size: .62rem; font-weight: 800; text-transform: uppercase; }
+.piano-key.active .key-shortcut { color: rgba(255,255,255,.8); }
+.black-key {
+    position: absolute;
+    z-index: 3;
+    top: 0;
+    width: 34px;
+    height: 178px;
+    border: 1px solid #07101d;
+    border-radius: 0 0 6px 6px;
+    color: #b4d2e8;
+    background: linear-gradient(90deg, #07101d, #304966 48%, #050910);
+    box-shadow: inset 0 -8px 0 rgba(0,0,0,.25), 0 5px 0 #02050a, 0 8px 14px rgba(0,0,0,.45);
+    cursor: pointer;
+    touch-action: none;
+    user-select: none;
+}
+.black-key:hover { background: linear-gradient(90deg, #10283d, #426480 48%, #08111e); }
+.black-key.active {
+    transform: translateY(4px);
+    background: linear-gradient(90deg, #267eb4, #63c8f2 48%, #1c477e);
+    box-shadow: 0 1px 0 #02050a, 0 4px 10px rgba(45,181,241,.3);
+}
+.black-key .key-note { bottom: 12px; color: #c8e2f2; font-size: .59rem; }
+.black-key .key-shortcut { bottom: 31px; color: #79a3bf; font-size: .55rem; }
+.keyboard-help {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: .6rem 1rem;
+    padding: .9rem 1.1rem 1rem;
+    color: rgba(255,255,255,.44);
+    font-size: .68rem;
+}
+.keyboard-help p { margin: 0; }
+.keyboard-help i { margin-right: .3rem; color: #8ec5ff; }
+.keyboard-help strong { color: rgba(255,255,255,.7); }
+@media (max-width: 768px) {
+    .keyboard-page { padding: 24vw 3vw 7rem; }
+    .keyboard-heading { flex-direction: column; gap: .8rem; }
+    .keyboard-back { margin-top: 0; }
+    .volume-control { margin-left: 0; }
+}
+@media (max-width: 560px) {
+    .keyboard-toolbar { align-items: stretch; }
+    .sound-picker { width: 100%; }
+    .sound-button { flex: 1; }
+    .keyboard-status { flex-wrap: wrap; }
+}
