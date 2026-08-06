@@ -50,10 +50,13 @@
 
         <section class="keyboard-workspace" aria-label="Keyboard Studio">
             <div class="keyboard-toolbar">
-                <div class="sound-picker" role="group" aria-label="Choose an instrument">
-                    <span class="toolbar-label">Sound</span>
-                    <button class="sound-button" data-sound="piano">Piano</button>
-                    <button class="sound-button active" data-sound="wave-synth">Wave Synth</button>
+                <div class="synth-mode-toggle" role="group" aria-label="Keyboard mode">
+                    <span class="toolbar-label">Mode</span>
+                    <button class="mode-button" data-mode="piano" type="button">Standard Piano</button>
+                    <button class="mode-button active" data-mode="synth" type="button">Flashing Lights Synth</button>
+                </div>
+                <div class="sound-picker" role="group" aria-label="More sounds">
+                    <span class="toolbar-label">More sounds</span>
                     <button class="sound-button" data-sound="organ">Organ</button>
                     <button class="sound-button" data-sound="bell">Bell</button>
                     <button class="sound-button" data-sound="bass">Bass</button>
@@ -66,18 +69,19 @@
             </div>
 
             <div class="keyboard-status" aria-live="polite">
-                <span id="sound-status">Wave Synth</span>
+                <span id="sound-status">Flashing Lights Synth</span>
                 <span class="status-dot"></span>
                 <span id="note-status">Click a key or use your keyboard</span>
             </div>
 
             <div class="piano-shell">
+                <div class="synth-lights" aria-hidden="true"></div>
                 <div class="piano-keyboard" id="piano-keyboard" aria-label="Playable piano keyboard"></div>
             </div>
 
             <div class="keyboard-help">
                 <p><i class="fas fa-keyboard"></i> White keys: <strong>A S D F G H J K L ; Z X C V B</strong> · Black keys: <strong>W E T Y U O P [ ] -</strong></p>
-                <p><i class="fas fa-hand-pointer"></i> Touch and mouse work too. You can play more than one note at once.</p>
+                <p><i class="fas fa-hand-pointer"></i> Touch and mouse work too. You can play more than one note at once. Flashing visuals can be disabled with Standard Piano.</p>
             </div>
         </section>
     </main>

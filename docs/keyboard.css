@@ -82,7 +82,7 @@
     border-bottom: 1px solid rgba(255,255,255,.1);
     background: rgba(20,31,55,.82);
 }
-.sound-picker { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
+.sound-picker, .synth-mode-toggle { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
 .toolbar-label, .volume-control span {
     color: rgba(255,255,255,.5);
     font-size: .68rem;
@@ -90,7 +90,7 @@
     letter-spacing: .08em;
     text-transform: uppercase;
 }
-.sound-button, .keyboard-control {
+.sound-button, .mode-button, .keyboard-control {
     padding: .55rem .75rem;
     border: 1px solid rgba(125,184,255,.2);
     border-radius: 8px;
@@ -99,10 +99,14 @@
     font-size: .74rem;
     font-weight: 750;
 }
-.sound-button:hover, .sound-button.active {
+.sound-button:hover, .sound-button.active, .mode-button:hover, .mode-button.active {
     border-color: #69c7ff;
     color: #fff;
     background: linear-gradient(135deg, #287de7, #5c4fca);
+}
+.mode-button.active {
+    background: linear-gradient(135deg, #e04a91, #604bd0);
+    box-shadow: 0 0 18px rgba(224,74,145,.25);
 }
 .volume-control {
     display: flex;
@@ -126,10 +130,36 @@
 #sound-status { color: #9bd9ff; font-weight: 800; }
 .status-dot { width: 5px; height: 5px; border-radius: 50%; background: #65f2d3; box-shadow: 0 0 9px #65f2d3; }
 .piano-shell {
+    position: relative;
     overflow-x: auto;
     padding: 1.2rem 1.2rem 1.45rem;
     background:
         radial-gradient(circle at 50% 0, rgba(61,134,209,.2), transparent 50%),
+        linear-gradient(180deg, #101c35, #07101e);
+}
+.synth-lights {
+    position: absolute;
+    z-index: 0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 10px;
+    opacity: 0;
+    background: linear-gradient(90deg, #ff4e9b, #7d6cff, #43e5ff, #ff4e9b);
+    background-size: 220% 100%;
+    transition: opacity .25s ease;
+}
+.synth-mode .synth-lights {
+    opacity: .75;
+    animation: synth-light-wave 3.5s linear infinite;
+}
+.synth-mode.synth-flash .synth-lights {
+    animation: synth-light-flash .32s ease-out;
+}
+.synth-mode .piano-shell {
+    background:
+        radial-gradient(circle at 20% 0, rgba(255,78,155,.16), transparent 32%),
+        radial-gradient(circle at 80% 0, rgba(67,229,255,.14), transparent 34%),
         linear-gradient(180deg, #101c35, #07101e);
 }
 .piano-keyboard {
@@ -215,4 +245,16 @@
     .sound-picker { width: 100%; }
     .sound-button { flex: 1; }
     .keyboard-status { flex-wrap: wrap; }
+}
+@keyframes synth-light-wave {
+    from { background-position: 0% 50%; }
+    to { background-position: 220% 50%; }
+}
+@keyframes synth-light-flash {
+    0% { opacity: .95; filter: brightness(1.7); }
+    100% { opacity: .75; filter: brightness(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .synth-mode .synth-lights,
+    .synth-mode.synth-flash .synth-lights { animation: none; }
 }
