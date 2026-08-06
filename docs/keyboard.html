@@ -49,40 +49,56 @@
         </header>
 
         <section class="keyboard-workspace" aria-label="Keyboard Studio">
+
+            <!-- Toolbar -->
             <div class="keyboard-toolbar">
                 <div class="synth-mode-toggle" role="group" aria-label="Keyboard mode">
                     <span class="toolbar-label">Mode</span>
                     <button class="mode-button" data-mode="piano" type="button">Standard Piano</button>
-                    <button class="mode-button active" data-mode="synth" type="button">Flashing Lights Synth</button>
+                    <button class="mode-button active" data-mode="synth" type="button">Flashing Lights</button>
                     <button class="mode-button" data-mode="pop" type="button">Pop Synth</button>
+                    <button class="mode-button mode-lumi" data-mode="lumi" type="button">
+                        <i class="fas fa-star-of-life"></i> Lumi Synth
+                    </button>
                 </div>
                 <div class="sound-picker" role="group" aria-label="More sounds">
-                    <span class="toolbar-label">More sounds</span>
+                    <span class="toolbar-label">More</span>
                     <button class="sound-button" data-sound="organ">Organ</button>
                     <button class="sound-button" data-sound="bell">Bell</button>
                     <button class="sound-button" data-sound="bass">Bass</button>
                 </div>
                 <label class="volume-control" for="keyboard-volume">
-                    <span><i class="fas fa-volume-high"></i> Volume</span>
+                    <span><i class="fas fa-volume-high"></i> Vol</span>
                     <input id="keyboard-volume" type="range" min="0" max="100" value="68">
                 </label>
-                <button class="keyboard-control" id="panic-button" type="button"><i class="fas fa-stop"></i> Stop all</button>
+                <button class="keyboard-control" id="panic-button" type="button">
+                    <i class="fas fa-stop"></i> Stop all
+                </button>
             </div>
 
+            <!-- Status bar -->
             <div class="keyboard-status" aria-live="polite">
                 <span id="sound-status">Flashing Lights Synth</span>
                 <span class="status-dot"></span>
                 <span id="note-status">Click a key or use your keyboard</span>
             </div>
 
+            <!-- Piano shell -->
             <div class="piano-shell">
                 <div class="synth-lights" aria-hidden="true"></div>
+                <div class="lumi-led-bar" aria-hidden="true">
+                    <div class="lumi-led-inner"></div>
+                </div>
                 <div class="piano-keyboard" id="piano-keyboard" aria-label="Playable piano keyboard"></div>
             </div>
 
+            <!-- Help row -->
             <div class="keyboard-help">
-                <p><i class="fas fa-keyboard"></i> White keys: <strong>A S D F G H J K L ; Z X C V B</strong> · Black keys: <strong>W E T Y U O P [ ] -</strong></p>
-                <p><i class="fas fa-hand-pointer"></i> Touch and mouse work too. You can play more than one note at once. Flashing visuals can be disabled with Standard Piano.</p>
+                <p><i class="fas fa-keyboard"></i>
+                    White: <strong>A S D F G H J K L ; Z X C V B</strong> &nbsp;·&nbsp;
+                    Black: <strong>W E T Y U O P [ ] -</strong>
+                </p>
+                <p><i class="fas fa-hand-pointer"></i> Mouse, touch, and keyboard all work. Hold multiple keys at once.</p>
             </div>
         </section>
     </main>
