@@ -303,6 +303,13 @@
             box-shadow: 0 8px 24px rgba(44,127,252,0.4);
         }
         .ctrl-btn.play-pause:hover { background: #1e5bc4; transform: scale(1.08); }
+        .ctrl-btn.art-mode-btn {
+            display: none;
+            min-width: 38px;
+            font-size: 0.92rem;
+        }
+        .ctrl-btn.art-mode-btn.visible { display: inline-flex; align-items: center; justify-content: center; }
+        .ctrl-btn.art-mode-btn.active { color: #2c7ffc; }
 
         /* Volume */
         .volume-row { display: flex; align-items: center; gap: 10px; width: 100%; }
@@ -543,6 +550,9 @@
                     <button class="ctrl-btn play-pause" id="playPauseBtn"><i class="fas fa-play" id="playIcon"></i></button>
                     <button class="ctrl-btn" id="repeatBtn"><i class="fas fa-repeat"></i></button>
                     <button class="ctrl-btn" id="nextBtn"><i class="fas fa-forward-step"></i></button>
+                    <button class="ctrl-btn art-mode-btn" id="artModeBtn" aria-label="Use song cover" title="Use song cover">
+                        <i class="fas fa-folder-open"></i>
+                    </button>
                 </div>
 
                 <div class="volume-row">
@@ -607,6 +617,7 @@
         const nextBtn      = document.getElementById('nextBtn');
         const shuffleBtn   = document.getElementById('shuffleBtn');
         const repeatBtn    = document.getElementById('repeatBtn');
+        const artModeBtn   = document.getElementById('artModeBtn');
         const volumeSlider = document.getElementById('volumeSlider');
         const videoEl      = document.getElementById('videoEl');
         const videoTitle   = document.getElementById('videoTitle');
@@ -625,6 +636,7 @@
         let shuffle = false;
         let repeat  = false;
         let playbackGroup = null; // folder currently being played in order
+        let artworkMode = 'folder';
 
         const isAudio = f => f.type.startsWith('audio/') || /\.(mp3|flac|aac|ogg|wav|m4a|opus|wma|aiff?)$/i.test(f.name);
         const isVideo = f => f.type.startsWith('video/') || /\.(mp4|webm|mkv|mov|avi|m4v)$/i.test(f.name);
@@ -947,6 +959,7 @@
             if (isLocked() || !group?.items?.length) return;
             const first = group.items.find(item => queue.includes(item));
             if (!first) return;
+            artworkMode = 'folder';
             playbackGroup = group;
             playItem(queue.indexOf(first), group);
         }
@@ -954,6 +967,7 @@
         function playItem(idx, groupContext = null) {
             if (idx < 0 || idx >= queue.length) return;
             if (isLocked()) return;
+            if (!groupContext) artworkMode = 'song';
             playbackGroup = groupContext;
             current = idx;
             const item = queue[idx];
@@ -985,11 +999,14 @@
             const item = queue[idx];
             if (!item) return;
             const groupCover = playbackGroup?.items.includes(item) ? playbackGroup.coverUrl : null;
+            const songCover = item.artUrl;
             trackTitle.textContent  = item.tags?.title  || item.name;
             trackArtist.textContent = item.tags?.artist || 'Unknown Artist';
             trackAlbum.textContent  = item.tags?.album  || '';
-            if (groupCover || item.artUrl) {
-                albumArt.src = groupCover || item.artUrl;
+            updateArtworkModeButton(groupCover, songCover);
+            const selectedCover = artworkMode === 'folder' && groupCover ? groupCover : songCover || groupCover;
+            if (selectedCover) {
+                albumArt.src = selectedCover;
                 albumArt.style.display = 'block';
                 albumArtPh.style.display = 'none';
             } else {
@@ -998,9 +1015,26 @@
             }
         }
 
+        function updateArtworkModeButton(groupCover, songCover) {
+            const canSwitch = Boolean(playbackGroup && groupCover && songCover);
+            artModeBtn.classList.toggle('visible', canSwitch);
+            artModeBtn.classList.toggle('active', canSwitch && artworkMode === 'folder');
+            artModeBtn.innerHTML = `<i class="fas fa-${artworkMode === 'folder' ? 'folder-open' : 'music'}"></i>`;
+            artModeBtn.setAttribute('aria-pressed', canSwitch && artworkMode === 'folder' ? 'true' : 'false');
+            artModeBtn.title = artworkMode === 'folder' ? 'Use song cover' : 'Use folder cover';
+            artModeBtn.setAttribute('aria-label', artModeBtn.title);
+        }
+
+        function toggleArtworkMode() {
+            if (!playbackGroup || current < 0 || !queue[current]) return;
+            const item = queue[current];
+            if (!playbackGroup.coverUrl || !item.artUrl) return;
+            artworkMode = artworkMode === 'folder' ? 'song' : 'folder';
+            applyAudioMeta(current);
+        }
+
         function playNext() {
             if (!queue.length) return;
-            if (shuffle) { playItem(Math.floor(Math.random() * queue.length)); return; }
             if (playbackGroup) {
                 const groupIndex = playbackGroup.items.indexOf(queue[current]);
                 const nextGroupIndex = groupIndex + 1;
@@ -1012,6 +1046,7 @@
                 }
                 return;
             }
+            if (shuffle) { playItem(Math.floor(Math.random() * queue.length)); return; }
             const next = (current + 1) % queue.length;
             if (next === 0 && !repeat) { audioPlayer.classList.remove('playing'); return; }
             playItem(next);
@@ -1066,6 +1101,7 @@
         nextBtn.addEventListener('click', playNext);
         shuffleBtn.addEventListener('click', () => { shuffle = !shuffle; shuffleBtn.style.color = shuffle ? '#2c7ffc' : ''; });
         repeatBtn.addEventListener('click',  () => { repeat  = !repeat;  repeatBtn.style.color  = repeat  ? '#2c7ffc' : ''; });
+        artModeBtn.addEventListener('click', toggleArtworkMode);
         volumeSlider.addEventListener('input', () => { audio.volume = volumeSlider.value; });
         progressBar.addEventListener('click', e => {
             const r = progressBar.getBoundingClientRect();
