@@ -1,0 +1,229 @@
+#aero-onboarding {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: grid;
+    place-items: center;
+    padding: 1.25rem;
+    box-sizing: border-box;
+    background: rgba(2, 5, 12, .76);
+    backdrop-filter: blur(12px) saturate(125%);
+    animation: aero-tour-fade-in .28s ease both;
+}
+
+#aero-onboarding[hidden] {
+    display: none;
+}
+
+@keyframes aero-tour-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes aero-tour-card-in {
+    from { opacity: 0; transform: translateY(10px) scale(.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.aero-tour-card {
+    position: relative;
+    width: min(100%, 680px);
+    max-height: min(680px, calc(100svh - 2.5rem));
+    overflow: auto;
+    box-sizing: border-box;
+    padding: clamp(1.35rem, 4vw, 2.35rem);
+    color: #fff;
+    border: 1px solid rgba(130, 183, 255, .27);
+    border-radius: 26px;
+    background:
+        radial-gradient(circle at 100% 0, rgba(44, 127, 252, .2), transparent 38%),
+        linear-gradient(145deg, rgba(15, 29, 60, .98), rgba(5, 11, 25, .98));
+    box-shadow: 0 28px 90px rgba(0, 0, 0, .65), 0 0 42px rgba(44, 127, 252, .12);
+    animation: aero-tour-card-in .36s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.aero-tour-close {
+    position: absolute;
+    top: .75rem;
+    right: .85rem;
+    width: 2.2rem;
+    height: 2.2rem;
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 50%;
+    color: rgba(255, 255, 255, .72);
+    background: rgba(255, 255, 255, .06);
+    cursor: pointer;
+    font-size: 1.15rem;
+    line-height: 1;
+    transition: background .2s ease, color .2s ease, transform .2s ease;
+}
+
+.aero-tour-close:hover,
+.aero-tour-close:focus-visible {
+    color: #fff;
+    background: rgba(44, 127, 252, .36);
+    transform: rotate(4deg);
+}
+
+.aero-tour-kicker {
+    margin: 0 0 .7rem;
+    color: #91c5ff;
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+}
+
+.aero-tour-title {
+    margin: 0;
+    max-width: 540px;
+    font-size: clamp(1.55rem, 4vw, 2.35rem);
+    line-height: 1.08;
+    letter-spacing: -.035em;
+}
+
+.aero-tour-description {
+    max-width: 540px;
+    margin: .8rem 0 0;
+    color: rgba(235, 243, 255, .68);
+    font-size: clamp(.82rem, 1.7vw, .96rem);
+    line-height: 1.55;
+}
+
+.aero-tour-feature {
+    display: flex;
+    gap: .9rem;
+    align-items: flex-start;
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border: 1px solid rgba(130, 183, 255, .16);
+    border-radius: 17px;
+    background: rgba(255, 255, 255, .045);
+}
+
+.aero-tour-icon {
+    display: grid;
+    flex: 0 0 2.55rem;
+    place-items: center;
+    width: 2.55rem;
+    height: 2.55rem;
+    color: #b8d8ff;
+    border-radius: 13px;
+    background: rgba(44, 127, 252, .2);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1);
+    font-size: 1rem;
+}
+
+.aero-tour-feature h2 {
+    margin: .05rem 0 .28rem;
+    font-size: 1rem;
+}
+
+.aero-tour-feature p {
+    margin: 0;
+    color: rgba(235, 243, 255, .65);
+    font-size: .82rem;
+    line-height: 1.5;
+}
+
+.aero-tour-progress {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin-top: 1.45rem;
+}
+
+.aero-tour-dot {
+    width: 7px;
+    height: 7px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .22);
+    cursor: pointer;
+}
+
+.aero-tour-dot.is-active {
+    width: 22px;
+    border-radius: 5px;
+    background: #4c9cff;
+    box-shadow: 0 0 12px rgba(76, 156, 255, .65);
+}
+
+.aero-tour-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1.65rem;
+}
+
+.aero-tour-skip {
+    padding: .55rem 0;
+    border: 0;
+    color: rgba(235, 243, 255, .55);
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
+    font-size: .8rem;
+}
+
+.aero-tour-skip:hover,
+.aero-tour-skip:focus-visible {
+    color: #fff;
+}
+
+.aero-tour-next {
+    min-width: 8.3rem;
+    padding: .78rem 1.15rem;
+    border: 1px solid rgba(166, 212, 255, .42);
+    border-radius: 12px;
+    color: #fff;
+    background: linear-gradient(135deg, #2c7ffc, #2160cb);
+    box-shadow: 0 8px 22px rgba(24, 91, 205, .3);
+    cursor: pointer;
+    font: inherit;
+    font-size: .82rem;
+    font-weight: 700;
+    transition: transform .2s ease, filter .2s ease;
+}
+
+.aero-tour-next:hover,
+.aero-tour-next:focus-visible {
+    filter: brightness(1.12);
+    transform: translateY(-1px);
+}
+
+@media (max-width: 700px) {
+    #aero-onboarding {
+        align-items: end;
+        padding: .75rem;
+    }
+
+    .aero-tour-card {
+        max-height: calc(100svh - 1.5rem);
+        padding: 1.35rem 1.1rem 1.1rem;
+        border-radius: 21px;
+    }
+
+    .aero-tour-close {
+        top: .55rem;
+        right: .6rem;
+    }
+
+    .aero-tour-feature {
+        margin-top: 1.15rem;
+        padding: .85rem;
+    }
+
+    .aero-tour-footer {
+        margin-top: 1.25rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #aero-onboarding,
+    .aero-tour-card {
+        animation: none;
+    }
+}
