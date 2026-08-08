@@ -7,7 +7,7 @@
         {
             icon: 'fa-gamepad',
             title: 'Play',
-            description: 'Spotlight shows a few favorites up top. Search or scroll the game grid to launch the full arcade.'
+            description: 'The Games page is your arcade. Search or scroll the game grid, then select any game to launch it.'
         },
         {
             icon: 'fa-compass',
@@ -15,9 +15,9 @@
             description: 'Apps has extra tools like the soundboard and drawing room. Settings lets you tune themes and effects.'
         },
         {
-            icon: 'fa-layer-group',
-            title: 'Collect',
-            description: 'Earn Dynamix Discs, spend them in Shop, and open packs to build your Card Collection.'
+            icon: 'fa-store',
+            title: 'Shop & collect',
+            description: 'Earn Dynamix Discs while you play, spend them in Shop on games and packs, then build your Card Collection with what you unlock.'
         },
         {
             icon: 'fa-headphones',
