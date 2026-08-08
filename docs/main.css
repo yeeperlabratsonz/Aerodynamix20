@@ -153,18 +153,9 @@ nav > div a.active,
     justify-content: center;
     margin-top: .6vw;
     padding-bottom: 5vw;
-    visibility: hidden;
-    opacity: 0;
-    transition: opacity .12s ease;
-}
-
-#games.game-visibility-ready {
     visibility: visible;
     opacity: 1;
-}
-
-body:not(.games-visibility-ready) #spotlight {
-    visibility: hidden;
+    transition: opacity .12s ease;
 }
 
 @keyframes gamesReveal {
